@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "26091166021",
+    "project_id": "qrsystemattendance",
+    "storage_bucket": "qrsystemattendance.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:26091166021:android:d0ca7e8ca4c0866d98862c",
+        "android_client_info": {
+          "package_name": "com.example.attendancesystem"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDmyE0eWS7FEzyiZsLKwbzgtzWsOws5lMg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

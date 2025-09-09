@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Attendance System</string>
+    
+    <!-- Login and Registration -->
+    <string name="login">Login</string>
+    <string name="signup">Sign Up</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="forgot_password">Forgot Password?</string>
+    <string name="name">Name</string>
+    <string name="student_id">Student ID</string>
+    <string name="teacher_id">Teacher ID</string>
+    
+    <!-- Dashboard -->
+    <string name="scan_qr_code">Scan QR Code</string>
+    <string name="generate_qr">Generate QR Code</string>
+    <string name="attendance_history">Attendance History</string>
+    <string name="logout">Logout</string>
+    <string name="welcome_message">Welcome, %1$s</string>
+    <string name="id_format">ID: %1$s</string>
+    
+    <!-- Main Activity -->
+    <string name="student_list">Student List</string>
+    <string name="add_student">Add Student</string>
+    <string name="total_students">Total: %1$d</string>
+    <string name="present_students">Present: %1$d</string>
+    <string name="absent_students">Absent: %1$d</string>
+    <string name="late_students">Late: %1$d</string>
+    <string name="excused_students">Excused: %1$d</string>
+    <string name="enter_student_name">Enter student name</string>
+    <string name="add">Add</string>
+    <string name="cancel">Cancel</string>
+    <string name="error_saving_data">Error saving data</string>
+    <string name="no_internet_connection">No internet connection</string>
+    <string name="server_connection_error">Server connection error</string>
+    <string name="expiration_time_format" formatted="false">Expires in: %1$d:%02d</string>
+    
+    <!-- QR Code Scanner -->
+    <string name="qr_code_image_description">QR Code Image</string>
+    <string name="qr_code_expiration">QR Code Expiration</string>
+    <string name="set_expiration">Set Expiration</string>
+    <string name="minutes">Minutes</string>
+    <string name="set">Set</string>
+    <string name="set_expiration_time">Set Expiration Time</string>
+    <string name="select_expiration_minutes">Select expiration time in minutes</string>
+    <string name="scan_qr_instructions">Position QR code within frame</string>
+    <string name="renew_qr_code">Renew QR Code</string>
+    <string name="qr_code_generation_failed">Failed to generate QR code</string>
+    <string name="expires_in" formatted="false">Expires in: %d:%02d</string>
+    <string name="qr_code_expired">QR Code Expired</string>
+    <string name="invalid_qr_code">Invalid QR code format</string>
+    <string name="error">An error occurred</string>
+    
+    <!-- Messages -->
+    <string name="error_loading_data">Error loading data: %1$s</string>
+    <string name="error_qr_expired">QR code has expired</string>
+    <string name="error_already_marked">Attendance already marked</string>
+    <string name="success_attendance">Attendance marked successfully!</string>
+    <string name="no_records">No attendance records found</string>
+    <string name="camera_permission_required">Camera permission is required</string>
+    <string name="invalid_schedule">Invalid Schedule</string>
+    <string name="error_loading_attendance">Error loading attendance: %1$s</string>
+    <string name="refresh">Refresh</string>
+    
+    <!-- Additional strings for improved UI -->
+    <string name="settings">Settings</string>
+    <string name="account">Account</string>
+    <string name="notifications">Notifications</string>
+    <string name="about">About</string>
+    <string name="edit_profile">Edit Profile</string>
+    <string name="generate_qr_code">Generate QR Code</string>
+    <string name="attendance_qr_code">Attendance QR Code</string>
+    <string name="qr_code_description">Students can scan this QR code to mark their attendance</string>
+    <string name="qr_code_expires_in">QR Code Expires In</string>
+    <string name="welcome_to">Welcome to</string>
+    <string name="choose_role">Choose your role to continue</string>
+    <string name="teacher_description">Create and manage attendance sessions</string>
+    <string name="student_description">Scan QR codes and view attendance history</string>
+    
+    <!-- Attendance List -->
+    <string name="student_id_format">Student ID: %1$s</string>
+    <string name="status_format">Status: %1$s</string>
+    <string name="location_format">Location: %1$s</string>
+    <string name="notes_format">Notes: %1$s</string>
+    <string name="student_removed">Student removed.</string>
+    <string name="error_removing_student">Error removing student: %1$s</string>
+    <string name="undo">Undo</string>
+    
+    <!-- Bulk/Multi-Select and Removal -->
+    <string name="confirm_remove_title">Remove Student</string>
+    <string name="confirm_remove_message">Are you sure you want to remove %1$s from the attendance list?</string>
+    <string name="remove">Remove</string>
+    <string name="selected_count">%1$d selected</string>
+    <string name="confirm_bulk_remove_title">Remove Students</string>
+    <string name="confirm_bulk_remove_message">Are you sure you want to remove %1$d selected students from the attendance list?</string>
+    <string name="student_removed_undo">Student removed. Undo?</string>
+    
+    <!-- Schedule/Class Removal -->
+    <string name="confirm_remove_class_title">Remove Class</string>
+    <string name="confirm_remove_class_message">Are you sure you want to remove the class %1$s (%2$s)?</string>
+    <string name="class_removed">Class removed.</string>
+    <string name="error_removing_class">Error removing class: %1$s</string>
+    
+    <!-- Attendance Details -->
+    <string name="subject_format">Subject: %1$s</string>
+    <string name="section_format">Section: %1$s</string>
+    <string name="time_format">Time: %1$s</string>
+    
+    <!-- Role Options -->
+    <string-array name="role_options">
+        <item>Student</item>
+        <item>Teacher</item>
+    </string-array>
+
+    <!-- Additional missing strings -->
+    <string name="unknown_error">An unknown error occurred</string>
+    <string name="enter_student_id">Enter Student ID</string>
+    <string name="location_permission_required">Location permission is required for QR code scanning</string>
+    <string name="location_not_available">Location not available</string>
+    <string name="qr_code_expired_location">QR code has expired or location is not valid</string>
+    <string name="too_far_from_classroom">You are too far from the classroom to scan this QR code</string>
+    <string name="save">Save</string>
+    <string name="close">Close</string>
+    <string name="back">Back</string>
+    <string name="confirm">Confirm</string>
+    <string name="loading">Loading...</string>
+    <string name="no_data_available">No data available</string>
+    <string name="retry">Retry</string>
+    <string name="permission_denied">Permission denied</string>
+    <string name="exit_app">Exit App</string>
+    <string name="are_you_sure_exit">Are you sure you want to exit?</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="attendance_marked">Attendance marked successfully</string>
+    <string name="attendance_updated">Attendance updated successfully</string>
+    <string name="failed_to_mark_attendance">Failed to mark attendance</string>
+    <string name="failed_to_update_attendance">Failed to update attendance</string>
+    <string name="notifications_enabled">Notifications enabled</string>
+    <string name="notifications_disabled">Notifications disabled</string>
+    <string name="daily_reminder">Daily Reminder</string>
+    <string name="dont_forget_attendance">Don\'t forget to generate QR codes for your classes today!</string>
+    <string name="low_attendance_alert">Low Attendance Alert</string>
+    <string name="students_with_low_attendance">Students with low attendance this month</string>
+    <string name="analytics">Analytics</string>
+    <string name="dashboard">Dashboard</string>
+    <string name="schedules">Schedules</string>
+    <string name="attendance">Attendance</string>
+    <string name="profile">Profile</string>
+    <string name="scan_qr">Scan QR</string>
+    <string name="history">History</string>
+    <string name="options">Options</string>
+    
+</resources>
