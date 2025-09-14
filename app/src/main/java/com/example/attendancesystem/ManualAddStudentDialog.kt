@@ -43,7 +43,7 @@ class ManualAddStudentDialog(context: Context, private val scheduleId: String, p
             classSection = doc.getString("section") ?: "Unknown Section"
             
             // Update UI with class info
-            findViewById<TextView>(R.id.textClassInfo).text = "Class: $classSubject - Section $classSection"
+            findViewById<TextView>(R.id.textCurrentSession).text = "Current Session: $classSubject ($classSection)"
             
             // First, get all students who are already present in this session
             db.collection("attendance")
@@ -99,7 +99,7 @@ class ManualAddStudentDialog(context: Context, private val scheduleId: String, p
     }
 
     private fun setupAutoCompleteTextView() {
-        val autoComplete = findViewById<AutoCompleteTextView>(R.id.autoCompleteStudentName)
+        val autoComplete = findViewById<AutoCompleteTextView>(R.id.editStudentName)
         
         // Create adapter with students from this specific section only
         val adapter = ArrayAdapter(context, android.R.layout.simple_dropdown_item_1line, studentNameList)
@@ -130,8 +130,8 @@ class ManualAddStudentDialog(context: Context, private val scheduleId: String, p
         findViewById<Button>(R.id.btnCancel).setOnClickListener {
             dismiss()
         }
-        findViewById<Button>(R.id.btnAdd).setOnClickListener {
-            val enteredName = findViewById<AutoCompleteTextView>(R.id.autoCompleteStudentName).text.toString().trim()
+        findViewById<Button>(R.id.btnAddStudent).setOnClickListener {
+            val enteredName = findViewById<AutoCompleteTextView>(R.id.editStudentName).text.toString().trim()
             
             if (enteredName.isEmpty()) {
                 Toast.makeText(context, "Please enter or select a student name", Toast.LENGTH_SHORT).show()

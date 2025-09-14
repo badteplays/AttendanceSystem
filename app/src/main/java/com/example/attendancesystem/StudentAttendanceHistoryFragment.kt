@@ -10,6 +10,7 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.attendancesystem.models.AttendanceHistoryItem
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -24,7 +25,7 @@ class StudentAttendanceHistoryFragment : Fragment() {
     private lateinit var warningText: TextView
     private lateinit var emptyState: LinearLayout
     private lateinit var adapter: AttendanceHistoryAdapter
-    private val attendanceList = ArrayList<AttendanceHistoryItem>()
+    private val attendanceList = mutableListOf<AttendanceHistoryItem>()
     private val db = FirebaseFirestore.getInstance()
     private val currentUser = FirebaseAuth.getInstance().currentUser
 

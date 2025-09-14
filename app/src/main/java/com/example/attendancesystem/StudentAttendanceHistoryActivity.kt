@@ -8,6 +8,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.attendancesystem.models.AttendanceHistoryItem
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
@@ -22,7 +23,7 @@ class StudentAttendanceHistoryActivity : AppCompatActivity() {
     private lateinit var attendancePercentage: TextView
     private lateinit var warningText: TextView
     private lateinit var adapter: AttendanceHistoryAdapter
-    private val attendanceList = ArrayList<AttendanceHistoryItem>()
+    private val attendanceList = mutableListOf<AttendanceHistoryItem>()
     private val db = FirebaseFirestore.getInstance()
     private val currentUser = FirebaseAuth.getInstance().currentUser
 
@@ -119,9 +120,3 @@ class StudentAttendanceHistoryActivity : AppCompatActivity() {
         return format.format(date)
     }
 }
-
-data class AttendanceHistoryItem(
-    val date: String,
-    val subject: String,
-    val status: String
-) 

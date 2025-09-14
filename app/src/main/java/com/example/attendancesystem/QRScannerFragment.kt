@@ -3,10 +3,13 @@ package com.example.attendancesystem
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ProgressBar
+import android.widget.TextView
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -26,10 +29,14 @@ import kotlinx.coroutines.tasks.await
 class QRScannerFragment : Fragment() {
     private lateinit var barcodeView: DecoratedBarcodeView
     private lateinit var progressBar: ProgressBar
+    private lateinit var timerText: TextView
     private lateinit var locationManager: LocationManager
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
     private var isProcessing = false
+    private var currentQRData: QRCodeData? = null
+    private val timerHandler = Handler(Looper.getMainLooper())
+    private var timerRunnable: Runnable? = null
 
 
     override fun onCreateView(
@@ -56,6 +63,7 @@ class QRScannerFragment : Fragment() {
     private fun initializeViews(view: View) {
         barcodeView = view.findViewById(R.id.barcodeScannerView)
         progressBar = view.findViewById(R.id.progressBar)
+        timerText = view.findViewById(R.id.timerText)
     }
 
     private fun checkPermissions(): Boolean {
@@ -88,15 +96,19 @@ class QRScannerFragment : Fragment() {
     }
 
     private fun startScanning() {
-        barcodeView.decodeContinuous(object : BarcodeCallback {
-            override fun barcodeResult(result: BarcodeResult) {
-                if (!isProcessing) {
-                    isProcessing = true
-                    handleQRCodeResult(result.text)
+        try {
+            barcodeView.decodeContinuous(object : BarcodeCallback {
+                override fun barcodeResult(result: BarcodeResult) {
+                    if (!isProcessing) {
+                        isProcessing = true
+                        handleQRCodeResult(result.text)
+                    }
                 }
-            }
-        })
-        barcodeView.resume()
+            })
+            barcodeView.resume()
+        } catch (e: Exception) {
+            showToast("Error starting camera: ${e.message}")
+        }
     }
 
     private fun stopScanning() {
@@ -110,6 +122,12 @@ class QRScannerFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val qrData = QRCodeData.fromJson(qrContent)
+                currentQRData = qrData
+                
+                // Start timer if QR code has expiration
+                if (!qrData.isExpired()) {
+                    startTimer(qrData)
+                }
 
                 // 1) Expiration
                 if (qrData.isExpired()) {
@@ -207,6 +225,13 @@ class QRScannerFragment : Fragment() {
             } finally {
                 progressBar.visibility = View.GONE
                 isProcessing = false
+                stopTimer()
+                // Restart scanning after a short delay
+                barcodeView.postDelayed({
+                    if (isAdded && !isDetached) {
+                        startScanning()
+                    }
+                }, 2000)
             }
         }
     }
@@ -236,13 +261,63 @@ class QRScannerFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         if (checkPermissions()) {
-            barcodeView.resume()
+            startScanning()
         }
     }
 
     override fun onPause() {
         super.onPause()
-        barcodeView.pause()
+        stopScanning()
+        stopTimer()
+    }
+    
+    override fun onDestroyView() {
+        super.onDestroyView()
+        stopTimer()
+    }
+    
+    fun refreshScanner() {
+        if (checkPermissions()) {
+            stopScanning()
+            startScanning()
+        } else {
+            requestPermissions()
+        }
+    }
+    
+    private fun startTimer(qrData: QRCodeData) {
+        stopTimer() // Stop any existing timer
+        
+        timerRunnable = object : Runnable {
+            override fun run() {
+                if (!isAdded || isDetached) return
+                
+                val remainingTime = qrData.getRemainingTimeInMillis()
+                if (remainingTime > 0) {
+                    val seconds = remainingTime / 1000
+                    val minutes = seconds / 60
+                    val remainingSeconds = seconds % 60
+                    
+                    timerText.text = "Expires in: ${minutes}:${remainingSeconds.toString().padStart(2, '0')}"
+                    timerText.visibility = View.VISIBLE
+                    
+                    timerHandler.postDelayed(this, 1000) // Update every second
+                } else {
+                    timerText.visibility = View.GONE
+                    showToast("QR code has expired")
+                }
+            }
+        }
+        
+        timerHandler.post(timerRunnable!!)
+    }
+    
+    private fun stopTimer() {
+        timerRunnable?.let { runnable ->
+            timerHandler.removeCallbacks(runnable)
+        }
+        timerRunnable = null
+        timerText.visibility = View.GONE
     }
 
     @Deprecated("Deprecated in Java")

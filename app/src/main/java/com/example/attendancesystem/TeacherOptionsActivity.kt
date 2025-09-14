@@ -56,7 +56,6 @@ class TeacherOptionsActivity : AppCompatActivity() {
         initializeViews()
         loadUserProfile()
         setupClickListeners()
-        setupBottomNavigation()
         updateThemeDisplay()
     }
 
@@ -174,48 +173,6 @@ class TeacherOptionsActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun setupBottomNavigation() {
-        // Home button -> open container and select tab
-        findViewById<LinearLayout>(R.id.nav_home_btn)?.setOnClickListener {
-            val intent = Intent(this, TeacherMainActivity::class.java)
-            intent.putExtra("selected_tab", R.id.nav_home)
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            startActivity(intent)
-            finish()
-        }
-        
-        // Schedule button -> container
-        findViewById<LinearLayout>(R.id.nav_schedule_btn)?.setOnClickListener {
-            val intent = Intent(this, TeacherMainActivity::class.java)
-            intent.putExtra("selected_tab", R.id.nav_schedule)
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            startActivity(intent)
-            finish()
-        }
-        
-        // Attendance button -> container
-        findViewById<LinearLayout>(R.id.nav_attendance_btn)?.setOnClickListener {
-            val intent = Intent(this, TeacherMainActivity::class.java)
-            intent.putExtra("selected_tab", R.id.nav_attendance)
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            startActivity(intent)
-            finish()
-        }
-        
-        // Analytics button -> container
-        findViewById<LinearLayout>(R.id.nav_analytics_btn)?.setOnClickListener {
-            val intent = Intent(this, TeacherMainActivity::class.java)
-            intent.putExtra("selected_tab", R.id.nav_analytics)
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            startActivity(intent)
-            finish()
-        }
-        
-        // Settings button (current page - already selected)
-        findViewById<LinearLayout>(R.id.nav_settings_btn)?.setOnClickListener { 
-            Toast.makeText(this, "Already on Settings", Toast.LENGTH_SHORT).show()
-        }
-    }
 
     private fun showThemeSelectionDialog() {
         val themes = arrayOf("Light", "Dark", "System")

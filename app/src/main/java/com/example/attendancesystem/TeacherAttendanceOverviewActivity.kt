@@ -32,7 +32,7 @@ class TeacherAttendanceOverviewActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerView() {
-        recyclerView = findViewById(R.id.recyclerSchedules)
+        recyclerView = findViewById(R.id.attendanceRecyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
         adapter = ScheduleAttendanceAdapter(scheduleList) { schedule ->
             // Open attendance list for this schedule

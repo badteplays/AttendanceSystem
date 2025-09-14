@@ -34,6 +34,7 @@ class StudentMainActivity : AppCompatActivity() {
                     true
                 }
                 R.id.nav_schedule -> {
+                    android.util.Log.d("StudentMainActivity", "Loading schedule fragment")
                     loadFragment(StudentScheduleFragment())
                     true
                 }
@@ -54,8 +55,16 @@ class StudentMainActivity : AppCompatActivity() {
     }
     
     private fun loadFragment(fragment: Fragment) {
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.fragmentContainer, fragment)
-            .commit()
+        try {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragmentContainer, fragment)
+                .commit()
+        } catch (e: Exception) {
+            android.util.Log.e("StudentMainActivity", "Error loading fragment: ${e.message}", e)
+            // Fallback to dashboard if fragment loading fails
+            if (fragment !is StudentDashboardFragment) {
+                loadFragment(StudentDashboardFragment())
+            }
+        }
     }
 }

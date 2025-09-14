@@ -149,8 +149,17 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Refresh"
-                android:layout_marginEnd="8dp"
+                android:layout_marginEnd="4dp"
                 android:background="@drawable/button_secondary" />
+
+            <Button
+                android:id="@+id/buttonManualAdd"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Manual Add"
+                android:layout_marginHorizontal="4dp"
+                android:background="@drawable/button_primary" />
 
             <Button
                 android:id="@+id/buttonAnalytics"
@@ -158,7 +167,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Analytics"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="4dp"
                 android:background="@drawable/button_secondary" />
 
         </LinearLayout>

@@ -15,7 +15,10 @@ class TeacherMainActivity : AppCompatActivity() {
         bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_home -> { load(TeacherDashboardFragment()); true }
-                R.id.nav_schedule -> { load(TeacherSchedulesFragment()); true }
+                R.id.nav_schedule -> { 
+                    android.util.Log.d("TeacherMainActivity", "Loading schedule fragment")
+                    load(TeacherSchedulesFragment()); true 
+                }
                 R.id.nav_attendance -> { load(TeacherAttendanceFragment()); true }
                 R.id.nav_analytics -> { load(TeacherAnalyticsFragment()); true }
                 R.id.nav_settings -> { load(TeacherOptionsFragment()); true }
@@ -29,9 +32,17 @@ class TeacherMainActivity : AppCompatActivity() {
     }
 
     private fun load(fragment: Fragment) {
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.fragmentContainer, fragment)
-            .commit()
+        try {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragmentContainer, fragment)
+                .commit()
+        } catch (e: Exception) {
+            android.util.Log.e("TeacherMainActivity", "Error loading fragment: ${e.message}", e)
+            // Fallback to dashboard if fragment loading fails
+            if (fragment !is TeacherDashboardFragment) {
+                load(TeacherDashboardFragment())
+            }
+        }
     }
 }
 

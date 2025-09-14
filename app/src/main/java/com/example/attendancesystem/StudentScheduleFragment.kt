@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.example.attendancesystem.models.StudentScheduleItem
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -33,35 +34,58 @@ class StudentScheduleFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        android.util.Log.d("StudentScheduleFragment", "Creating view")
         return inflater.inflate(R.layout.fragment_student_schedule, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
-        initializeViews(view)
-        setupRecyclerView()
-        loadStudentSection()
+        try {
+            initializeViews(view)
+            setupRecyclerView()
+            // Show a simple message first to test if fragment loads
+            showEmptyState("Schedule loading...")
+            loadStudentSection()
+        } catch (e: Exception) {
+            android.util.Log.e("StudentScheduleFragment", "Error in onViewCreated: ${e.message}", e)
+            showEmptyState("Error loading schedule: ${e.message}")
+        }
     }
 
     private fun initializeViews(view: View) {
-        recyclerView = view.findViewById(R.id.studentScheduleRecyclerView)
-        progressBar = view.findViewById(R.id.progressBar)
-        emptyState = view.findViewById(R.id.emptyState)
-        textTotalClasses = view.findViewById(R.id.textTotalClasses)
-        textTodayClasses = view.findViewById(R.id.textTodayClasses)
+        try {
+            recyclerView = view.findViewById(R.id.studentScheduleRecyclerView)
+            progressBar = view.findViewById(R.id.progressBar)
+            emptyState = view.findViewById(R.id.emptyState)
+            textTotalClasses = view.findViewById(R.id.textTotalClasses)
+            textTodayClasses = view.findViewById(R.id.textTodayClasses)
+        } catch (e: Exception) {
+            android.util.Log.e("StudentScheduleFragment", "Error initializing views: ${e.message}", e)
+            throw e
+        }
     }
 
     private fun setupRecyclerView() {
-        adapter = StudentScheduleAdapter(scheduleList)
-        recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        recyclerView.adapter = adapter
+        try {
+            adapter = StudentScheduleAdapter(scheduleList)
+            recyclerView.layoutManager = LinearLayoutManager(requireContext())
+            recyclerView.adapter = adapter
+        } catch (e: Exception) {
+            android.util.Log.e("StudentScheduleFragment", "Error setting up recycler view: ${e.message}", e)
+            throw e
+        }
     }
 
     private fun loadStudentSection() {
-        currentUser?.let { user ->
+        if (currentUser == null) {
+            showEmptyState("User not authenticated")
+            return
+        }
+        
+        try {
             // First get the student's section
-            db.collection("users").document(user.uid)
+            db.collection("users").document(currentUser.uid)
                 .get()
                 .addOnSuccessListener { document ->
                     if (document.exists()) {
@@ -75,21 +99,23 @@ class StudentScheduleFragment : Fragment() {
                         showEmptyState("User data not found")
                     }
                 }
-                .addOnFailureListener {
-                    showEmptyState("Error loading user data")
+                .addOnFailureListener { e ->
+                    showEmptyState("Error loading user data: ${e.message}")
                 }
+        } catch (e: Exception) {
+            showEmptyState("Error: ${e.message}")
         }
     }
 
     private fun loadStudentSchedules() {
         progressBar.visibility = View.VISIBLE
         
-        // Query schedules that match the student's section (case-insensitive)
-        db.collection("schedules")
-            .whereEqualTo("section", studentSection.lowercase())
-            .orderBy("day", Query.Direction.ASCENDING)
-            .get()
-            .addOnSuccessListener { documents ->
+        try {
+            // Query schedules that match the student's section (case-insensitive)
+            db.collection("schedules")
+                .whereEqualTo("section", studentSection.lowercase())
+                .get()
+                .addOnSuccessListener { documents ->
                 scheduleList.clear()
                 var todayClassesCount = 0
                 val today = getCurrentDayOfWeek()
@@ -142,6 +168,10 @@ class StudentScheduleFragment : Fragment() {
                 progressBar.visibility = View.GONE
                 showEmptyState("Error loading schedules: ${e.message}")
             }
+        } catch (e: Exception) {
+            progressBar.visibility = View.GONE
+            showEmptyState("Error: ${e.message}")
+        }
     }
 
     private fun showEmptyState(message: String) {
@@ -181,14 +211,3 @@ class StudentScheduleFragment : Fragment() {
     }
 }
 
-data class StudentScheduleItem(
-    val id: String,
-    val subject: String,
-    val section: String,
-    val day: String,
-    val time: String,
-    val startTime: String,
-    val endTime: String,
-    val notes: String,
-    val teacherId: String
-)
