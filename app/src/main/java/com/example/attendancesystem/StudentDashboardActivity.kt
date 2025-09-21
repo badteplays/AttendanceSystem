@@ -161,39 +161,28 @@ class StudentDashboardActivity : AppCompatActivity() {
     }
 
     private fun setupBottomNavigation() {
-        // Home button (already selected)
-        findViewById<LinearLayout>(R.id.nav_home_btn)?.setOnClickListener { 
-            // Already on home, just refresh or do nothing
-            Toast.makeText(this, "Already on Dashboard", Toast.LENGTH_SHORT).show()
-        }
-        
-        // Scan button
-        findViewById<LinearLayout>(R.id.nav_scan_btn)?.setOnClickListener { 
-            try {
-            startActivity(Intent(this, QRScannerActivity::class.java))
-            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
-            } catch (e: Exception) {
-                Toast.makeText(this, "Error opening scanner: ${e.message}", Toast.LENGTH_SHORT).show()
+        // Wire side drawer for student
+        try {
+            val drawerLayout = findViewById<androidx.drawerlayout.widget.DrawerLayout>(R.id.drawerLayout)
+            val drawerHandle = findViewById<ImageView>(R.id.drawerHandle)
+            val navigationView = findViewById<com.google.android.material.navigation.NavigationView>(R.id.navigationView)
+            drawerHandle?.setOnClickListener { drawerLayout?.open() }
+            navigationView?.setNavigationItemSelectedListener { item ->
+                when (item.itemId) {
+                    R.id.drawer_home -> { /* already here */ true }
+                    R.id.drawer_scan -> { startActivity(Intent(this, QRScannerActivity::class.java)); true }
+                    R.id.drawer_history -> {
+                        val intent = Intent(this, StudentMainActivity::class.java)
+                        intent.putExtra("selected_tab", R.id.nav_history)
+                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                        startActivity(intent)
+                        true
+                    }
+                    R.id.drawer_profile -> { startActivity(Intent(this, StudentOptionsActivity::class.java)); true }
+                    else -> false
+                }.also { drawerLayout?.close() }
             }
-        }
-        
-        // History button
-        findViewById<LinearLayout>(R.id.nav_history_btn)?.setOnClickListener { 
-            val intent = Intent(this, StudentMainActivity::class.java)
-            intent.putExtra("selected_tab", R.id.nav_history)
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            startActivity(intent)
-            finish()
-        }
-        
-        // Profile button
-        findViewById<LinearLayout>(R.id.nav_profile_btn)?.setOnClickListener { 
-            val intent = Intent(this, StudentMainActivity::class.java)
-            intent.putExtra("selected_tab", R.id.nav_profile)
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            startActivity(intent)
-            finish()
-        }
+        } catch (_: Exception) { }
     }
 
     private fun showToast(message: String, duration: Int = Toast.LENGTH_SHORT) {

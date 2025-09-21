@@ -103,6 +103,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:textColor="@color/on_primary"
                 android:text="Show QR"
                 android:layout_marginEnd="8dp"
                 android:background="@drawable/button_primary" />
@@ -112,6 +113,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:textColor="@color/primary"
                 android:text="Renew QR"
                 android:layout_marginStart="8dp"
                 android:background="@drawable/button_secondary" />
@@ -148,6 +150,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:textColor="@color/primary"
                 android:text="Refresh"
                 android:layout_marginEnd="4dp"
                 android:background="@drawable/button_secondary" />
@@ -157,6 +160,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:textColor="@color/on_primary"
                 android:text="Manual Add"
                 android:layout_marginHorizontal="4dp"
                 android:background="@drawable/button_primary" />
@@ -166,6 +170,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:textColor="@color/primary"
                 android:text="Analytics"
                 android:layout_marginStart="4dp"
                 android:background="@drawable/button_secondary" />

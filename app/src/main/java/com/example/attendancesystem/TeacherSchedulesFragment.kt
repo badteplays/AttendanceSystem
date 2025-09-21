@@ -121,6 +121,7 @@ class TeacherSchedulesFragment : Fragment() {
         val schedule = hashMapOf(
             "teacherId" to currentUser.uid,
             "subject" to subject,
+            // Store a trimmed section; display stays as-is and comparisons will be case-insensitive in code
             "section" to section,
             "day" to day,
             "startTime" to startTime,

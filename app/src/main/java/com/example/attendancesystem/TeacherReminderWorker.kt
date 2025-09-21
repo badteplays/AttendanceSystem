@@ -88,7 +88,7 @@ class TeacherReminderWorker(
         }
 
         // Create intent to open TeacherDashboardActivity
-        val intent = Intent(context, TeacherDashboardActivity::class.java).apply {
+        val intent = Intent(context, TeacherMainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
         val pendingIntent = PendingIntent.getActivity(

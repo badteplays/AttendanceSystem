@@ -30,6 +30,7 @@ class ScheduleAdapter(
         val txtDay: TextView = itemView.findViewById(R.id.txtDay)
         val txtTime: TextView = itemView.findViewById(R.id.txtTime)
         val btnRemoveClass: Button = itemView.findViewById(R.id.btnRemoveClass)
+        val btnEditSchedule: Button? = itemView.findViewById(R.id.btnEditSchedule)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ScheduleViewHolder {
@@ -44,6 +45,7 @@ class ScheduleAdapter(
         holder.txtDay.text = schedule.day
         holder.txtTime.text = schedule.time
         holder.btnRemoveClass.setOnClickListener { onRemove(schedule) }
+        holder.btnEditSchedule?.setOnClickListener { onEdit(schedule) }
         holder.itemView.setOnClickListener { onEdit(schedule) }
     }
 

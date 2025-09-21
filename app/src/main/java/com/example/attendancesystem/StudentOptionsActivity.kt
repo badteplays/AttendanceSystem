@@ -34,6 +34,7 @@ class StudentOptionsActivity : AppCompatActivity() {
     private lateinit var textUserEmail: TextView
     private lateinit var chipSection: Chip
     private lateinit var fabChangePhoto: FloatingActionButton
+    private lateinit var switchClassReminders: SwitchCompat
 
     // Activity result launcher for image selection
     private val imagePickerLauncher = registerForActivityResult(
@@ -63,6 +64,7 @@ class StudentOptionsActivity : AppCompatActivity() {
         textUserEmail = findViewById(R.id.textUserEmail)
         chipSection = findViewById(R.id.chipSection)
         fabChangePhoto = findViewById(R.id.fabChangePhoto)
+        switchClassReminders = findViewById(R.id.switchClassReminders)
     }
 
     private fun loadUserProfile() {
@@ -105,6 +107,41 @@ class StudentOptionsActivity : AppCompatActivity() {
         findViewById<LinearLayout>(R.id.buttonLogout).setOnClickListener {
             performLogout()
         }
+
+        // Notification toggle
+        val prefs = getSharedPreferences("student_prefs", MODE_PRIVATE)
+        val enabled = prefs.getBoolean("notifications_enabled", true)
+        switchClassReminders.isChecked = enabled
+        switchClassReminders.setOnCheckedChangeListener { _, isChecked ->
+            prefs.edit().putBoolean("notifications_enabled", isChecked).apply()
+            if (isChecked) {
+                scheduleStudentReminders()
+                Toast.makeText(this, "Class reminders enabled", Toast.LENGTH_SHORT).show()
+            } else {
+                cancelStudentReminders()
+                Toast.makeText(this, "Class reminders disabled", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun scheduleStudentReminders() {
+        try {
+            val workManager = androidx.work.WorkManager.getInstance(this)
+            val request = androidx.work.PeriodicWorkRequestBuilder<StudentReminderWorker>(1, java.util.concurrent.TimeUnit.DAYS)
+                .build()
+            workManager.enqueueUniquePeriodicWork(
+                "student_reminder_work",
+                androidx.work.ExistingPeriodicWorkPolicy.UPDATE,
+                request
+            )
+        } catch (_: Exception) { }
+    }
+
+    private fun cancelStudentReminders() {
+        try {
+            val workManager = androidx.work.WorkManager.getInstance(this)
+            workManager.cancelUniqueWork("student_reminder_work")
+        } catch (_: Exception) { }
     }
 
     private fun openImagePicker() {

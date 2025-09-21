@@ -87,7 +87,9 @@ class TeacherDashboardFragment : Fragment() {
         }
         
         buttonAnalytics.setOnClickListener {
-            startActivity(Intent(requireContext(), AnalyticsActivity::class.java))
+            val intent = Intent(requireContext(), TeacherMainActivity::class.java)
+            intent.putExtra("open", "analytics")
+            startActivity(intent)
         }
     }
     
@@ -108,11 +110,68 @@ class TeacherDashboardFragment : Fragment() {
     }
     
     private fun showQRCode() {
-        Toast.makeText(requireContext(), "QR Code functionality coming soon", Toast.LENGTH_SHORT).show()
+        val currentUser = auth.currentUser ?: run {
+            Toast.makeText(requireContext(), "Not signed in", Toast.LENGTH_SHORT).show(); return
+        }
+
+        val currentDay = getCurrentDayOfWeek()
+        val nowMinutes = getCurrentTimeInMinutes()
+
+        db.collection("schedules")
+            .whereEqualTo("teacherId", currentUser.uid)
+            .whereEqualTo("day", currentDay)
+            .get()
+            .addOnSuccessListener { scheduleDocs ->
+                val todays = scheduleDocs.documents
+                val match = todays.firstOrNull { doc ->
+                    val start = doc.getString("startTime") ?: ""
+                    val end = doc.getString("endTime") ?: ""
+                    isNowWithinRange(nowMinutes, start, end)
+                }
+
+                fun launchFor(doc: com.google.firebase.firestore.DocumentSnapshot) {
+                    val intent = android.content.Intent(requireContext(), QRActivity::class.java).apply {
+                        putExtra("scheduleId", doc.id)
+                        putExtra("subject", doc.getString("subject") ?: "Attendance")
+                        putExtra("section", doc.getString("section") ?: "")
+                    }
+                    startActivity(intent)
+                }
+
+                if (match != null) {
+                    launchFor(match)
+                } else {
+                    // No current class — find next upcoming today and inform the teacher
+                    val next = todays
+                        .mapNotNull { doc ->
+                            val start = doc.getString("startTime") ?: return@mapNotNull null
+                            val startMin = parseTimeToMinutes24(start) ?: return@mapNotNull null
+                            Pair(startMin, doc)
+                        }
+                        .filter { it.first > nowMinutes }
+                        .minByOrNull { it.first }
+                        ?.second
+
+                    if (next != null) {
+                        val subj = next.getString("subject") ?: ""
+                        val sec = next.getString("section") ?: ""
+                        val start = next.getString("startTime") ?: ""
+                        Toast.makeText(requireContext(), "No current class. Next: $subj ($sec) at $start", Toast.LENGTH_LONG).show()
+                    } else if (todays.isNotEmpty()) {
+                        Toast.makeText(requireContext(), "No more classes today", Toast.LENGTH_LONG).show()
+                    } else {
+                        Toast.makeText(requireContext(), "No schedules found for today", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(requireContext(), "Error loading schedule: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
     }
     
     private fun renewQRCode() {
-        Toast.makeText(requireContext(), "QR Code renewal functionality coming soon", Toast.LENGTH_SHORT).show()
+        // Simply re-open QRActivity to generate a fresh QR for the current class
+        showQRCode()
     }
     
     private fun loadRecentAttendance() {
@@ -232,10 +291,7 @@ class TeacherDashboardFragment : Fragment() {
     
     private fun showManualAddDialog() {
         val currentUser = auth.currentUser ?: return
-        
-        // Get current session info
-        val currentTime = java.util.Calendar.getInstance()
-        val currentHour = currentTime.get(java.util.Calendar.HOUR_OF_DAY)
+        val nowMinutes = getCurrentTimeInMinutes()
         val currentDay = getCurrentDayOfWeek()
         
         db.collection("schedules")
@@ -243,48 +299,100 @@ class TeacherDashboardFragment : Fragment() {
             .whereEqualTo("day", currentDay)
             .get()
             .addOnSuccessListener { scheduleDocs ->
-                val currentSchedule = scheduleDocs.documents.find { doc ->
-                    val startTime = doc.getString("startTime") ?: ""
-                    val endTime = doc.getString("endTime") ?: ""
-                    
-                    if (startTime.isNotEmpty() && endTime.isNotEmpty()) {
-                        val startHour = parseTimeToHour(startTime)
-                        val endHour = parseTimeToHour(endTime)
-                        currentHour >= startHour && currentHour < endHour
-                    } else {
-                        false
-                    }
+                val todays = scheduleDocs.documents
+                val currentSchedule = todays.firstOrNull { doc ->
+                    val start = doc.getString("startTime") ?: ""
+                    val end = doc.getString("endTime") ?: ""
+                    isNowWithinRange(nowMinutes, start, end)
                 }
-                
+
+                fun proceedWith(doc: com.google.firebase.firestore.DocumentSnapshot) {
+                    val subject = doc.getString("subject") ?: ""
+                    val section = doc.getString("section") ?: ""
+                    loadStudentsForSection(section, subject, doc.id)
+                }
+
                 if (currentSchedule != null) {
-                    val subject = currentSchedule.getString("subject") ?: ""
-                    val section = currentSchedule.getString("section") ?: ""
-                    
-                    // Load students from this section
-                    loadStudentsForSection(section, subject, currentSchedule.id)
+                    proceedWith(currentSchedule)
+                } else if (todays.isNotEmpty()) {
+                    showSchedulePicker(todays, title = "Select class for manual add") { chosen ->
+                        proceedWith(chosen)
+                    }
                 } else {
-                    Toast.makeText(requireContext(), "No current class session", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "No schedules found for today", Toast.LENGTH_SHORT).show()
                 }
             }
             .addOnFailureListener { e ->
                 Toast.makeText(requireContext(), "Error loading schedule: ${e.message}", Toast.LENGTH_SHORT).show()
             }
     }
+
+    private fun getCurrentTimeInMinutes(): Int {
+        val cal = java.util.Calendar.getInstance()
+        return cal.get(java.util.Calendar.HOUR_OF_DAY) * 60 + cal.get(java.util.Calendar.MINUTE)
+    }
+
+    private fun parseTimeToMinutes24(time: String): Int? {
+        return try {
+            val parts = time.split(":")
+            val hour = parts.getOrNull(0)?.toInt() ?: return null
+            val minute = parts.getOrNull(1)?.toInt() ?: 0
+            hour * 60 + minute
+        } catch (_: Exception) { null }
+    }
+
+    private fun isNowWithinRange(nowMinutes: Int, start: String, end: String): Boolean {
+        val s = parseTimeToMinutes24(start) ?: return false
+        val e = parseTimeToMinutes24(end) ?: return false
+        return if (e < s) {
+            nowMinutes >= s || nowMinutes <= e
+        } else {
+            nowMinutes in s until e
+        }
+    }
+
+    private fun showSchedulePicker(
+        schedules: List<com.google.firebase.firestore.DocumentSnapshot>,
+        title: String,
+        onChosen: (com.google.firebase.firestore.DocumentSnapshot) -> Unit
+    ) {
+        val items = schedules.map { doc ->
+            val subject = doc.getString("subject") ?: ""
+            val section = doc.getString("section") ?: ""
+            val start = doc.getString("startTime") ?: ""
+            val end = doc.getString("endTime") ?: ""
+            "$subject ($section)  $start-$end"
+        }.toTypedArray()
+
+        android.app.AlertDialog.Builder(requireContext())
+            .setTitle(title)
+            .setItems(items) { dialog, which ->
+                onChosen(schedules[which])
+                dialog.dismiss()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
     
     private fun loadStudentsForSection(section: String, subject: String, scheduleId: String) {
+        val target = section.trim().lowercase()
         db.collection("users")
             .whereEqualTo("role", "student")
-            .whereEqualTo("section", section)
             .get()
             .addOnSuccessListener { studentDocs ->
-                val students = studentDocs.map { doc ->
-                    StudentItem(
-                        id = doc.id,
-                        name = doc.getString("name") ?: "Unknown Student",
-                        email = doc.getString("email") ?: "",
-                        section = doc.getString("section") ?: ""
-                    )
-                }
+                val students = studentDocs
+                    .filter { (it.getString("role") ?: "") == "student" }
+                    .mapNotNull { doc ->
+                        val studentSection = (doc.getString("section") ?: "").trim().lowercase()
+                        if (studentSection == target) {
+                            StudentItem(
+                                id = doc.id,
+                                name = doc.getString("name") ?: "Unknown Student",
+                                email = doc.getString("email") ?: "",
+                                section = doc.getString("section") ?: ""
+                            )
+                        } else null
+                    }
                 
                 if (students.isNotEmpty()) {
                     showStudentSelectionDialog(students, subject, scheduleId)

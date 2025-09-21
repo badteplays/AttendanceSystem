@@ -68,7 +68,7 @@
                     android:layout_height="match_parent"
                     android:gravity="center"
                     android:text="TC"
-                                android:textColor="@color/primary"
+                        android:textColor="@color/primary"
                                 android:textSize="48sp"
                     android:textStyle="bold"
                                 android:background="@color/primary_light" />
@@ -209,7 +209,7 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:src="@drawable/ic_logout"
-                        android:tint="#F44336"
+                        android:tint="@color/error"
                         android:layout_marginEnd="16dp" />
 
                     <TextView
@@ -218,14 +218,14 @@
                         android:layout_weight="1"
                 android:text="Logout"
                         android:textSize="16sp"
-                        android:textColor="#F44336"
+                        android:textColor="@color/error"
                         android:textStyle="bold" />
 
                     <ImageView
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:src="@drawable/ic_arrow_right"
-                        android:tint="#F44336" />
+                        android:tint="@color/error" />
 
                 </LinearLayout>
 

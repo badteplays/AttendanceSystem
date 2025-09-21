@@ -52,16 +52,11 @@
         <activity android:name=".StudentAttendanceHistoryActivity" />
         <activity android:name=".ScheduleActivity" />
         <activity android:name=".StudentOptionsActivity" />
-        <activity android:name=".TeacherDashboardActivity" />
         <activity android:name=".TeacherMainActivity" />
         <activity android:name=".TeacherOptionsActivity" />
         <activity android:name=".ItemScheduleActivity" />
-        <activity android:name=".TeacherScheduleActivity" />
         <activity android:name=".RoleSelectionActivity" />
-        <activity android:name=".TeacherSchedulesListActivity" />
-        <activity android:name=".AnalyticsActivity" />
         <activity android:name=".StudentProfileActivity" />
-        <activity android:name=".TeacherAttendanceOverviewActivity" />
 
     </application>
 
