@@ -19,7 +19,14 @@ class StudentMainActivity : AppCompatActivity() {
         
         // Load initial fragment (supports deep-linking via intent extra)
         if (savedInstanceState == null) {
-            loadFragment(StudentDashboardFragment())
+            val fragmentToLoad = when (intent.getStringExtra("fragment")) {
+                "schedule" -> StudentScheduleFragment()
+                "routines" -> StudentRoutinesFragment()
+                "history" -> StudentAttendanceHistoryFragment()
+                "profile" -> StudentOptionsFragment()
+                else -> StudentDashboardFragment()
+            }
+            loadFragment(fragmentToLoad)
         }
     }
     

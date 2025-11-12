@@ -42,6 +42,9 @@ class QRScannerActivity : AppCompatActivity() {
         db = FirebaseFirestore.getInstance()
         locationManager = LocationManager(this)
 
+        // Initialize the barcode scanner view
+        binding.barcodeScannerView.barcodeView.decoderFactory = com.journeyapps.barcodescanner.DefaultDecoderFactory()
+        
         if (checkPermissions()) {
             startScanning()
         } else {
@@ -51,9 +54,8 @@ class QRScannerActivity : AppCompatActivity() {
 
     private fun checkPermissions(): Boolean {
         val cameraPermission = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
-        val locationPermission = locationManager.hasLocationPermission()
-        
-        return cameraPermission == PackageManager.PERMISSION_GRANTED && locationPermission
+        // Camera is the main requirement, location is checked during QR processing
+        return cameraPermission == PackageManager.PERMISSION_GRANTED
     }
 
     private fun requestPermissions() {
@@ -79,14 +81,22 @@ class QRScannerActivity : AppCompatActivity() {
     }
 
     private fun startScanning() {
-        binding.barcodeScannerView.decodeContinuous(object : BarcodeCallback {
-            override fun barcodeResult(result: BarcodeResult) {
-                if (!isProcessing) {
-                    isProcessing = true
-                    processQRCode(result.text)
+        try {
+            // Initialize and start the camera
+            binding.barcodeScannerView.initializeFromIntent(intent)
+            binding.barcodeScannerView.decodeContinuous(object : BarcodeCallback {
+                override fun barcodeResult(result: BarcodeResult) {
+                    if (!isProcessing) {
+                        isProcessing = true
+                        processQRCode(result.text)
+                    }
                 }
-            }
-        })
+            })
+            binding.barcodeScannerView.resume()
+        } catch (e: Exception) {
+            android.util.Log.e("QRScanner", "Error starting camera", e)
+            showToast("Error starting camera: ${e.message}")
+        }
     }
 
     private fun processQRCode(qrContent: String) {
@@ -230,11 +240,22 @@ class QRScannerActivity : AppCompatActivity() {
         
         when (requestCode) {
             CAMERA_PERMISSION_REQUEST_CODE -> {
-                if (grantResults.isNotEmpty() && 
-                    grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
+                // Check if camera permission was granted (minimum requirement)
+                val cameraGranted = permissions.indices.any { i ->
+                    permissions[i] == Manifest.permission.CAMERA && 
+                    grantResults[i] == PackageManager.PERMISSION_GRANTED
+                }
+                
+                if (cameraGranted) {
+                    // Camera permission granted, start scanning
                     startScanning()
+                    
+                    // Check location permission separately
+                    if (!locationManager.hasLocationPermission()) {
+                        showToast("Location permission is required for attendance validation")
+                    }
                 } else {
-                    showToast("Camera and location permissions are required for QR scanning")
+                    showToast("Camera permission is required for QR scanning")
                     finish()
                 }
             }
@@ -247,11 +268,18 @@ class QRScannerActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        binding.barcodeScannerView.resume()
+        if (checkPermissions()) {
+            binding.barcodeScannerView.resume()
+        }
     }
 
     override fun onPause() {
         super.onPause()
+        binding.barcodeScannerView.pause()
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
         binding.barcodeScannerView.pause()
     }
 }

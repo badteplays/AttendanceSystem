@@ -113,63 +113,61 @@
 
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <!-- Row for Day, Start Time, End Time -->
+                <!-- Day Input -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/dayInputLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp"
+                    android:hint="Day"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/editDay"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="text" />
+
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <!-- Time Selection Buttons -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:layout_marginBottom="12dp">
 
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/dayInputLayout"
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/editStartTime"
                         android:layout_width="0dp"
-                        android:layout_height="wrap_content"
+                        android:layout_height="64dp"
                         android:layout_weight="1"
                         android:layout_marginEnd="8dp"
-                        android:hint="Day"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                        android:text="Select start time"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textAllCaps="false"
+                        app:icon="@android:drawable/ic_menu_recent_history"
+                        app:iconGravity="start"
+                        app:iconTint="?attr/colorOnSurface"
+                        app:iconPadding="8dp"
+                        app:cornerRadius="8dp"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
 
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/editDay"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:inputType="text" />
-
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/startTimeInputLayout"
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/editEndTime"
                         android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginHorizontal="4dp"
-                        android:hint="Start Time"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/editStartTime"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:inputType="time" />
-
-                    </com.google.android.material.textfield.TextInputLayout>
-
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:id="@+id/endTimeInputLayout"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
+                        android:layout_height="64dp"
                         android:layout_weight="1"
                         android:layout_marginStart="8dp"
-                        android:hint="End Time"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/editEndTime"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:inputType="time" />
-
-                    </com.google.android.material.textfield.TextInputLayout>
+                        android:text="Select end time"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textAllCaps="false"
+                        app:icon="@android:drawable/ic_menu_recent_history"
+                        app:iconGravity="start"
+                        app:iconTint="?attr/colorOnSurface"
+                        app:iconPadding="8dp"
+                        app:cornerRadius="8dp"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
 
                 </LinearLayout>
 

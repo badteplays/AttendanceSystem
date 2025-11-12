@@ -1,5 +1,6 @@
 package com.example.attendancesystem
 
+import android.app.TimePickerDialog
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -24,6 +25,11 @@ class ScheduleActivity : AppCompatActivity() {
     private lateinit var adapter: ScheduleAdapter
     private val scheduleList = mutableListOf<Schedule>()
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+    
+    private var selectedStartHour = 0
+    private var selectedStartMinute = 0
+    private var selectedEndHour = 0
+    private var selectedEndMinute = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,27 +50,50 @@ class ScheduleActivity : AppCompatActivity() {
         )
         recyclerSchedules.adapter = adapter
 
+        // Setup time picker dialogs
+        findViewById<Button>(R.id.editStartTime).setOnClickListener {
+            showTimePicker { hour, minute ->
+                selectedStartHour = hour
+                selectedStartMinute = minute
+                findViewById<Button>(R.id.editStartTime).text = formatTimeTo12Hour(hour, minute)
+            }
+        }
+        
+        findViewById<Button>(R.id.editEndTime).setOnClickListener {
+            showTimePicker { hour, minute ->
+                selectedEndHour = hour
+                selectedEndMinute = minute
+                findViewById<Button>(R.id.editEndTime).text = formatTimeTo12Hour(hour, minute)
+            }
+        }
+
         findViewById<Button>(R.id.btnAddSchedule).setOnClickListener {
             val subject = findViewById<EditText>(R.id.editSubject).text.toString().trim()
             val section = findViewById<EditText>(R.id.editSection).text.toString().trim()
             val day = findViewById<EditText>(R.id.editDay).text.toString().trim()
-            val startTime = findViewById<EditText>(R.id.editStartTime).text.toString().trim()
-            val endTime = findViewById<EditText>(R.id.editEndTime).text.toString().trim()
+            val startTime = findViewById<Button>(R.id.editStartTime).text.toString().trim()
+            val endTime = findViewById<Button>(R.id.editEndTime).text.toString().trim()
 
-            if (subject.isEmpty() || section.isEmpty() || day.isEmpty() || startTime.isEmpty() || endTime.isEmpty()) {
+            if (subject.isEmpty() || section.isEmpty() || day.isEmpty() || 
+                startTime.isEmpty() || startTime == "Select start time" ||
+                endTime.isEmpty() || endTime == "Select end time") {
                 Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
-            val schedule = hashMapOf(
-                "teacherId" to auth.currentUser?.uid,
-                "subject" to subject,
-                "section" to section,
-                "day" to day,
-                "startTime" to startTime,
-                "endTime" to endTime,
-                "lastGeneratedDate" to ""
-            )
+        // Store in 24-hour format for consistency
+        val startTime24 = String.format("%02d:%02d", selectedStartHour, selectedStartMinute)
+        val endTime24 = String.format("%02d:%02d", selectedEndHour, selectedEndMinute)
+
+        val schedule = hashMapOf(
+            "teacherId" to auth.currentUser?.uid,
+            "subject" to subject,
+            "section" to section,
+            "day" to day,
+            "startTime" to startTime24,
+            "endTime" to endTime24,
+            "lastGeneratedDate" to ""
+        )
 
             db.collection("schedules")
                 .add(schedule)
@@ -79,6 +108,32 @@ class ScheduleActivity : AppCompatActivity() {
 
         fetchSchedules()
         checkAndAutoGenerateQR()
+    }
+
+    private fun showTimePicker(onTimeSelected: (Int, Int) -> Unit) {
+        val calendar = Calendar.getInstance()
+        val hour = calendar.get(Calendar.HOUR_OF_DAY)
+        val minute = calendar.get(Calendar.MINUTE)
+        
+        TimePickerDialog(
+            this,
+            { _, selectedHour, selectedMinute ->
+                onTimeSelected(selectedHour, selectedMinute)
+            },
+            hour,
+            minute,
+            false // 12-hour format with AM/PM
+        ).show()
+    }
+    
+    private fun formatTimeTo12Hour(hour: Int, minute: Int): String {
+        val amPm = if (hour < 12) "AM" else "PM"
+        val displayHour = when {
+            hour == 0 -> 12
+            hour > 12 -> hour - 12
+            else -> hour
+        }
+        return String.format("%d:%02d %s", displayHour, minute, amPm)
     }
 
     private fun fetchSchedules() {

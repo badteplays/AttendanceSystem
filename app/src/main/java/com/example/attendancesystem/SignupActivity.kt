@@ -68,6 +68,10 @@ class SignupActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
+            // Show loading
+            binding.btnSignup.isEnabled = false
+            binding.btnSignup.text = "Creating Account..."
+            
             auth.createUserWithEmailAndPassword(email, password)
                 .addOnSuccessListener { result ->
                     val user = hashMapOf(
@@ -88,6 +92,7 @@ class SignupActivity : AppCompatActivity() {
                         .document(result.user!!.uid)
                         .set(user)
                         .addOnSuccessListener {
+                            Toast.makeText(this, "Account created successfully!", Toast.LENGTH_SHORT).show()
                             if (selectedRole == "teacher") {
                                 startActivity(Intent(this, TeacherMainActivity::class.java))
                             } else {
@@ -95,12 +100,29 @@ class SignupActivity : AppCompatActivity() {
                             }
                             finish()
                         }
-                        .addOnFailureListener {
-                            Toast.makeText(this, "Failed to save user info", Toast.LENGTH_SHORT).show()
+                        .addOnFailureListener { e ->
+                            binding.btnSignup.isEnabled = true
+                            binding.btnSignup.text = "Sign Up"
+                            Toast.makeText(this, "Failed to save user info: ${e.message}", Toast.LENGTH_LONG).show()
+                            // Delete the auth user since Firestore save failed
+                            result.user?.delete()
                         }
                 }
-                .addOnFailureListener {
-                    Toast.makeText(this, "Signup failed: ${it.message}", Toast.LENGTH_SHORT).show()
+                .addOnFailureListener { e ->
+                    binding.btnSignup.isEnabled = true
+                    binding.btnSignup.text = "Sign Up"
+                    
+                    // Better error messages
+                    val errorMessage = when {
+                        e.message?.contains("already in use", ignoreCase = true) == true -> 
+                            "This email is already registered. Please login or use a different email."
+                        e.message?.contains("badly formatted", ignoreCase = true) == true -> 
+                            "Invalid email format. Please check your email address."
+                        e.message?.contains("weak password", ignoreCase = true) == true -> 
+                            "Password is too weak. Please use at least 6 characters."
+                        else -> "Signup failed: ${e.message}"
+                    }
+                    Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show()
                 }
         }
 

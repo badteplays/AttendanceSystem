@@ -155,8 +155,16 @@ class StudentScheduleFragment : Fragment() {
                     recyclerView.visibility = View.VISIBLE
                     emptyState.visibility = View.GONE
                     
-                    textTotalClasses.text = "${scheduleList.size}"
-                    textTodayClasses.text = "$todayClassesCount"
+                    // Format header text
+                    val totalText = if (scheduleList.size == 1) "1 class" else "${scheduleList.size} classes"
+                    textTotalClasses.text = totalText
+                    
+                    val todayText = when (todayClassesCount) {
+                        0 -> "No classes today"
+                        1 -> "1 class today"
+                        else -> "$todayClassesCount classes today"
+                    }
+                    textTodayClasses.text = todayText
                 } else {
                     showEmptyState("No classes scheduled for your section")
                 }

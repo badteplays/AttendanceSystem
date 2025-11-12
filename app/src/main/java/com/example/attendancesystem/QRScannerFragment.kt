@@ -53,6 +53,9 @@ class QRScannerFragment : Fragment() {
         initializeViews(view)
         locationManager = LocationManager(requireContext())
         
+        // Initialize barcode view
+        barcodeView.barcodeView.decoderFactory = com.journeyapps.barcodescanner.DefaultDecoderFactory()
+        
         if (checkPermissions()) {
             startScanning()
         } else {
@@ -68,9 +71,8 @@ class QRScannerFragment : Fragment() {
 
     private fun checkPermissions(): Boolean {
         val cameraPermission = ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA)
-        val locationPermission = locationManager.hasLocationPermission()
-        
-        return cameraPermission == PackageManager.PERMISSION_GRANTED && locationPermission
+        // Camera is the main requirement, location is checked during QR processing
+        return cameraPermission == PackageManager.PERMISSION_GRANTED
     }
 
     private fun requestPermissions() {
@@ -97,6 +99,8 @@ class QRScannerFragment : Fragment() {
 
     private fun startScanning() {
         try {
+            // Initialize camera
+            barcodeView.initializeFromIntent(requireActivity().intent)
             barcodeView.decodeContinuous(object : BarcodeCallback {
                 override fun barcodeResult(result: BarcodeResult) {
                     if (!isProcessing) {
@@ -107,6 +111,7 @@ class QRScannerFragment : Fragment() {
             })
             barcodeView.resume()
         } catch (e: Exception) {
+            android.util.Log.e("QRScannerFragment", "Error starting camera", e)
             showToast("Error starting camera: ${e.message}")
         }
     }
@@ -327,12 +332,24 @@ class QRScannerFragment : Fragment() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         
         if (requestCode == PERMISSION_REQUEST_CODE) {
-            if (grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
+            // Check if camera permission was granted (minimum requirement)
+            val cameraGranted = permissions.indices.any { i ->
+                permissions[i] == Manifest.permission.CAMERA && 
+                grantResults[i] == PackageManager.PERMISSION_GRANTED
+            }
+            
+            if (cameraGranted) {
+                // Camera permission granted, start scanning
                 startScanning()
-            } else {
-                Toast.makeText(requireContext(), "Camera and location permissions are required", Toast.LENGTH_LONG).show()
                 
-                // Switch back to dashboard if permissions denied
+                // Check location permission separately
+                if (!locationManager.hasLocationPermission()) {
+                    Toast.makeText(requireContext(), "Location permission is required for attendance validation", Toast.LENGTH_LONG).show()
+                }
+            } else {
+                Toast.makeText(requireContext(), "Camera permission is required for QR scanning", Toast.LENGTH_LONG).show()
+                
+                // Switch back to dashboard if camera permission denied
                 parentFragmentManager.beginTransaction()
                     .replace(R.id.fragmentContainer, StudentDashboardFragment())
                     .commit()

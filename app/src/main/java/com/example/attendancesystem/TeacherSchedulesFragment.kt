@@ -1,5 +1,6 @@
 package com.example.attendancesystem
 
+import android.app.TimePickerDialog
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -20,6 +21,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import java.util.*
 
 class TeacherSchedulesFragment : Fragment() {
     private lateinit var recyclerView: RecyclerView
@@ -29,8 +31,8 @@ class TeacherSchedulesFragment : Fragment() {
     private lateinit var editSubject: TextInputEditText
     private lateinit var editSection: TextInputEditText
     private lateinit var editDay: AutoCompleteTextView
-    private lateinit var editStartTime: TextInputEditText
-    private lateinit var editEndTime: TextInputEditText
+    private lateinit var editStartTime: MaterialButton
+    private lateinit var editEndTime: MaterialButton
     private lateinit var btnAddSchedule: MaterialButton
     private lateinit var btnCancelSchedule: MaterialButton
     private val schedules = arrayListOf<TeacherScheduleRow>()
@@ -89,6 +91,23 @@ class TeacherSchedulesFragment : Fragment() {
             }
         }
         
+        // Time pickers
+        editStartTime.setOnClickListener {
+            showTimePicker { hour, minute ->
+                selectedStartHour = hour
+                selectedStartMinute = minute
+                editStartTime.text = formatTimeTo12Hour(hour, minute)
+            }
+        }
+        
+        editEndTime.setOnClickListener {
+            showTimePicker { hour, minute ->
+                selectedEndHour = hour
+                selectedEndMinute = minute
+                editEndTime.text = formatTimeTo12Hour(hour, minute)
+            }
+        }
+        
         // Add Schedule button
         btnAddSchedule.setOnClickListener {
             addSchedule()
@@ -100,6 +119,37 @@ class TeacherSchedulesFragment : Fragment() {
         }
     }
     
+    private fun showTimePicker(onTimeSelected: (Int, Int) -> Unit) {
+        val calendar = Calendar.getInstance()
+        val hour = calendar.get(Calendar.HOUR_OF_DAY)
+        val minute = calendar.get(Calendar.MINUTE)
+        
+        TimePickerDialog(
+            requireContext(),
+            { _, selectedHour, selectedMinute ->
+                onTimeSelected(selectedHour, selectedMinute)
+            },
+            hour,
+            minute,
+            false // 12-hour format with AM/PM
+        ).show()
+    }
+    
+    private fun formatTimeTo12Hour(hour: Int, minute: Int): String {
+        val amPm = if (hour < 12) "AM" else "PM"
+        val displayHour = when {
+            hour == 0 -> 12
+            hour > 12 -> hour - 12
+            else -> hour
+        }
+        return String.format("%d:%02d %s", displayHour, minute, amPm)
+    }
+    
+    private var selectedStartHour = 0
+    private var selectedStartMinute = 0
+    private var selectedEndHour = 0
+    private var selectedEndMinute = 0
+    
     private fun addSchedule() {
         val subject = editSubject.text.toString().trim()
         val section = editSection.text.toString().trim()
@@ -107,8 +157,31 @@ class TeacherSchedulesFragment : Fragment() {
         val startTime = editStartTime.text.toString().trim()
         val endTime = editEndTime.text.toString().trim()
 
-        if (subject.isEmpty() || section.isEmpty() || day.isEmpty() || startTime.isEmpty() || endTime.isEmpty()) {
-            Toast.makeText(requireContext(), "Please fill in all fields", Toast.LENGTH_SHORT).show()
+        android.util.Log.d("TeacherSchedules", "Add Schedule called - subject: $subject, section: $section, day: $day, startTime: $startTime, endTime: $endTime")
+        android.util.Log.d("TeacherSchedules", "Selected hours/minutes - start: $selectedStartHour:$selectedStartMinute, end: $selectedEndHour:$selectedEndMinute")
+
+        if (subject.isEmpty()) {
+            Toast.makeText(requireContext(), "Please enter a subject", Toast.LENGTH_SHORT).show()
+            return
+        }
+        
+        if (section.isEmpty()) {
+            Toast.makeText(requireContext(), "Please enter a section", Toast.LENGTH_SHORT).show()
+            return
+        }
+        
+        if (day.isEmpty()) {
+            Toast.makeText(requireContext(), "Please select a day", Toast.LENGTH_SHORT).show()
+            return
+        }
+        
+        if (startTime.isEmpty() || startTime.equals("Select start time", ignoreCase = true)) {
+            Toast.makeText(requireContext(), "Please select a start time", Toast.LENGTH_SHORT).show()
+            return
+        }
+        
+        if (endTime.isEmpty() || endTime.equals("Select end time", ignoreCase = true)) {
+            Toast.makeText(requireContext(), "Please select an end time", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -118,26 +191,35 @@ class TeacherSchedulesFragment : Fragment() {
             return
         }
 
+        // Store in 24-hour format for consistency
+        val startTime24 = String.format("%02d:%02d", selectedStartHour, selectedStartMinute)
+        val endTime24 = String.format("%02d:%02d", selectedEndHour, selectedEndMinute)
+
+        android.util.Log.d("TeacherSchedules", "Creating schedule with times: $startTime24 - $endTime24")
+
         val schedule = hashMapOf(
             "teacherId" to currentUser.uid,
             "subject" to subject,
-            // Store a trimmed section; display stays as-is and comparisons will be case-insensitive in code
             "section" to section,
             "day" to day,
-            "startTime" to startTime,
-            "endTime" to endTime,
+            "startTime" to startTime24,
+            "endTime" to endTime24,
             "lastGeneratedDate" to ""
         )
+
+        Toast.makeText(requireContext(), "Creating schedule...", Toast.LENGTH_SHORT).show()
 
         db.collection("schedules")
             .add(schedule)
             .addOnSuccessListener {
-                Toast.makeText(requireContext(), "Schedule added!", Toast.LENGTH_SHORT).show()
+                android.util.Log.d("TeacherSchedules", "Schedule added successfully!")
+                Toast.makeText(requireContext(), "Schedule created", Toast.LENGTH_SHORT).show()
                 hideScheduleForm()
                 loadSchedules() // Refresh the list
             }
             .addOnFailureListener { e ->
-                Toast.makeText(requireContext(), "Failed to add schedule: ${e.message}", Toast.LENGTH_SHORT).show()
+                android.util.Log.e("TeacherSchedules", "Failed to add schedule: ${e.message}", e)
+                Toast.makeText(requireContext(), "Failed to create schedule: ${e.message}", Toast.LENGTH_LONG).show()
             }
     }
     
@@ -147,8 +229,8 @@ class TeacherSchedulesFragment : Fragment() {
         editSubject.setText("")
         editSection.setText("")
         editDay.setText("")
-        editStartTime.setText("")
-        editEndTime.setText("")
+        editStartTime.text = "Select start time"
+        editEndTime.text = "Select end time"
     }
 
     fun loadSchedules() {

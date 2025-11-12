@@ -54,7 +54,6 @@ class StudentOptionsActivity : AppCompatActivity() {
         initializeViews()
         loadUserProfile()
         setupClickListeners()
-        setupBottomNavigation()
     }
 
     private fun initializeViews() {
@@ -98,6 +97,11 @@ class StudentOptionsActivity : AppCompatActivity() {
 
 
     private fun setupClickListeners() {
+        // Menu button - go back to dashboard
+        findViewById<ImageView>(R.id.drawerHandle)?.setOnClickListener {
+            finish()
+        }
+        
         // Profile picture change
         fabChangePhoto.setOnClickListener {
             openImagePicker()
@@ -206,30 +210,5 @@ class StudentOptionsActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun setupBottomNavigation() {
-        // Home button → go to StudentDashboardActivity
-        findViewById<LinearLayout>(R.id.nav_home_btn)?.setOnClickListener {
-            val intent = Intent(this, StudentDashboardActivity::class.java)
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            startActivity(intent)
-            finish()
-        }
-
-        // Scan button → open QRScannerActivity
-        findViewById<LinearLayout>(R.id.nav_scan_btn)?.setOnClickListener {
-            startActivity(Intent(this, QRScannerActivity::class.java))
-        }
-
-        // History button → open StudentAttendanceHistoryActivity
-        findViewById<LinearLayout>(R.id.nav_history_btn)?.setOnClickListener {
-            val intent = Intent(this, StudentAttendanceHistoryActivity::class.java)
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            startActivity(intent)
-        }
-
-        // Profile button (current page - already selected)
-        findViewById<LinearLayout>(R.id.nav_profile_btn)?.setOnClickListener {
-            Toast.makeText(this, "Already on Profile", Toast.LENGTH_SHORT).show()
-        }
-    }
+    // Bottom navigation removed - app now uses drawer navigation
 }

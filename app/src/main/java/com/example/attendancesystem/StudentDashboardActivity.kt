@@ -53,10 +53,6 @@ class StudentDashboardActivity : AppCompatActivity() {
         setupClickListeners()
         setupSwipeRefresh()
         setupBottomNavigation()
-        
-        // Setup toolbar
-        setSupportActionBar(findViewById(R.id.toolbar))
-        supportActionBar?.setDisplayHomeAsUpEnabled(false) // Dashboard is home
     }
     
     override fun onBackPressed() {
@@ -164,15 +160,38 @@ class StudentDashboardActivity : AppCompatActivity() {
             val drawerLayout = findViewById<androidx.drawerlayout.widget.DrawerLayout>(R.id.drawerLayout)
             val drawerHandle = findViewById<ImageView>(R.id.drawerHandle)
             val navigationView = findViewById<com.google.android.material.navigation.NavigationView>(R.id.navigationView)
-            drawerHandle?.setOnClickListener { drawerLayout?.open() }
+            drawerHandle?.setOnClickListener { 
+                drawerLayout?.openDrawer(androidx.core.view.GravityCompat.END) 
+            }
             navigationView?.setNavigationItemSelectedListener { item ->
                 when (item.itemId) {
                     R.id.drawer_home -> { /* already here */ true }
-                    R.id.drawer_scan -> { startActivity(Intent(this, QRScannerActivity::class.java)); true }
-                    R.id.drawer_history -> { startActivity(Intent(this, StudentAttendanceHistoryActivity::class.java)); true }
-                    R.id.drawer_profile -> { startActivity(Intent(this, StudentOptionsActivity::class.java)); true }
+                    R.id.drawer_scan -> { 
+                        startActivity(Intent(this, QRScannerActivity::class.java))
+                        true 
+                    }
+                    R.id.drawer_schedule -> {
+                        startActivity(Intent(this, StudentMainActivity::class.java).apply {
+                            putExtra("fragment", "schedule")
+                        })
+                        true
+                    }
+                    R.id.drawer_routines -> {
+                        startActivity(Intent(this, StudentMainActivity::class.java).apply {
+                            putExtra("fragment", "routines")
+                        })
+                        true
+                    }
+                    R.id.drawer_history -> { 
+                        startActivity(Intent(this, StudentAttendanceHistoryActivity::class.java))
+                        true 
+                    }
+                    R.id.drawer_profile -> { 
+                        startActivity(Intent(this, StudentOptionsActivity::class.java))
+                        true 
+                    }
                     else -> false
-                }.also { drawerLayout?.close() }
+                }.also { drawerLayout?.closeDrawer(androidx.core.view.GravityCompat.END) }
             }
         } catch (_: Exception) { }
     }
