@@ -57,7 +57,8 @@
         android:textColor="@color/text_primary"
         android:layout_marginBottom="8dp" />
 
-    <LinearLayout
+    <RadioGroup
+        android:id="@+id/radioGroupStatus"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -88,7 +89,7 @@
             android:text="CUTTING"
             android:textColor="@color/text_primary" />
 
-    </LinearLayout>
+    </RadioGroup>
 
     <LinearLayout
         android:layout_width="match_parent"

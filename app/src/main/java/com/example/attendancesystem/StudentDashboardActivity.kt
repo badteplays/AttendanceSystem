@@ -142,11 +142,9 @@ class StudentDashboardActivity : AppCompatActivity() {
         }
         
         buttonViewHistory.setOnClickListener {
-            val intent = Intent(this, StudentMainActivity::class.java)
-            intent.putExtra("selected_tab", R.id.nav_history)
+            val intent = Intent(this, StudentAttendanceHistoryActivity::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
             startActivity(intent)
-            finish()
         }
         
         // Set up floating action button
@@ -171,13 +169,7 @@ class StudentDashboardActivity : AppCompatActivity() {
                 when (item.itemId) {
                     R.id.drawer_home -> { /* already here */ true }
                     R.id.drawer_scan -> { startActivity(Intent(this, QRScannerActivity::class.java)); true }
-                    R.id.drawer_history -> {
-                        val intent = Intent(this, StudentMainActivity::class.java)
-                        intent.putExtra("selected_tab", R.id.nav_history)
-                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                        startActivity(intent)
-                        true
-                    }
+                    R.id.drawer_history -> { startActivity(Intent(this, StudentAttendanceHistoryActivity::class.java)); true }
                     R.id.drawer_profile -> { startActivity(Intent(this, StudentOptionsActivity::class.java)); true }
                     else -> false
                 }.also { drawerLayout?.close() }

@@ -149,15 +149,6 @@ class StudentDashboardFragment : Fragment() {
         parentFragmentManager.beginTransaction()
             .replace(R.id.fragmentContainer, fragment)
             .commit()
-        
-        // Update bottom navigation selection
-        val bottomNav = requireActivity().findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.bottomNavigationView)
-        when (fragment) {
-            is QRScannerFragment -> bottomNav.selectedItemId = R.id.nav_scan
-            is StudentScheduleFragment -> bottomNav.selectedItemId = R.id.nav_schedule
-            is StudentAttendanceHistoryFragment -> bottomNav.selectedItemId = R.id.nav_history
-            is StudentOptionsFragment -> bottomNav.selectedItemId = R.id.nav_profile
-        }
     }
 
     private fun showToast(message: String, duration: Int = Toast.LENGTH_SHORT) {

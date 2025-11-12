@@ -12,6 +12,7 @@ import androidx.fragment.app.Fragment
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.ListenerRegistration
 import java.util.Calendar
 import java.util.Date
 
@@ -20,6 +21,7 @@ class TeacherAnalyticsFragment : Fragment() {
     private lateinit var auth: FirebaseAuth
     private val teacherSubjects = mutableListOf<String>()
     private val subjectSections = mutableMapOf<String, MutableList<String>>()
+    private var analyticsListener: ListenerRegistration? = null
 
     private lateinit var totalClassesText: TextView
     private lateinit var avgAttendanceText: TextView
@@ -128,47 +130,68 @@ class TeacherAnalyticsFragment : Fragment() {
     }
 
     private fun loadAnalyticsData() {
-        val selectedPeriod = periodSpinner.selectedItem?.toString() ?: "Last 30 Days"
-        val selectedSubject = subjectSpinner.selectedItem?.toString() ?: "All Subjects"
-        val selectedSection = sectionSpinner.selectedItem?.toString() ?: "All Sections"
+        try {
+            val selectedPeriod = periodSpinner.selectedItem?.toString() ?: "Last 30 Days"
+            val selectedSubject = subjectSpinner.selectedItem?.toString() ?: "All Subjects"
+            val selectedSection = sectionSpinner.selectedItem?.toString() ?: "All Sections"
 
-        val calendar = Calendar.getInstance()
-        val endDate = calendar.time
-        when (selectedPeriod) {
-            "Last 7 Days" -> calendar.add(Calendar.DAY_OF_YEAR, -7)
-            "Last 30 Days" -> calendar.add(Calendar.DAY_OF_YEAR, -30)
-            "Last 3 Months" -> calendar.add(Calendar.MONTH, -3)
-            "All Time" -> calendar.add(Calendar.YEAR, -1)
-        }
-        val startDate = calendar.time
-
-        var query: Query = db.collection("attendance")
-            .whereGreaterThanOrEqualTo("timestamp", startDate)
-            .whereLessThanOrEqualTo("timestamp", endDate)
-            .orderBy("timestamp")
-
-        if (selectedSubject != "All Subjects") {
-            query = query.whereEqualTo("subject", selectedSubject)
-        }
-
-        query.get().addOnSuccessListener { documents ->
-            var data = documents.map { doc ->
-                TeacherAnalyticsData(
-                    studentName = doc.getString("studentName") ?: "",
-                    subject = doc.getString("subject") ?: "",
-                    section = doc.getString("section") ?: "",
-                    status = doc.getString("status") ?: "PRESENT",
-                    timestamp = doc.getTimestamp("timestamp")?.toDate() ?: Date()
-                )
+            val calendar = Calendar.getInstance()
+            val endDate = calendar.time
+            when (selectedPeriod) {
+                "Last 7 Days" -> calendar.add(Calendar.DAY_OF_YEAR, -7)
+                "Last 30 Days" -> calendar.add(Calendar.DAY_OF_YEAR, -30)
+                "Last 3 Months" -> calendar.add(Calendar.MONTH, -3)
+                "All Time" -> calendar.add(Calendar.YEAR, -1)
             }
-            data = data.filter { d ->
-                teacherSubjects.contains(d.subject) && subjectSections[d.subject]?.contains(d.section) == true
+            val startDate = calendar.time
+
+            // Server query: range + orderBy on timestamp; attach realtime listener
+            val query: Query = db.collection("attendance")
+                .whereGreaterThanOrEqualTo("timestamp", startDate)
+                .whereLessThanOrEqualTo("timestamp", endDate)
+                .orderBy("timestamp")
+
+            analyticsListener?.remove()
+            analyticsListener = query.addSnapshotListener { documents, e ->
+                if (e != null) {
+                    android.widget.Toast.makeText(requireContext(), "Analytics listen failed: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
+                    return@addSnapshotListener
+                }
+
+                var data = documents?.map { doc ->
+                    TeacherAnalyticsData(
+                        studentName = doc.getString("studentName") ?: "",
+                        subject = doc.getString("subject") ?: "",
+                        section = doc.getString("section") ?: "",
+                        status = doc.getString("status") ?: "PRESENT",
+                        timestamp = doc.getTimestamp("timestamp")?.toDate() ?: Date()
+                    )
+                } ?: emptyList()
+
+                // Filter to classes the teacher actually owns
+                data = data.filter { d ->
+                    teacherSubjects.contains(d.subject) && subjectSections[d.subject]?.contains(d.section) == true
+                }
+
+                // Apply UI filters in memory to avoid extra indexes
+                if (selectedSubject != "All Subjects") {
+                    data = data.filter { it.subject == selectedSubject }
+                }
+                if (selectedSection != "All Sections") {
+                    data = data.filter { it.section.equals(selectedSection, ignoreCase = true) }
+                }
+
+                updateStatistics(data)
             }
-            if (selectedSection != "All Sections") {
-                data = data.filter { it.section.equals(selectedSection, ignoreCase = true) }
-            }
-            updateStatistics(data)
+        } catch (e: Exception) {
+            android.widget.Toast.makeText(requireContext(), "Analytics error: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
         }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        analyticsListener?.remove()
+        analyticsListener = null
     }
 
     private fun updateStatistics(attendanceData: List<TeacherAnalyticsData>) {

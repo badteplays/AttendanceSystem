@@ -132,8 +132,15 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun navigateToAppropriateScreen() {
+        val currentUser = auth.currentUser
+        if (currentUser == null) {
+            auth.signOut()
+            Toast.makeText(this, "Session expired. Please log in again.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         db.collection("users")
-            .document(auth.currentUser!!.uid)
+            .document(currentUser.uid)
             .get()
             .addOnSuccessListener { document ->
                 if (!document.exists()) {
@@ -146,7 +153,7 @@ class LoginActivity : AppCompatActivity() {
                 val intent = if (isTeacher) {
                     Intent(this, TeacherMainActivity::class.java)
                 } else {
-                    Intent(this, StudentMainActivity::class.java)
+                    Intent(this, StudentDashboardActivity::class.java)
                 }
                 startActivity(intent)
                 finish()

@@ -25,7 +25,6 @@ class TeacherSchedulesFragment : Fragment() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var progressBar: ProgressBar
     private lateinit var emptyState: LinearLayout
-    private lateinit var textTotalSchedules: TextView
     private lateinit var scheduleFormCard: MaterialCardView
     private lateinit var editSubject: TextInputEditText
     private lateinit var editSection: TextInputEditText
@@ -50,7 +49,6 @@ class TeacherSchedulesFragment : Fragment() {
             recyclerView = view.findViewById(R.id.recyclerView)
             progressBar = view.findViewById(R.id.progressBar)
             emptyState = view.findViewById(R.id.emptyState)
-            textTotalSchedules = view.findViewById(R.id.textTotalSchedules)
             scheduleFormCard = view.findViewById(R.id.scheduleFormCard)
             editSubject = view.findViewById(R.id.editSubject)
             editSection = view.findViewById(R.id.editSection)
@@ -60,7 +58,9 @@ class TeacherSchedulesFragment : Fragment() {
             btnAddSchedule = view.findViewById(R.id.btnAddSchedule)
             btnCancelSchedule = view.findViewById(R.id.btnCancelSchedule)
             
-            adapter = TeacherSimpleScheduleAdapter(schedules)
+            adapter = TeacherSimpleScheduleAdapter(schedules) { row ->
+                showScheduleActions(row)
+            }
             recyclerView.layoutManager = LinearLayoutManager(requireContext())
             recyclerView.adapter = adapter
 
@@ -151,7 +151,7 @@ class TeacherSchedulesFragment : Fragment() {
         editEndTime.setText("")
     }
 
-    private fun loadSchedules() {
+    fun loadSchedules() {
         progressBar.visibility = View.VISIBLE
         val user = FirebaseAuth.getInstance().currentUser ?: return
         db.collection("schedules")
@@ -162,6 +162,7 @@ class TeacherSchedulesFragment : Fragment() {
                 for (d in docs) {
                     schedules.add(
                         TeacherScheduleRow(
+                            id = d.id,
                             subject = d.getString("subject") ?: "",
                             section = d.getString("section") ?: "",
                             day = d.getString("day") ?: "",
@@ -170,7 +171,7 @@ class TeacherSchedulesFragment : Fragment() {
                         )
                     )
                 }
-                textTotalSchedules.text = schedules.size.toString()
+                // Total header removed per request
                 adapter.notifyDataSetChanged()
                 recyclerView.visibility = if (schedules.isEmpty()) View.GONE else View.VISIBLE
                 emptyState.visibility = if (schedules.isEmpty()) View.VISIBLE else View.GONE
@@ -188,7 +189,7 @@ class TeacherSchedulesFragment : Fragment() {
         recyclerView.visibility = View.GONE
         emptyState.visibility = View.VISIBLE
         progressBar.visibility = View.GONE
-        textTotalSchedules.text = "0"
+        // Total header removed per request
         
         // Update empty state message if needed
         val emptyMessage = emptyState.findViewById<TextView>(android.R.id.text1)
@@ -197,6 +198,7 @@ class TeacherSchedulesFragment : Fragment() {
 }
 
 data class TeacherScheduleRow(
+    val id: String,
     val subject: String,
     val section: String,
     val day: String,
@@ -204,7 +206,7 @@ data class TeacherScheduleRow(
     val endTime: String
 )
 
-class TeacherSimpleScheduleAdapter(private val items: List<TeacherScheduleRow>) : RecyclerView.Adapter<TeacherSimpleScheduleAdapter.VH>() {
+class TeacherSimpleScheduleAdapter(private val items: List<TeacherScheduleRow>, private val onLongPress: (TeacherScheduleRow) -> Unit) : RecyclerView.Adapter<TeacherSimpleScheduleAdapter.VH>() {
     class VH(v: View) : RecyclerView.ViewHolder(v) {
         val subject: TextView = v.findViewById(R.id.subjectText)
         val section: TextView = v.findViewById(R.id.sectionText)
@@ -222,10 +224,128 @@ class TeacherSimpleScheduleAdapter(private val items: List<TeacherScheduleRow>) 
         holder.subject.text = s.subject
         holder.section.text = s.section.uppercase()
         holder.day.text = s.day
-        holder.time.text = "${s.startTime} - ${s.endTime}"
+        holder.time.text = "${format24To12(s.startTime)} - ${format24To12(s.endTime)}"
+        holder.itemView.setOnLongClickListener {
+            onLongPress(items[holder.bindingAdapterPosition])
+            true
+        }
     }
 
     override fun getItemCount(): Int = items.size
+}
+
+private fun format24To12(time24: String): String {
+    return try {
+        val parts = time24.split(":")
+        if (parts.size != 2) return time24
+        var hour = parts[0].toInt()
+        val minute = parts[1].toInt()
+        val amPm = if (hour < 12) "AM" else "PM"
+        val hour12 = when {
+            hour == 0 -> 12
+            hour > 12 -> hour - 12
+            else -> hour
+        }
+        String.format("%d:%02d %s", hour12, minute, amPm)
+    } catch (_: Exception) { time24 }
+}
+
+private fun TeacherSchedulesFragment.showScheduleActions(row: TeacherScheduleRow) {
+    androidx.appcompat.app.AlertDialog.Builder(requireContext())
+        .setTitle(row.subject)
+        .setItems(arrayOf("Edit", "Delete")) { dialog, which ->
+            dialog.dismiss()
+            when (which) {
+                0 -> showEditDialog(row)
+                1 -> confirmDelete(row)
+            }
+        }
+        .show()
+}
+
+private fun TeacherSchedulesFragment.confirmDelete(row: TeacherScheduleRow) {
+    androidx.appcompat.app.AlertDialog.Builder(requireContext())
+        .setTitle("Delete schedule")
+        .setMessage("Delete ${row.subject} (${row.section}) on ${row.day}?")
+        .setPositiveButton("Delete") { _, _ ->
+            FirebaseFirestore.getInstance().collection("schedules").document(row.id)
+                .delete()
+                .addOnSuccessListener {
+                    Toast.makeText(requireContext(), "Schedule deleted", Toast.LENGTH_SHORT).show()
+                    loadSchedules()
+                }
+                .addOnFailureListener { e ->
+                    Toast.makeText(requireContext(), "Delete failed: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+        }
+        .setNegativeButton("Cancel", null)
+        .show()
+}
+
+private fun TeacherSchedulesFragment.showEditDialog(row: TeacherScheduleRow) {
+    val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_edit_schedule, null)
+    val subjectInput = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.editSubject)
+    val sectionInput = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.editSection)
+    val roomInput = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.editRoom)
+    val spinnerDay = dialogView.findViewById<android.widget.Spinner>(R.id.spinnerDay)
+    val timeStart = dialogView.findViewById<android.widget.TimePicker>(R.id.timePickerStart)
+    val timeEnd = dialogView.findViewById<android.widget.TimePicker>(R.id.timePickerEnd)
+
+    // Populate
+    subjectInput.setText(row.subject)
+    sectionInput.setText(row.section)
+    val days = arrayOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+    spinnerDay.adapter = android.widget.ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, days)
+    spinnerDay.setSelection(days.indexOfFirst { it.equals(row.day, true) }.coerceAtLeast(0))
+
+    fun setPickerFrom24(picker: android.widget.TimePicker, value24: String) {
+        picker.setIs24HourView(false)
+        val parts = value24.split(":")
+        val h = parts.getOrNull(0)?.toIntOrNull() ?: 8
+        val m = parts.getOrNull(1)?.toIntOrNull() ?: 0
+        picker.hour = h
+        picker.minute = m
+    }
+    setPickerFrom24(timeStart, row.startTime)
+    setPickerFrom24(timeEnd, row.endTime)
+
+    val dlg = androidx.appcompat.app.AlertDialog.Builder(requireContext())
+        .setView(dialogView)
+        .create()
+
+    dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnCancel)?.setOnClickListener { dlg.dismiss() }
+    dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnSave)?.setOnClickListener {
+        val subject = subjectInput.text?.toString()?.trim().orEmpty()
+        val section = sectionInput.text?.toString()?.trim().orEmpty()
+        val day = spinnerDay.selectedItem?.toString()?.trim().orEmpty()
+        val start24 = String.format("%02d:%02d", timeStart.hour, timeStart.minute)
+        val end24 = String.format("%02d:%02d", timeEnd.hour, timeEnd.minute)
+
+        if (subject.isBlank() || section.isBlank() || day.isBlank()) {
+            Toast.makeText(requireContext(), "Please fill all fields", Toast.LENGTH_SHORT).show()
+            return@setOnClickListener
+        }
+
+        val updates = mapOf(
+            "subject" to subject,
+            "section" to section,
+            "day" to day,
+            "startTime" to start24,
+            "endTime" to end24
+        )
+        FirebaseFirestore.getInstance().collection("schedules").document(row.id)
+            .update(updates)
+            .addOnSuccessListener {
+                Toast.makeText(requireContext(), "Schedule updated", Toast.LENGTH_SHORT).show()
+                dlg.dismiss()
+                loadSchedules()
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(requireContext(), "Update failed: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+    }
+
+    dlg.show()
 }
 
 

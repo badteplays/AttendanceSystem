@@ -210,12 +210,10 @@ class QRScannerFragment : Fragment() {
                 db.collection("attendance").add(attendanceData)
                     .addOnSuccessListener {
                         showToast("Attendance marked successfully!")
-                        // Navigate back
+                        // Navigate back to dashboard
                         parentFragmentManager.beginTransaction()
                             .replace(R.id.fragmentContainer, StudentDashboardFragment())
                             .commit()
-                        val bottomNav = requireActivity().findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.bottomNavigationView)
-                        bottomNav.selectedItemId = R.id.nav_home
                     }
                     .addOnFailureListener { e ->
                         showToast("Failed to mark attendance: ${e.message}")
@@ -338,9 +336,6 @@ class QRScannerFragment : Fragment() {
                 parentFragmentManager.beginTransaction()
                     .replace(R.id.fragmentContainer, StudentDashboardFragment())
                     .commit()
-                
-                val bottomNav = requireActivity().findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.bottomNavigationView)
-                bottomNav.selectedItemId = R.id.nav_home
             }
         }
     }

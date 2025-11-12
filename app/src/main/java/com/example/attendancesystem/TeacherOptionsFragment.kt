@@ -65,6 +65,17 @@ class TeacherOptionsFragment : Fragment() {
             showThemePicker()
         }
 
+        // About us button
+        view.findViewById<LinearLayout>(R.id.buttonAboutUs)?.setOnClickListener {
+            val url = "https://badteplays.github.io/FPL-WEBSITE/website.html"
+            try {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                startActivity(intent)
+            } catch (_: Exception) {
+                Toast.makeText(requireContext(), "Unable to open link", Toast.LENGTH_SHORT).show()
+            }
+        }
+
         // Logout button
         view.findViewById<LinearLayout>(R.id.buttonLogout)?.setOnClickListener {
             AlertDialog.Builder(requireContext())

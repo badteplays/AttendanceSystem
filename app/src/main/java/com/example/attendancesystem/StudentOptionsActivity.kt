@@ -207,35 +207,28 @@ class StudentOptionsActivity : AppCompatActivity() {
     }
 
     private fun setupBottomNavigation() {
-        // Home button → switch tab in StudentMainActivity
-        findViewById<LinearLayout>(R.id.nav_home_btn)?.setOnClickListener { 
-            val intent = Intent(this, StudentMainActivity::class.java)
-            intent.putExtra("selected_tab", R.id.nav_home)
+        // Home button → go to StudentDashboardActivity
+        findViewById<LinearLayout>(R.id.nav_home_btn)?.setOnClickListener {
+            val intent = Intent(this, StudentDashboardActivity::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
             startActivity(intent)
             finish()
         }
-        
-        // Scan button
-        findViewById<LinearLayout>(R.id.nav_scan_btn)?.setOnClickListener { 
-            val intent = Intent(this, StudentMainActivity::class.java)
-            intent.putExtra("selected_tab", R.id.nav_scan)
+
+        // Scan button → open QRScannerActivity
+        findViewById<LinearLayout>(R.id.nav_scan_btn)?.setOnClickListener {
+            startActivity(Intent(this, QRScannerActivity::class.java))
+        }
+
+        // History button → open StudentAttendanceHistoryActivity
+        findViewById<LinearLayout>(R.id.nav_history_btn)?.setOnClickListener {
+            val intent = Intent(this, StudentAttendanceHistoryActivity::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
             startActivity(intent)
-            finish()
         }
-        
-        // History button
-        findViewById<LinearLayout>(R.id.nav_history_btn)?.setOnClickListener { 
-            val intent = Intent(this, StudentMainActivity::class.java)
-            intent.putExtra("selected_tab", R.id.nav_history)
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            startActivity(intent)
-            finish()
-        }
-        
+
         // Profile button (current page - already selected)
-        findViewById<LinearLayout>(R.id.nav_profile_btn)?.setOnClickListener { 
+        findViewById<LinearLayout>(R.id.nav_profile_btn)?.setOnClickListener {
             Toast.makeText(this, "Already on Profile", Toast.LENGTH_SHORT).show()
         }
     }

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Attendance System</string>
+    <string name="app_name">Marks-up</string>
     
     <!-- Login and Registration -->
     <string name="login">Login</string>

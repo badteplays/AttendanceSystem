@@ -20,7 +20,6 @@ class TeacherMainActivity : AppCompatActivity() {
             when (item.itemId) {
                 R.id.drawer_home -> { load(TeacherDashboardFragment()); true }
                 R.id.drawer_schedule -> { load(TeacherSchedulesFragment()); true }
-                R.id.drawer_attendance -> { load(TeacherAttendanceFragment()); true }
                 R.id.drawer_analytics -> { load(TeacherAnalyticsFragment()); true }
                 R.id.drawer_settings -> { load(TeacherOptionsFragment()); true }
                 else -> false

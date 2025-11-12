@@ -23,8 +23,12 @@ import android.app.AlertDialog
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.RadioButton
+import com.google.firebase.firestore.ListenerRegistration
 
 class TeacherDashboardFragment : Fragment() {
+    companion object {
+        private const val RECENT_ATTENDANCE_LIMIT = 100
+    }
     private lateinit var imageProfilePic: ImageView
     private lateinit var textInitials: TextView
     private lateinit var textName: TextView
@@ -36,8 +40,12 @@ class TeacherDashboardFragment : Fragment() {
     private lateinit var buttonManualAdd: Button
     private lateinit var buttonAnalytics: Button
     private lateinit var attendanceRecyclerView: RecyclerView
+    private lateinit var textAttendanceCount: TextView
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
+    private var attendanceListener: ListenerRegistration? = null
+    private var listeningScheduleId: String? = null
+    private var listeningSubject: String? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_teacher_dashboard, container, false)
@@ -64,6 +72,7 @@ class TeacherDashboardFragment : Fragment() {
         buttonManualAdd = view.findViewById(R.id.buttonManualAdd)
         buttonAnalytics = view.findViewById(R.id.buttonAnalytics)
         attendanceRecyclerView = view.findViewById(R.id.attendanceRecyclerView)
+        textAttendanceCount = view.findViewById(R.id.textAttendanceCount)
         
         // Setup RecyclerView
         attendanceRecyclerView.layoutManager = LinearLayoutManager(requireContext())
@@ -177,37 +186,26 @@ class TeacherDashboardFragment : Fragment() {
     private fun loadRecentAttendance() {
         val currentUser = auth.currentUser
         if (currentUser != null) {
-            // First, get the current schedule for this hour
-            val currentTime = java.util.Calendar.getInstance()
-            val currentHour = currentTime.get(java.util.Calendar.HOUR_OF_DAY)
             val currentDay = getCurrentDayOfWeek()
-            
-            // Find the current schedule
+            val nowMinutes = getCurrentTimeInMinutes()
+            // Find today's schedules and determine the current class with minute precision
             db.collection("schedules")
                 .whereEqualTo("teacherId", currentUser.uid)
                 .whereEqualTo("day", currentDay)
                 .get()
                 .addOnSuccessListener { scheduleDocs ->
                     if (scheduleDocs.isEmpty()) {
-                        // No schedule for today, show empty state
-                        val adapter = TeacherAttendanceAdapter(emptyList())
-                        attendanceRecyclerView.adapter = adapter
+                        // No schedule for today — show recent attendance fallback
                         textQrExpiry.text = "No classes scheduled for today"
+                        loadRecentAttendanceFallback()
                         return@addOnSuccessListener
                     }
                     
-                    // Find the current class based on time
-                    val currentSchedule = scheduleDocs.documents.find { doc ->
+                    // Find the current class based on precise minutes (supports crossing midnight)
+                    val currentSchedule = scheduleDocs.documents.firstOrNull { doc ->
                         val startTime = doc.getString("startTime") ?: ""
                         val endTime = doc.getString("endTime") ?: ""
-                        
-                        if (startTime.isNotEmpty() && endTime.isNotEmpty()) {
-                            val startHour = parseTimeToHour(startTime)
-                            val endHour = parseTimeToHour(endTime)
-                            currentHour >= startHour && currentHour < endHour
-                        } else {
-                            false
-                        }
+                        isNowWithinRange(nowMinutes, startTime, endTime)
                     }
                     
                     if (currentSchedule != null) {
@@ -217,36 +215,19 @@ class TeacherDashboardFragment : Fragment() {
                         
                         // Update QR status
                         textQrExpiry.text = "Current Class: $subject ($section)"
-                        
-                        // Load attendance for this specific schedule
-                        db.collection("attendance")
-                            .whereEqualTo("teacherId", currentUser.uid)
-                            .whereEqualTo("scheduleId", scheduleId)
-                            .whereEqualTo("subject", subject)
-                            .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
-                            .get()
-                            .addOnSuccessListener { attendanceDocs ->
-                                val attendanceList = attendanceDocs.map { doc ->
-                                    TeacherAttendanceItem(
-                                        studentName = doc.getString("studentName") ?: "Unknown Student",
-                                        timeTaken = formatTimestamp(doc.getTimestamp("timestamp")),
-                                        section = doc.getString("section") ?: "",
-                                        status = doc.getString("status") ?: "PRESENT"
-                                    )
-                                }
-                                
-                                val adapter = TeacherAttendanceAdapter(attendanceList)
-                                attendanceRecyclerView.adapter = adapter
-                            }
-                            .addOnFailureListener { e ->
-                                Toast.makeText(requireContext(), "Error loading attendance: ${e.message}", Toast.LENGTH_SHORT).show()
-                            }
+                        // Start realtime listener for this class
+                        startAttendanceListener(scheduleId, subject)
                     } else {
-                        // No current class, show next class or empty state
-                        val nextSchedule = scheduleDocs.documents.minByOrNull { doc ->
-                            val startTime = doc.getString("startTime") ?: "00:00"
-                            parseTimeToHour(startTime)
-                        }
+                        // No current class — show next class and recent attendance fallback
+                        val nextSchedule = scheduleDocs.documents
+                            .mapNotNull { doc ->
+                                val startTime = doc.getString("startTime") ?: return@mapNotNull null
+                                val startMin = parseTimeToMinutes24(startTime) ?: return@mapNotNull null
+                                Pair(startMin, doc)
+                            }
+                            .filter { it.first > nowMinutes }
+                            .minByOrNull { it.first }
+                            ?.second
                         
                         if (nextSchedule != null) {
                             val subject = nextSchedule.getString("subject") ?: ""
@@ -257,14 +238,100 @@ class TeacherDashboardFragment : Fragment() {
                             textQrExpiry.text = "No classes scheduled for today"
                         }
                         
-                        val adapter = TeacherAttendanceAdapter(emptyList())
-                        attendanceRecyclerView.adapter = adapter
+                        // Stop any existing listener since no current class
+                        attendanceListener?.remove()
+                        attendanceListener = null
+                        listeningScheduleId = null
+                        listeningSubject = null
+                        loadRecentAttendanceFallback()
                     }
                 }
                 .addOnFailureListener { e ->
                     Toast.makeText(requireContext(), "Error loading schedule: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
         }
+    }
+
+    private fun startAttendanceListener(scheduleId: String, subject: String) {
+        val currentUser = auth.currentUser ?: return
+        if (listeningScheduleId == scheduleId && listeningSubject == subject && attendanceListener != null) {
+            return
+        }
+        attendanceListener?.remove()
+        listeningScheduleId = scheduleId
+        listeningSubject = subject
+        attendanceListener = db.collection("attendance")
+            .whereEqualTo("teacherId", currentUser.uid)
+            .whereEqualTo("scheduleId", scheduleId)
+            .whereEqualTo("subject", subject)
+            .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
+            .addSnapshotListener { snapshot, e ->
+                if (e != null) {
+                    Toast.makeText(requireContext(), "Attendance listen failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                    return@addSnapshotListener
+                }
+                val attendanceList = snapshot?.documents?.map { doc ->
+                    TeacherAttendanceItem(
+                        documentId = doc.id,
+                        studentName = doc.getString("studentName") ?: "Unknown Student",
+                        timeTaken = formatTimestamp(doc.getTimestamp("timestamp")),
+                        section = doc.getString("section") ?: "",
+                        status = doc.getString("status") ?: "PRESENT"
+                    )
+                } ?: emptyList()
+                attendanceRecyclerView.adapter = TeacherAttendanceAdapter(attendanceList) { item ->
+                    confirmAndRemoveAttendance(item)
+                }
+                textAttendanceCount.text = "Total: ${attendanceList.size}"
+            }
+    }
+
+    private fun loadRecentAttendanceFallback() {
+        // Load recent attendance for the current teacher; sort on client to avoid index requirements
+        val uid = auth.currentUser?.uid ?: return
+        db.collection("attendance")
+            .whereEqualTo("teacherId", uid)
+            .limit(RECENT_ATTENDANCE_LIMIT.toLong())
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val sortedDocs = snapshot.documents.sortedByDescending { it.getTimestamp("timestamp")?.seconds ?: 0 }
+                val attendanceList = sortedDocs.map { doc ->
+                    TeacherAttendanceItem(
+                        documentId = doc.id,
+                        studentName = doc.getString("studentName") ?: "Unknown Student",
+                        timeTaken = formatTimestamp(doc.getTimestamp("timestamp")),
+                        section = doc.getString("section") ?: "",
+                        status = doc.getString("status") ?: "PRESENT"
+                    )
+                }
+                attendanceRecyclerView.adapter = TeacherAttendanceAdapter(attendanceList) { item ->
+                    confirmAndRemoveAttendance(item)
+                }
+                textAttendanceCount.text = "Total: ${attendanceList.size}"
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(requireContext(), "Error loading recent attendance: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun confirmAndRemoveAttendance(item: TeacherAttendanceItem) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Remove attendance")
+            .setMessage("Remove ${item.studentName}'s attendance?")
+            .setPositiveButton("Remove") { _, _ ->
+                FirebaseFirestore.getInstance()
+                    .collection("attendance")
+                    .document(item.documentId)
+                    .delete()
+                    .addOnSuccessListener {
+                        Toast.makeText(requireContext(), "Removed ${item.studentName}", Toast.LENGTH_SHORT).show()
+                    }
+                    .addOnFailureListener { ex ->
+                        Toast.makeText(requireContext(), "Failed: ${ex.message}", Toast.LENGTH_SHORT).show()
+                    }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
     
     private fun getCurrentDayOfWeek(): String {
@@ -415,6 +482,8 @@ class TeacherDashboardFragment : Fragment() {
         val radioPresent = dialogView.findViewById<RadioButton>(R.id.radioPresent)
         val radioExcused = dialogView.findViewById<RadioButton>(R.id.radioExcused)
         val radioCutting = dialogView.findViewById<RadioButton>(R.id.radioCutting)
+
+        // RadioGroup is defined in XML now; nothing needed here
         val btnCancel = dialogView.findViewById<Button>(R.id.btnCancel)
         val btnAddStudent = dialogView.findViewById<Button>(R.id.btnAddStudent)
         
@@ -440,7 +509,6 @@ class TeacherDashboardFragment : Fragment() {
             
             // Get selected status
             val status = when {
-                radioPresent.isChecked -> "PRESENT"
                 radioExcused.isChecked -> "EXCUSED"
                 radioCutting.isChecked -> "CUTTING"
                 else -> "PRESENT"
@@ -486,9 +554,16 @@ class TeacherDashboardFragment : Fragment() {
                     Toast.makeText(requireContext(), "Failed to add ${student.name}: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
         }
-        
-        // Refresh attendance list
-        loadRecentAttendance()
+        // Ensure we are listening to updates for this schedule so the UI reflects changes instantly
+        startAttendanceListener(scheduleId, subject)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        attendanceListener?.remove()
+        attendanceListener = null
+        listeningScheduleId = null
+        listeningSubject = null
     }
 }
 

@@ -21,6 +21,8 @@ class StudentOptionsFragment : Fragment() {
     private lateinit var chipSection: TextView
     private lateinit var imageProfilePic: ImageView
     private lateinit var textInitials: TextView
+    private lateinit var spinnerReminderTime: Spinner
+    private lateinit var reminderTimeLayout: LinearLayout
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
 
@@ -46,6 +48,54 @@ class StudentOptionsFragment : Fragment() {
         chipSection = view.findViewById(R.id.chipSection)
         imageProfilePic = view.findViewById(R.id.imageProfilePic)
         textInitials = view.findViewById(R.id.textInitials)
+        spinnerReminderTime = view.findViewById(R.id.spinnerReminderTime)
+        reminderTimeLayout = view.findViewById(R.id.reminderTimeLayout)
+        
+        setupReminderTimeSpinner()
+    }
+    
+    private fun setupReminderTimeSpinner() {
+        val reminderOptions = arrayOf("5 minutes", "10 minutes", "15 minutes", "20 minutes", "30 minutes", "1 hour")
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, reminderOptions)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerReminderTime.adapter = adapter
+        
+        // Load saved reminder time
+        val prefs = requireContext().getSharedPreferences("student_prefs", android.content.Context.MODE_PRIVATE)
+        val savedMinutes = prefs.getInt("reminder_minutes", 10)
+        val position = when (savedMinutes) {
+            5 -> 0
+            10 -> 1
+            15 -> 2
+            20 -> 3
+            30 -> 4
+            60 -> 5
+            else -> 1 // Default to 10 minutes
+        }
+        spinnerReminderTime.setSelection(position)
+        
+        // Save when changed
+        spinnerReminderTime.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                val minutes = when (position) {
+                    0 -> 5
+                    1 -> 10
+                    2 -> 15
+                    3 -> 20
+                    4 -> 30
+                    5 -> 60
+                    else -> 10
+                }
+                prefs.edit().putInt("reminder_minutes", minutes).apply()
+                
+                // Reschedule reminders if enabled
+                if (prefs.getBoolean("notifications_enabled", true)) {
+                    scheduleStudentReminders()
+                }
+            }
+            
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
     }
 
     private fun loadUserProfile() {
@@ -80,6 +130,17 @@ class StudentOptionsFragment : Fragment() {
         // Logout option
         view.findViewById<LinearLayout>(R.id.buttonLogout).setOnClickListener { confirmLogout() }
 
+        // About us
+        view.findViewById<LinearLayout>(R.id.buttonAboutUs)?.setOnClickListener {
+            val url = "https://badteplays.github.io/FPL-WEBSITE/website.html"
+            try {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                startActivity(intent)
+            } catch (_: Exception) {
+                Toast.makeText(requireContext(), "Unable to open link", Toast.LENGTH_SHORT).show()
+            }
+        }
+
         // Change photo - reuse ProfilePictureManager
         view.findViewById<ImageView>(R.id.imageProfilePic).setOnClickListener { openImagePicker() }
         view.findViewById<TextView>(R.id.textInitials).setOnClickListener { openImagePicker() }
@@ -88,8 +149,14 @@ class StudentOptionsFragment : Fragment() {
         val prefs = requireContext().getSharedPreferences("student_prefs", android.content.Context.MODE_PRIVATE)
         val switch = view.findViewById<androidx.appcompat.widget.SwitchCompat>(R.id.switchClassReminders)
         switch?.isChecked = prefs.getBoolean("notifications_enabled", true)
+        
+        // Show/hide reminder time setting based on switch state
+        reminderTimeLayout.visibility = if (switch?.isChecked == true) View.VISIBLE else View.GONE
+        
         switch?.setOnCheckedChangeListener { _, isChecked ->
             prefs.edit().putBoolean("notifications_enabled", isChecked).apply()
+            reminderTimeLayout.visibility = if (isChecked) View.VISIBLE else View.GONE
+            
             if (isChecked) {
                 scheduleStudentReminders()
                 Toast.makeText(requireContext(), "Class reminders enabled", Toast.LENGTH_SHORT).show()
@@ -146,8 +213,17 @@ class StudentOptionsFragment : Fragment() {
     private fun scheduleStudentReminders() {
         try {
             val wm = androidx.work.WorkManager.getInstance(requireContext())
-            val req = androidx.work.PeriodicWorkRequestBuilder<StudentReminderWorker>(1, java.util.concurrent.TimeUnit.DAYS).build()
-            wm.enqueueUniquePeriodicWork("student_reminder_work", androidx.work.ExistingPeriodicWorkPolicy.UPDATE, req)
+            
+            // Schedule to run every 15 minutes to catch reminder windows
+            val req = androidx.work.PeriodicWorkRequestBuilder<StudentReminderWorker>(
+                15, java.util.concurrent.TimeUnit.MINUTES
+            ).build()
+            
+            wm.enqueueUniquePeriodicWork(
+                "student_reminder_work",
+                androidx.work.ExistingPeriodicWorkPolicy.REPLACE,
+                req
+            )
         } catch (_: Exception) { }
     }
 
