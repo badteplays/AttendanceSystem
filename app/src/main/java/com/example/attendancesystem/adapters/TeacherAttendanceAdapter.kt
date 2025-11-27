@@ -39,7 +39,7 @@ class TeacherAttendanceAdapter(
         val backgroundRes = when (item.status) {
             "PRESENT" -> R.drawable.status_present_bg
             "EXCUSED" -> R.drawable.status_excused_bg
-            "CUTTING" -> R.drawable.status_cutting_bg
+            "ABSENT" -> R.drawable.status_absent_bg
             else -> R.drawable.status_present_bg
         }
         

@@ -380,7 +380,7 @@ class StudentDashboardFragment : Fragment() {
                         "PRESENT" -> updateStatusUI("Present - $subject", timeString, Color.parseColor("#4CAF50"))
                         "LATE" -> updateStatusUI("Late - $subject", timeString, Color.parseColor("#FF9800"))
                         "EXCUSED" -> updateStatusUI("Excused - $subject", timeString, Color.parseColor("#2196F3"))
-                        "CUTTING" -> updateStatusUI("Cutting - $subject", timeString, Color.parseColor("#F44336"))
+                        "ABSENT" -> updateStatusUI("Absent - $subject", timeString, Color.parseColor("#F44336"))
                         else -> updateStatusUI("Marked - $subject", timeString, Color.parseColor("#4CAF50"))
                     }
                 } else {

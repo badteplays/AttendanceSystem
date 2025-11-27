@@ -82,11 +82,11 @@
             android:textColor="@color/text_primary" />
 
         <RadioButton
-            android:id="@+id/radioCutting"
+            android:id="@+id/radioAbsent"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="CUTTING"
+            android:text="ABSENT"
             android:textColor="@color/text_primary" />
 
     </RadioGroup>

@@ -718,7 +718,7 @@ class TeacherDashboardFragment : Fragment() {
         val textCurrentSession = dialogView.findViewById<TextView>(R.id.textCurrentSession)
         val radioPresent = dialogView.findViewById<RadioButton>(R.id.radioPresent)
         val radioExcused = dialogView.findViewById<RadioButton>(R.id.radioExcused)
-        val radioCutting = dialogView.findViewById<RadioButton>(R.id.radioCutting)
+        val radioAbsent = dialogView.findViewById<RadioButton>(R.id.radioAbsent)
 
         // RadioGroup is defined in XML now; nothing needed here
         val btnCancel = dialogView.findViewById<Button>(R.id.btnCancel)
@@ -747,7 +747,7 @@ class TeacherDashboardFragment : Fragment() {
             // Get selected status
             val status = when {
                 radioExcused.isChecked -> "EXCUSED"
-                radioCutting.isChecked -> "CUTTING"
+                radioAbsent.isChecked -> "ABSENT"
                 else -> "PRESENT"
             }
             

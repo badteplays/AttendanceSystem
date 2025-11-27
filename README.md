@@ -37,7 +37,7 @@ A modern Android application designed to streamline attendance tracking for educ
 - **Attendance History**
   - View complete attendance records
   - Filter by date and subject
-  - See attendance status (Present, Excused, Cutting)
+  - See attendance status (Present, Excused, Absent)
   - Track attendance percentage
 
 - **Class Reminders**
@@ -68,7 +68,7 @@ A modern Android application designed to streamline attendance tracking for educ
 
 - **Manual Attendance Management**
   - Manually add students who forgot to scan
-  - Mark attendance status (Present, Excused, Cutting)
+  - Mark attendance status (Present, Excused, Absent)
   - Remove incorrect attendance entries
   - Search and select students by section
 
