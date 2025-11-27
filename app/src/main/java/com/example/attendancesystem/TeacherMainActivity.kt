@@ -5,8 +5,17 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.google.android.material.navigation.NavigationView
 import androidx.core.view.GravityCompat
+import android.Manifest
+import android.content.pm.PackageManager
+import android.widget.Toast
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 
 class TeacherMainActivity : AppCompatActivity() {
+
+    companion object {
+        private const val PERMISSION_REQUEST_CODE = 102
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -25,6 +34,9 @@ class TeacherMainActivity : AppCompatActivity() {
                 else -> false
             }.also { drawerLayout?.closeDrawers() }
         }
+        
+        // Request necessary permissions
+        requestCameraPermission()
 
         if (savedInstanceState == null) {
             val open = intent?.getStringExtra("open")
@@ -46,6 +58,38 @@ class TeacherMainActivity : AppCompatActivity() {
             // Fallback to dashboard if fragment loading fails
             if (fragment !is TeacherDashboardFragment) {
                 load(TeacherDashboardFragment())
+            }
+        }
+    }
+    
+    private fun requestCameraPermission() {
+        // Camera permission (for generating QR codes)
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) 
+            != PackageManager.PERMISSION_GRANTED) {
+            android.util.Log.d("TeacherMainActivity", "Requesting camera permission")
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.CAMERA),
+                PERMISSION_REQUEST_CODE
+            )
+        }
+    }
+    
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(
+                    this, 
+                    "Camera permission is needed to display QR codes for attendance", 
+                    Toast.LENGTH_LONG
+                ).show()
+                android.util.Log.w("TeacherMainActivity", "Camera permission denied")
             }
         }
     }

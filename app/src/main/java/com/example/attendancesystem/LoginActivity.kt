@@ -1,4 +1,4 @@
-image.pngpackage com.example.attendancesystem
+package com.example.attendancesystem
 
 import android.content.Intent
 import android.os.Bundle
@@ -14,11 +14,20 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.ExistingPeriodicWorkPolicy
 import java.util.concurrent.TimeUnit
 import android.content.Context
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
     private lateinit var auth: FirebaseAuth
     private val db = FirebaseFirestore.getInstance()
+    
+    companion object {
+        private const val PERMISSION_REQUEST_CODE = 100
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -196,6 +205,9 @@ class LoginActivity : AppCompatActivity() {
                     scheduleStudentReminders()
                 }
                 
+                // Request necessary permissions before navigating
+                requestNecessaryPermissions(isTeacher)
+                
                 val intent = if (isTeacher) {
                     Intent(this, TeacherMainActivity::class.java)
                 } else {
@@ -231,6 +243,73 @@ class LoginActivity : AppCompatActivity() {
             }
         } catch (e: Exception) {
             android.util.Log.e("LoginActivity", "Error scheduling reminders: ${e.message}", e)
+        }
+    }
+    
+    private fun requestNecessaryPermissions(isTeacher: Boolean) {
+        val permissionsToRequest = mutableListOf<String>()
+        
+        // Camera permission (for both teachers and students - QR scanning)
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) 
+            != PackageManager.PERMISSION_GRANTED) {
+            permissionsToRequest.add(Manifest.permission.CAMERA)
+        }
+        
+        // Notification permission (Android 13+) - especially important for students
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) 
+                != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+        
+        // Request all necessary permissions at once
+        if (permissionsToRequest.isNotEmpty()) {
+            android.util.Log.d("LoginActivity", "Requesting permissions: ${permissionsToRequest.joinToString()}")
+            ActivityCompat.requestPermissions(
+                this,
+                permissionsToRequest.toTypedArray(),
+                PERMISSION_REQUEST_CODE
+            )
+        }
+    }
+    
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            val deniedPermissions = mutableListOf<String>()
+            
+            permissions.forEachIndexed { index, permission ->
+                if (grantResults[index] != PackageManager.PERMISSION_GRANTED) {
+                    deniedPermissions.add(permission)
+                }
+            }
+            
+            if (deniedPermissions.isNotEmpty()) {
+                val message = when {
+                    deniedPermissions.contains(Manifest.permission.CAMERA) && 
+                    deniedPermissions.contains(Manifest.permission.POST_NOTIFICATIONS) -> {
+                        "Camera and notification permissions are needed for full app functionality"
+                    }
+                    deniedPermissions.contains(Manifest.permission.CAMERA) -> {
+                        "Camera permission is needed to scan QR codes for attendance"
+                    }
+                    deniedPermissions.contains(Manifest.permission.POST_NOTIFICATIONS) -> {
+                        "Notification permission is needed for class reminders"
+                    }
+                    else -> "Some permissions were denied"
+                }
+                Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+                android.util.Log.w("LoginActivity", "Denied permissions: ${deniedPermissions.joinToString()}")
+            } else {
+                android.util.Log.d("LoginActivity", "All permissions granted")
+                Toast.makeText(this, "Permissions granted successfully", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 }

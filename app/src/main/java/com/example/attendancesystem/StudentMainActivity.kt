@@ -11,17 +11,30 @@ import androidx.work.WorkManager
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.ExistingPeriodicWorkPolicy
 import java.util.concurrent.TimeUnit
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import android.widget.Toast
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 
 class StudentMainActivity : AppCompatActivity() {
     
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var navigationView: NavigationView
     
+    companion object {
+        private const val PERMISSION_REQUEST_CODE = 101
+    }
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_student_main)
         
         setupDrawerNavigation()
+        
+        // Request necessary permissions
+        requestNecessaryPermissions()
         
         // Load initial fragment (supports deep-linking via intent extra)
         if (savedInstanceState == null) {
@@ -111,6 +124,70 @@ class StudentMainActivity : AppCompatActivity() {
             drawerLayout.closeDrawer(navigationView)
         } else {
             super.onBackPressed()
+        }
+    }
+    
+    private fun requestNecessaryPermissions() {
+        val permissionsToRequest = mutableListOf<String>()
+        
+        // Camera permission (for QR scanning)
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) 
+            != PackageManager.PERMISSION_GRANTED) {
+            permissionsToRequest.add(Manifest.permission.CAMERA)
+        }
+        
+        // Notification permission (Android 13+) for class reminders
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) 
+                != PackageManager.PERMISSION_GRANTED) {
+                permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+        
+        // Request all necessary permissions at once
+        if (permissionsToRequest.isNotEmpty()) {
+            android.util.Log.d("StudentMainActivity", "Requesting permissions: ${permissionsToRequest.joinToString()}")
+            ActivityCompat.requestPermissions(
+                this,
+                permissionsToRequest.toTypedArray(),
+                PERMISSION_REQUEST_CODE
+            )
+        }
+    }
+    
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            val deniedPermissions = mutableListOf<String>()
+            
+            permissions.forEachIndexed { index, permission ->
+                if (grantResults[index] != PackageManager.PERMISSION_GRANTED) {
+                    deniedPermissions.add(permission)
+                }
+            }
+            
+            if (deniedPermissions.isNotEmpty()) {
+                val message = when {
+                    deniedPermissions.contains(Manifest.permission.CAMERA) && 
+                    deniedPermissions.contains(Manifest.permission.POST_NOTIFICATIONS) -> {
+                        "Camera and notification permissions are recommended for full functionality"
+                    }
+                    deniedPermissions.contains(Manifest.permission.CAMERA) -> {
+                        "Camera permission is needed to scan QR codes for attendance"
+                    }
+                    deniedPermissions.contains(Manifest.permission.POST_NOTIFICATIONS) -> {
+                        "Notification permission is recommended for class reminders"
+                    }
+                    else -> "Some permissions were denied"
+                }
+                Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+                android.util.Log.w("StudentMainActivity", "Denied permissions: ${deniedPermissions.joinToString()}")
+            }
         }
     }
 }
