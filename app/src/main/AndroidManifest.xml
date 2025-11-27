@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.VIBRATE" />
     <!-- Location permissions removed -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.INTERNET" />
@@ -31,6 +32,7 @@
             </intent-filter>
         </service>
 
+        <!-- Entry Activities -->
         <activity
             android:name=".LoginActivity"
             android:exported="true">
@@ -39,23 +41,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <activity android:name=".MainActivity" />
+        
         <activity android:name=".SignupActivity" />
-        <activity android:name=".QRActivity" />
-        <activity android:name=".QRScannerActivity" />
-        <activity android:name=".StudentScannerActivity" />
-        <activity android:name=".AttendanceListActivity" />
-        <activity android:name=".StudentDashboardActivity" />
-        <activity android:name=".StudentMainActivity" />
-        <activity android:name=".StudentAttendanceHistoryActivity" />
-        <activity android:name=".ScheduleActivity" />
-        <activity android:name=".StudentOptionsActivity" />
-        <activity android:name=".TeacherMainActivity" />
-        <activity android:name=".TeacherOptionsActivity" />
-        <activity android:name=".ItemScheduleActivity" />
         <activity android:name=".RoleSelectionActivity" />
-        <activity android:name=".StudentProfileActivity" />
+        
+        <!-- Main Container Activities (hold fragments) -->
+        <activity android:name=".StudentMainActivity" />
+        <activity android:name=".TeacherMainActivity" />
+        
+        <!-- QR Code Activity -->
+        <activity android:name=".QRActivity" />
 
     </application>
 

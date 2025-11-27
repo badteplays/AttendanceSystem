@@ -223,36 +223,6 @@
                     </LinearLayout>
 
                 </LinearLayout>
-
-                <!-- Recent Attendance -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/card_shadow"
-                    android:orientation="vertical"
-                    android:padding="16dp"
-                    android:layout_marginBottom="90dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Recent Attendance"
-                        android:textColor="@color/text_primary"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:layout_marginBottom="12dp" />
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="100dp"
-                        android:text="Tap 'History' to view your attendance records"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="14sp"
-                        android:gravity="center"
-                        android:background="@drawable/text_background" />
-
-                </LinearLayout>
-
             </LinearLayout>
 
         </ScrollView>
@@ -270,3 +240,5 @@
         app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
+
+

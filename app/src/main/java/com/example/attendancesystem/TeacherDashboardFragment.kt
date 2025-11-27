@@ -24,10 +24,14 @@ import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.RadioButton
 import com.google.firebase.firestore.ListenerRegistration
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 class TeacherDashboardFragment : Fragment() {
     companion object {
         private const val RECENT_ATTENDANCE_LIMIT = 100
+        private const val TAG = "TeacherDashboard"
     }
     private lateinit var imageProfilePic: ImageView
     private lateinit var textInitials: TextView
@@ -39,6 +43,7 @@ class TeacherDashboardFragment : Fragment() {
     private lateinit var buttonRefreshAttendance: Button
     private lateinit var buttonManualAdd: Button
     private lateinit var buttonAnalytics: Button
+    private lateinit var buttonEndClass: Button
     private lateinit var attendanceRecyclerView: RecyclerView
     private lateinit var textAttendanceCount: TextView
     private val db = FirebaseFirestore.getInstance()
@@ -46,6 +51,11 @@ class TeacherDashboardFragment : Fragment() {
     private var attendanceListener: ListenerRegistration? = null
     private var listeningScheduleId: String? = null
     private var listeningSubject: String? = null
+    private var currentScheduleEndTime: String? = null
+    private val classEndHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private var classEndRunnable: Runnable? = null
+    private var attendanceAdapter: TeacherAttendanceAdapter? = null
+    private val attendanceList = mutableListOf<TeacherAttendanceItem>()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_teacher_dashboard, container, false)
@@ -71,23 +81,35 @@ class TeacherDashboardFragment : Fragment() {
         buttonRefreshAttendance = view.findViewById(R.id.buttonRefreshAttendance)
         buttonManualAdd = view.findViewById(R.id.buttonManualAdd)
         buttonAnalytics = view.findViewById(R.id.buttonAnalytics)
+        buttonEndClass = view.findViewById(R.id.buttonEndClass)
         attendanceRecyclerView = view.findViewById(R.id.attendanceRecyclerView)
         textAttendanceCount = view.findViewById(R.id.textAttendanceCount)
         
-        // Setup RecyclerView
+        // Setup RecyclerView with adapter
         attendanceRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+        attendanceAdapter = TeacherAttendanceAdapter(attendanceList) { item ->
+            confirmAndRemoveAttendance(item)
+        }
+        attendanceRecyclerView.adapter = attendanceAdapter
     }
     
     private fun setupClickListeners() {
         buttonShowQr.setOnClickListener {
-            showQRCode()
+            // Show QR: Open QR activity to show existing QR (or create if none exists)
+            showQRCode(forceNew = false)
         }
         
         buttonRenewQr.setOnClickListener {
-            renewQRCode()
+            // Renew QR: Force delete old sessions and create fresh QR code
+            showQRCode(forceNew = true)
         }
         
         buttonRefreshAttendance.setOnClickListener {
+            // Force remove existing listener and reload fresh
+            attendanceListener?.remove()
+            attendanceListener = null
+            listeningScheduleId = null
+            listeningSubject = null
             loadRecentAttendance()
         }
         
@@ -99,6 +121,10 @@ class TeacherDashboardFragment : Fragment() {
             val intent = Intent(requireContext(), TeacherMainActivity::class.java)
             intent.putExtra("open", "analytics")
             startActivity(intent)
+        }
+        
+        buttonEndClass.setOnClickListener {
+            confirmEndClass()
         }
     }
     
@@ -118,7 +144,7 @@ class TeacherDashboardFragment : Fragment() {
         }
     }
     
-    private fun showQRCode() {
+    private fun showQRCode(forceNew: Boolean = false) {
         val currentUser = auth.currentUser ?: run {
             Toast.makeText(requireContext(), "Not signed in", Toast.LENGTH_SHORT).show(); return
         }
@@ -143,6 +169,7 @@ class TeacherDashboardFragment : Fragment() {
                         putExtra("scheduleId", doc.id)
                         putExtra("subject", doc.getString("subject") ?: "Attendance")
                         putExtra("section", doc.getString("section") ?: "")
+                        putExtra("forceNew", forceNew) // Pass flag to force new QR
                     }
                     startActivity(intent)
                 }
@@ -218,7 +245,26 @@ class TeacherDashboardFragment : Fragment() {
                         // Start realtime listener for this class
                         startAttendanceListener(scheduleId, subject)
                     } else {
-                        // No current class — show next class and recent attendance fallback
+                        // No current class — archive any old attendance from ended classes today
+                        val endedSchedules = scheduleDocs.documents
+                            .filter { doc ->
+                                val endTime = doc.getString("endTime") ?: return@filter false
+                                val endMin = parseTimeToMinutes24(endTime) ?: return@filter false
+                                // Check if class has ended
+                                if (endMin < parseTimeToMinutes24(doc.getString("startTime") ?: "00:00") ?: 0) {
+                                    // Class crosses midnight - check if we're past the end time in the new day
+                                    nowMinutes > endMin && nowMinutes < 720 // Before noon means new day
+                                } else {
+                                    nowMinutes > endMin
+                                }
+                            }
+                        
+                        // Archive attendance from all ended classes today
+                        if (endedSchedules.isNotEmpty()) {
+                            archiveEndedClassesAttendance(endedSchedules)
+                        }
+                        
+                        // Show next class info
                         val nextSchedule = scheduleDocs.documents
                             .mapNotNull { doc ->
                                 val startTime = doc.getString("startTime") ?: return@mapNotNull null
@@ -243,6 +289,7 @@ class TeacherDashboardFragment : Fragment() {
                         attendanceListener = null
                         listeningScheduleId = null
                         listeningSubject = null
+                        buttonEndClass.visibility = View.GONE
                         loadRecentAttendanceFallback()
                     }
                 }
@@ -260,57 +307,214 @@ class TeacherDashboardFragment : Fragment() {
         attendanceListener?.remove()
         listeningScheduleId = scheduleId
         listeningSubject = subject
-        attendanceListener = db.collection("attendance")
-            .whereEqualTo("teacherId", currentUser.uid)
-            .whereEqualTo("scheduleId", scheduleId)
-            .whereEqualTo("subject", subject)
-            .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshot, e ->
-                if (e != null) {
-                    Toast.makeText(requireContext(), "Attendance listen failed: ${e.message}", Toast.LENGTH_SHORT).show()
-                    return@addSnapshotListener
-                }
-                val attendanceList = snapshot?.documents?.map { doc ->
-                    TeacherAttendanceItem(
-                        documentId = doc.id,
-                        studentName = doc.getString("studentName") ?: "Unknown Student",
-                        timeTaken = formatTimestamp(doc.getTimestamp("timestamp")),
-                        section = doc.getString("section") ?: "",
-                        status = doc.getString("status") ?: "PRESENT"
-                    )
-                } ?: emptyList()
-                attendanceRecyclerView.adapter = TeacherAttendanceAdapter(attendanceList) { item ->
-                    confirmAndRemoveAttendance(item)
-                }
-                textAttendanceCount.text = "Total: ${attendanceList.size}"
+        
+        // Get the class start and end time for filtering and auto-archiving
+        db.collection("schedules").document(scheduleId)
+            .get()
+            .addOnSuccessListener { scheduleDoc ->
+                val startTime = scheduleDoc.getString("startTime") ?: "00:00"
+                val endTime = scheduleDoc.getString("endTime") ?: "23:59"
+                
+                // Store end time for scheduling
+                currentScheduleEndTime = endTime
+                
+                // Show the "End Class" button for current class
+                buttonEndClass.visibility = View.VISIBLE
+                
+                // Schedule auto-archive when class ends
+                scheduleAutoArchiveAtClassEnd(endTime)
+                
+                // Calculate today's class start timestamp
+                val calendar = java.util.Calendar.getInstance()
+                val (startHour, startMin) = parseTime24(startTime)
+                calendar.set(java.util.Calendar.HOUR_OF_DAY, startHour)
+                calendar.set(java.util.Calendar.MINUTE, startMin)
+                calendar.set(java.util.Calendar.SECOND, 0)
+                calendar.set(java.util.Calendar.MILLISECOND, 0)
+                val classStartTimestamp = com.google.firebase.Timestamp(calendar.time)
+                
+                // Listen for attendance from this class session only (after class start time)
+                // Exclude archived records by only querying the attendance collection (not archived_attendance)
+                android.util.Log.d(TAG, "=== TEACHER QUERYING ATTENDANCE ===")
+                android.util.Log.d(TAG, "teacherId: ${currentUser.uid}")
+                android.util.Log.d(TAG, "scheduleId: $scheduleId")
+                android.util.Log.d(TAG, "subject: $subject")
+                android.util.Log.d(TAG, "timestamp >= $classStartTimestamp")
+                attendanceListener = db.collection("attendance")
+                    .whereEqualTo("teacherId", currentUser.uid)
+                    .whereEqualTo("scheduleId", scheduleId)
+                    .whereEqualTo("subject", subject)
+                    .whereGreaterThanOrEqualTo("timestamp", classStartTimestamp)
+                    .addSnapshotListener { snapshot, e ->
+                        if (e != null) {
+                            android.util.Log.e(TAG, "Attendance listen failed: ${e.message}", e)
+                            Toast.makeText(requireContext(), "Attendance listen failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                            return@addSnapshotListener
+                        }
+                        
+                        // Sort by timestamp in memory to avoid composite index requirement
+                        val newAttendanceList = snapshot?.documents
+                            ?.sortedByDescending { doc -> 
+                                doc.getTimestamp("timestamp")?.seconds ?: 0L 
+                            }
+                            ?.map { doc ->
+                                TeacherAttendanceItem(
+                                    documentId = doc.id,
+                                    studentName = doc.getString("studentName") ?: "Unknown Student",
+                                    timeTaken = formatTimestamp(doc.getTimestamp("timestamp")),
+                                    section = doc.getString("section") ?: "",
+                                    status = doc.getString("status") ?: "PRESENT"
+                                )
+                            } ?: emptyList()
+                        
+                        // Update the adapter's data and notify changes
+                        val oldSize = attendanceList.size
+                        attendanceList.clear()
+                        attendanceList.addAll(newAttendanceList)
+                        attendanceAdapter?.notifyDataSetChanged()
+                        
+                        // Scroll to top if new items were added
+                        if (newAttendanceList.size > oldSize) {
+                            attendanceRecyclerView.smoothScrollToPosition(0)
+                        }
+                        
+                        textAttendanceCount.text = "Total: ${attendanceList.size}"
+                        
+                        android.util.Log.d(TAG, "✓✓✓ TEACHER LOADED ${attendanceList.size} ATTENDANCE RECORDS (LIVE UPDATE) ✓✓✓")
+                        android.util.Log.d(TAG, "Subject: $subject, from ${formatTimestamp(classStartTimestamp)}")
+                        attendanceList.forEach { 
+                            android.util.Log.d(TAG, "  → ${it.studentName} at ${it.timeTaken}")
+                        }
+                    }
             }
+            .addOnFailureListener { e ->
+                android.util.Log.e(TAG, "Error getting schedule: ${e.message}", e)
+            }
+    }
+    
+    private fun parseTime24(time: String): Pair<Int, Int> {
+        return try {
+            val parts = time.split(":")
+            Pair(parts[0].toInt(), parts[1].toInt())
+        } catch (e: Exception) {
+            Pair(0, 0)
+        }
     }
 
     private fun loadRecentAttendanceFallback() {
-        // Load recent attendance for the current teacher; sort on client to avoid index requirements
+        // Load recent attendance with REAL-TIME updates - shows both active and archived
         val uid = auth.currentUser?.uid ?: return
-        db.collection("attendance")
+        
+        // Remove any existing listener first
+        attendanceListener?.remove()
+        listeningScheduleId = null
+        listeningSubject = null
+        
+        android.util.Log.d(TAG, "Loading fallback with REAL-TIME listener for active/archived attendance")
+        
+        // Get today's start for filtering archived records
+        val calendar = java.util.Calendar.getInstance()
+        calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
+        calendar.set(java.util.Calendar.MINUTE, 0)
+        calendar.set(java.util.Calendar.SECOND, 0)
+        calendar.set(java.util.Calendar.MILLISECOND, 0)
+        val todayMillis = calendar.timeInMillis
+        
+        // Set up REAL-TIME listener on active attendance (NO LIMIT to avoid index requirement)
+        attendanceListener = db.collection("attendance")
             .whereEqualTo("teacherId", uid)
-            .limit(RECENT_ATTENDANCE_LIMIT.toLong())
-            .get()
-            .addOnSuccessListener { snapshot ->
-                val sortedDocs = snapshot.documents.sortedByDescending { it.getTimestamp("timestamp")?.seconds ?: 0 }
-                val attendanceList = sortedDocs.map { doc ->
-                    TeacherAttendanceItem(
-                        documentId = doc.id,
-                        studentName = doc.getString("studentName") ?: "Unknown Student",
-                        timeTaken = formatTimestamp(doc.getTimestamp("timestamp")),
-                        section = doc.getString("section") ?: "",
-                        status = doc.getString("status") ?: "PRESENT"
-                    )
+            .addSnapshotListener { activeSnapshot, e ->
+                if (e != null) {
+                    android.util.Log.e(TAG, "Attendance fallback listen failed: ${e.message}", e)
+                    Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                    return@addSnapshotListener
                 }
-                attendanceRecyclerView.adapter = TeacherAttendanceAdapter(attendanceList) { item ->
-                    confirmAndRemoveAttendance(item)
-                }
-                textAttendanceCount.text = "Total: ${attendanceList.size}"
-            }
-            .addOnFailureListener { e ->
-                Toast.makeText(requireContext(), "Error loading recent attendance: ${e.message}", Toast.LENGTH_SHORT).show()
+                
+                // Also check archived attendance (NO date filter to avoid composite index requirement)
+                db.collection("archived_attendance")
+                    .whereEqualTo("teacherId", uid)
+                    .get()
+                    .addOnSuccessListener { archivedSnapshot ->
+                        // Filter archived records to only today (in memory)
+                        val archivedFromToday = archivedSnapshot.documents.filter {
+                            val archivedAt = it.getLong("archivedAt") ?: 0L
+                            archivedAt >= todayMillis
+                        }
+                        
+                        // Combine both active and archived
+                        val allDocs = (activeSnapshot?.documents ?: emptyList()) + archivedFromToday
+                        
+                        // Sort by timestamp and limit in memory
+                        val sortedDocs = allDocs
+                            .sortedByDescending { it.getTimestamp("timestamp")?.seconds ?: 0 }
+                            .take(RECENT_ATTENDANCE_LIMIT)
+                        
+                        val newAttendanceList = sortedDocs.map { doc ->
+                            TeacherAttendanceItem(
+                                documentId = doc.id,
+                                studentName = doc.getString("studentName") ?: "Unknown Student",
+                                timeTaken = formatTimestamp(doc.getTimestamp("timestamp")),
+                                section = doc.getString("section") ?: "",
+                                status = doc.getString("status") ?: "PRESENT"
+                            )
+                        }
+                        
+                        // Update the adapter's data and notify changes
+                        val oldSize = attendanceList.size
+                        attendanceList.clear()
+                        attendanceList.addAll(newAttendanceList)
+                        
+                        // Update the adapter's click handler to check archived status
+                        attendanceAdapter = TeacherAttendanceAdapter(attendanceList) { item ->
+                            // Check if it's archived
+                            if (archivedFromToday.any { it.id == item.documentId }) {
+                                Toast.makeText(requireContext(), "Cannot modify archived attendance", Toast.LENGTH_SHORT).show()
+                            } else {
+                                confirmAndRemoveAttendance(item)
+                            }
+                        }
+                        attendanceRecyclerView.adapter = attendanceAdapter
+                        
+                        // Scroll to top if new items were added
+                        if (newAttendanceList.size > oldSize) {
+                            attendanceRecyclerView.smoothScrollToPosition(0)
+                        }
+                        
+                        val activeCount = activeSnapshot?.documents?.size ?: 0
+                        val archivedCount = archivedFromToday.size
+                        val label = if (archivedCount > 0) " ($activeCount active, $archivedCount archived)" else ""
+                        textAttendanceCount.text = "Total: ${attendanceList.size}$label"
+                        
+                        android.util.Log.d(TAG, "Loaded ${attendanceList.size} attendance records ($activeCount active, $archivedCount archived) with REAL-TIME updates")
+                    }
+                    .addOnFailureListener { archiveError ->
+                        android.util.Log.e(TAG, "Error loading archived attendance: ${archiveError.message}", archiveError)
+                        // Just show active attendance if archived query fails
+                        val sortedDocs = (activeSnapshot?.documents ?: emptyList())
+                            .sortedByDescending { it.getTimestamp("timestamp")?.seconds ?: 0 }
+                            .take(RECENT_ATTENDANCE_LIMIT)
+                        
+                        val newAttendanceList = sortedDocs.map { doc ->
+                            TeacherAttendanceItem(
+                                documentId = doc.id,
+                                studentName = doc.getString("studentName") ?: "Unknown Student",
+                                timeTaken = formatTimestamp(doc.getTimestamp("timestamp")),
+                                section = doc.getString("section") ?: "",
+                                status = doc.getString("status") ?: "PRESENT"
+                            )
+                        }
+                        
+                        // Update the adapter's data
+                        attendanceList.clear()
+                        attendanceList.addAll(newAttendanceList)
+                        
+                        // Recreate adapter for consistency
+                        attendanceAdapter = TeacherAttendanceAdapter(attendanceList) { item ->
+                            confirmAndRemoveAttendance(item)
+                        }
+                        attendanceRecyclerView.adapter = attendanceAdapter
+                        textAttendanceCount.text = "Total: ${attendanceList.size}"
+                    }
             }
     }
 
@@ -319,12 +523,45 @@ class TeacherDashboardFragment : Fragment() {
             .setTitle("Remove attendance")
             .setMessage("Remove ${item.studentName}'s attendance?")
             .setPositiveButton("Remove") { _, _ ->
-                FirebaseFirestore.getInstance()
-                    .collection("attendance")
-                    .document(item.documentId)
-                    .delete()
-                    .addOnSuccessListener {
-                        Toast.makeText(requireContext(), "Removed ${item.studentName}", Toast.LENGTH_SHORT).show()
+                val db = FirebaseFirestore.getInstance()
+                val attendanceId = item.documentId
+                
+                // First, get the attendance document to archive it
+                db.collection("attendance")
+                    .document(attendanceId)
+                    .get()
+                    .addOnSuccessListener { document ->
+                        if (document.exists()) {
+                            // Archive the document for historical analytics
+                            val archiveData = document.data?.toMutableMap() ?: mutableMapOf()
+                            archiveData["archivedAt"] = System.currentTimeMillis()
+                            archiveData["originalId"] = attendanceId
+                            
+                            db.collection("archived_attendance")
+                                .document(attendanceId)
+                                .set(archiveData)
+                                .addOnSuccessListener {
+                                    // Now delete from the active collection
+                                    db.collection("attendance")
+                                        .document(attendanceId)
+                                        .delete()
+                                        .addOnSuccessListener {
+                                            Toast.makeText(requireContext(), "Removed ${item.studentName}", Toast.LENGTH_SHORT).show()
+                                        }
+                                        .addOnFailureListener { ex ->
+                                            Toast.makeText(requireContext(), "Failed: ${ex.message}", Toast.LENGTH_SHORT).show()
+                                        }
+                                }
+                                .addOnFailureListener { ex ->
+                                    // Even if archiving fails, still try to delete
+                                    db.collection("attendance")
+                                        .document(attendanceId)
+                                        .delete()
+                                        .addOnSuccessListener {
+                                            Toast.makeText(requireContext(), "Removed ${item.studentName}", Toast.LENGTH_SHORT).show()
+                                        }
+                                }
+                        }
                     }
                     .addOnFailureListener { ex ->
                         Toast.makeText(requireContext(), "Failed: ${ex.message}", Toast.LENGTH_SHORT).show()
@@ -531,11 +768,13 @@ class TeacherDashboardFragment : Fragment() {
         val currentUser = auth.currentUser ?: return
         val currentTime = com.google.firebase.Timestamp.now()
         
+        android.util.Log.d(TAG, "Manually adding ${students.size} students to attendance - Subject: $subject, Status: $status")
+        
         students.forEach { student ->
             val attendanceData = hashMapOf(
                 "userId" to student.id,
                 "studentName" to student.name,
-                "sessionId" to "",
+                "sessionId" to "MANUAL_${System.currentTimeMillis()}", // Unique session ID for manual entries
                 "teacherId" to currentUser.uid,
                 "scheduleId" to scheduleId,
                 "subject" to subject,
@@ -543,19 +782,179 @@ class TeacherDashboardFragment : Fragment() {
                 "timestamp" to currentTime,
                 "status" to status,
                 "location" to "",
-                "notes" to "Manually added by teacher - Status: $status"
+                "notes" to "Manually added by teacher - Status: $status",
+                "isManualEntry" to true // Flag to identify manual entries
             )
             
+            android.util.Log.d(TAG, "Adding manual attendance: ${student.name} - $subject (${student.section}) - $status")
+            
             db.collection("attendance").add(attendanceData)
-                .addOnSuccessListener {
+                .addOnSuccessListener { docRef ->
+                    android.util.Log.d(TAG, "Successfully added manual attendance for ${student.name} with ID: ${docRef.id}")
                     Toast.makeText(requireContext(), "Added ${student.name} to attendance", Toast.LENGTH_SHORT).show()
                 }
                 .addOnFailureListener { e ->
+                    android.util.Log.e(TAG, "Failed to add manual attendance for ${student.name}: ${e.message}", e)
                     Toast.makeText(requireContext(), "Failed to add ${student.name}: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
         }
         // Ensure we are listening to updates for this schedule so the UI reflects changes instantly
         startAttendanceListener(scheduleId, subject)
+    }
+
+    private fun confirmEndClass() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("End Class")
+            .setMessage("This will archive all attendance from this class session. The attendance will be removed from Recent Attendance but kept for analytics. Continue?")
+            .setPositiveButton("End Class") { _, _ ->
+                archiveCurrentClassAttendance()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+    
+    private fun archiveCurrentClassAttendance() {
+        val scheduleId = listeningScheduleId ?: return
+        val subject = listeningSubject ?: return
+        val currentUser = auth.currentUser ?: return
+        
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                // Get all attendance records for the current class session
+                val attendanceSnapshot = db.collection("attendance")
+                    .whereEqualTo("teacherId", currentUser.uid)
+                    .whereEqualTo("scheduleId", scheduleId)
+                    .whereEqualTo("subject", subject)
+                    .get()
+                    .await()
+                
+                android.util.Log.d(TAG, "Archiving ${attendanceSnapshot.size()} attendance records for $subject")
+                
+                var archivedCount = 0
+                // Archive each record
+                for (doc in attendanceSnapshot.documents) {
+                    val archiveData = doc.data?.toMutableMap() ?: continue
+                    archiveData["archivedAt"] = System.currentTimeMillis()
+                    archiveData["originalId"] = doc.id
+                    
+                    // Add to archived collection
+                    db.collection("archived_attendance")
+                        .document(doc.id)
+                        .set(archiveData)
+                        .await()
+                    
+                    // Delete from active collection
+                    doc.reference.delete().await()
+                    archivedCount++
+                }
+                
+                // Hide the End Class button
+                buttonEndClass.visibility = View.GONE
+                
+                // Clear the current listening state
+                attendanceListener?.remove()
+                listeningScheduleId = null
+                listeningSubject = null
+                
+                // Reload to show empty/next class
+                loadRecentAttendance()
+                
+                Toast.makeText(requireContext(), "Class ended. $archivedCount records archived.", Toast.LENGTH_SHORT).show()
+                android.util.Log.d(TAG, "Successfully archived $archivedCount attendance records")
+                
+            } catch (e: Exception) {
+                android.util.Log.e(TAG, "Error archiving attendance: ${e.message}", e)
+                Toast.makeText(requireContext(), "Error archiving attendance: ${e.message}", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+    
+    private fun archiveEndedClassesAttendance(endedSchedules: List<com.google.firebase.firestore.DocumentSnapshot>) {
+        val currentUser = auth.currentUser ?: return
+        
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                var totalArchived = 0
+                
+                for (schedule in endedSchedules) {
+                    val scheduleId = schedule.id
+                    val subject = schedule.getString("subject") ?: continue
+                    
+                    // Get attendance records for this ended class from today
+                    val calendar = java.util.Calendar.getInstance()
+                    calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                    calendar.set(java.util.Calendar.MINUTE, 0)
+                    calendar.set(java.util.Calendar.SECOND, 0)
+                    calendar.set(java.util.Calendar.MILLISECOND, 0)
+                    val todayStart = com.google.firebase.Timestamp(calendar.time)
+                    
+                    val attendanceSnapshot = db.collection("attendance")
+                        .whereEqualTo("teacherId", currentUser.uid)
+                        .whereEqualTo("scheduleId", scheduleId)
+                        .whereEqualTo("subject", subject)
+                        .whereGreaterThanOrEqualTo("timestamp", todayStart)
+                        .get()
+                        .await()
+                    
+                    // Archive each record
+                    for (doc in attendanceSnapshot.documents) {
+                        val archiveData = doc.data?.toMutableMap() ?: continue
+                        archiveData["archivedAt"] = System.currentTimeMillis()
+                        archiveData["originalId"] = doc.id
+                        archiveData["autoArchived"] = true
+                        
+                        // Add to archived collection
+                        db.collection("archived_attendance")
+                            .document(doc.id)
+                            .set(archiveData)
+                            .await()
+                        
+                        // Delete from active collection
+                        doc.reference.delete().await()
+                        totalArchived++
+                    }
+                    
+                    android.util.Log.d(TAG, "Auto-archived ${attendanceSnapshot.size()} records from ended class: $subject")
+                }
+                
+                if (totalArchived > 0) {
+                    android.util.Log.d(TAG, "Auto-archived total of $totalArchived attendance records from ${endedSchedules.size} ended classes")
+                }
+                
+            } catch (e: Exception) {
+                android.util.Log.e(TAG, "Error auto-archiving ended classes: ${e.message}", e)
+            }
+        }
+    }
+    
+    private fun scheduleAutoArchiveAtClassEnd(endTime: String) {
+        // Cancel any existing scheduled archiving
+        classEndRunnable?.let { classEndHandler.removeCallbacks(it) }
+        
+        try {
+            // Calculate milliseconds until class ends
+            val (endHour, endMin) = parseTime24(endTime)
+            val now = java.util.Calendar.getInstance()
+            val classEnd = java.util.Calendar.getInstance().apply {
+                set(java.util.Calendar.HOUR_OF_DAY, endHour)
+                set(java.util.Calendar.MINUTE, endMin)
+                set(java.util.Calendar.SECOND, 0)
+                set(java.util.Calendar.MILLISECOND, 0)
+            }
+            
+            val millisUntilEnd = classEnd.timeInMillis - now.timeInMillis
+            
+            if (millisUntilEnd > 0) {
+                classEndRunnable = Runnable {
+                    android.util.Log.d(TAG, "Class end time reached - auto-archiving attendance")
+                    archiveCurrentClassAttendance()
+                }
+                classEndHandler.postDelayed(classEndRunnable!!, millisUntilEnd)
+                android.util.Log.d(TAG, "Scheduled auto-archive in ${millisUntilEnd / 1000 / 60} minutes at $endTime")
+            }
+        } catch (e: Exception) {
+            android.util.Log.e(TAG, "Error scheduling auto-archive: ${e.message}", e)
+        }
     }
 
     override fun onDestroyView() {
@@ -564,6 +963,9 @@ class TeacherDashboardFragment : Fragment() {
         attendanceListener = null
         listeningScheduleId = null
         listeningSubject = null
+        attendanceAdapter = null
+        attendanceList.clear()
+        classEndRunnable?.let { classEndHandler.removeCallbacks(it) }
     }
 }
 

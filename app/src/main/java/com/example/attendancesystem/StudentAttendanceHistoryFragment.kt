@@ -15,6 +15,7 @@ import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.ListenerRegistration
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -28,6 +29,8 @@ class StudentAttendanceHistoryFragment : Fragment() {
     private val attendanceList = mutableListOf<AttendanceHistoryItem>()
     private val db = FirebaseFirestore.getInstance()
     private val currentUser = FirebaseAuth.getInstance().currentUser
+    private var attendanceListener: ListenerRegistration? = null
+    private var archivedListener: ListenerRegistration? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -43,6 +46,14 @@ class StudentAttendanceHistoryFragment : Fragment() {
         initializeViews(view)
         setupRecyclerView()
         loadAttendanceHistory()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        attendanceListener?.remove()
+        attendanceListener = null
+        archivedListener?.remove()
+        archivedListener = null
     }
 
     private fun initializeViews(view: View) {
@@ -62,70 +73,105 @@ class StudentAttendanceHistoryFragment : Fragment() {
     private fun loadAttendanceHistory() {
         progressBar.visibility = View.VISIBLE
         currentUser?.let { user ->
-            db.collection("attendance")
-                .whereEqualTo("studentId", user.uid)
-                .orderBy("timestamp", Query.Direction.DESCENDING)
-                .get()
-                .addOnSuccessListener { documents ->
-                    attendanceList.clear()
-                    var totalClasses = 0
-                    var attendedClasses = 0
-
-                    for (document in documents) {
-                        val timestamp = document.getTimestamp("timestamp")
-                        val subject = document.getString("subject") ?: ""
-                        val status = document.getBoolean("verified") ?: false
-                        
-                        if (status) attendedClasses++
-                        totalClasses++
-
-                        timestamp?.let {
-                            attendanceList.add(AttendanceHistoryItem(
-                                date = formatDate(it),
-                                subject = subject,
-                                status = if (status) "Present" else "Absent"
-                            ))
+            val tempActiveList = mutableListOf<AttendanceHistoryItem>()
+            val tempArchivedList = mutableListOf<AttendanceHistoryItem>()
+            
+            // Listen to active attendance
+            attendanceListener?.remove()
+            attendanceListener = db.collection("attendance")
+                .whereEqualTo("userId", user.uid)
+                .addSnapshotListener { snapshot, e ->
+                    if (e != null) {
+                        android.util.Log.e("StudentAttendanceHistory", "Error loading active attendance: ${e.message}", e)
+                    } else {
+                        tempActiveList.clear()
+                        snapshot?.documents?.forEach { document ->
+                            val timestamp = document.getTimestamp("timestamp")
+                            val subject = document.getString("subject") ?: ""
+                            val statusString = document.getString("status") ?: "ABSENT"
+                            
+                            timestamp?.let {
+                                tempActiveList.add(AttendanceHistoryItem(
+                                    date = formatDate(it),
+                                    subject = subject,
+                                    status = statusString
+                                ))
+                            }
                         }
                     }
-
-                    // Calculate attendance percentage
-                    val percentage = if (totalClasses > 0) {
-                        (attendedClasses.toDouble() / totalClasses.toDouble() * 100)
-                    } else {
-                        0.0
-                    }
-
-                    // Update UI based on data
-                    if (totalClasses > 0) {
-                        attendancePercentage.text = "Attendance: ${String.format("%.1f", percentage)}%"
-                        recyclerView.visibility = View.VISIBLE
-                        emptyState.visibility = View.GONE
-                        
-                        // Show warning if attendance is below 75%
-                        if (percentage < 75) {
-                            warningText.visibility = View.VISIBLE
-                            warningText.text = "Warning: Your attendance is below 75%"
-                        } else {
-                            warningText.visibility = View.GONE
-                        }
-                    } else {
-                        attendancePercentage.text = "No attendance data yet"
-                        recyclerView.visibility = View.GONE
-                        emptyState.visibility = View.VISIBLE
-                        warningText.visibility = View.GONE
-                    }
-
-                    adapter.notifyDataSetChanged()
-                    progressBar.visibility = View.GONE
+                    updateCombinedList(tempActiveList, tempArchivedList)
                 }
-                .addOnFailureListener { e ->
-                    // Handle error
-                    progressBar.visibility = View.GONE
-                    recyclerView.visibility = View.GONE
-                    emptyState.visibility = View.VISIBLE
-                    attendancePercentage.text = "No attendance data yet"
+            
+            // Listen to archived attendance
+            archivedListener?.remove()
+            archivedListener = db.collection("archived_attendance")
+                .whereEqualTo("userId", user.uid)
+                .addSnapshotListener { snapshot, e ->
+                    if (e != null) {
+                        android.util.Log.e("StudentAttendanceHistory", "Error loading archived attendance: ${e.message}", e)
+                    } else {
+                        tempArchivedList.clear()
+                        snapshot?.documents?.forEach { document ->
+                            val timestamp = document.getTimestamp("timestamp")
+                            val subject = document.getString("subject") ?: ""
+                            val statusString = document.getString("status") ?: "ABSENT"
+                            
+                            timestamp?.let {
+                                tempArchivedList.add(AttendanceHistoryItem(
+                                    date = formatDate(it),
+                                    subject = subject,
+                                    status = statusString
+                                ))
+                            }
+                        }
+                    }
+                    updateCombinedList(tempActiveList, tempArchivedList)
                 }
         }
+    }
+    
+    private fun updateCombinedList(activeList: List<AttendanceHistoryItem>, archivedList: List<AttendanceHistoryItem>) {
+        attendanceList.clear()
+        attendanceList.addAll(activeList)
+        attendanceList.addAll(archivedList)
+        
+        // Sort by date descending (most recent first)
+        attendanceList.sortByDescending { it.date }
+        
+        var totalClasses = attendanceList.size
+        var attendedClasses = attendanceList.count { it.status == "PRESENT" }
+
+        // Calculate attendance percentage
+        val percentage = if (totalClasses > 0) {
+            (attendedClasses.toDouble() / totalClasses.toDouble() * 100)
+        } else {
+            0.0
+        }
+
+        // Update UI based on data
+        if (totalClasses > 0) {
+            attendancePercentage.text = "Attendance: ${String.format("%.1f", percentage)}%"
+            recyclerView.visibility = View.VISIBLE
+            emptyState.visibility = View.GONE
+            
+            // Show warning if attendance is below 75%
+            if (percentage < 75) {
+                warningText.visibility = View.VISIBLE
+                warningText.text = "Warning: Your attendance is below 75%"
+            } else {
+                warningText.visibility = View.GONE
+            }
+        } else {
+            attendancePercentage.text = "No attendance data yet"
+            recyclerView.visibility = View.GONE
+            emptyState.visibility = View.VISIBLE
+            warningText.visibility = View.GONE
+        }
+
+        adapter.notifyDataSetChanged()
+        progressBar.visibility = View.GONE
+        
+        android.util.Log.d("StudentAttendanceHistory", "Loaded ${attendanceList.size} total records (${activeList.size} active + ${archivedList.size} archived)")
     }
 
     private fun formatDate(timestamp: Timestamp): String {

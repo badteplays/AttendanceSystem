@@ -24,7 +24,7 @@ class StudentScheduleAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val schedule = schedules[position]
         holder.binding.textScheduleName.text = schedule.subject
-        holder.binding.textScheduleTime.text = schedule.time
+        holder.binding.textScheduleTime.text = "${schedule.day} ${schedule.time}"
         holder.binding.textScheduleLocation.text = schedule.section
     }
 

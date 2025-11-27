@@ -25,6 +25,14 @@ import com.example.attendancesystem.models.AttendanceStatus
 import com.example.attendancesystem.models.QRCodeData
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import android.content.Context
+import android.media.AudioManager
+import android.media.ToneGenerator
+import android.os.VibrationEffect
+import android.os.Vibrator
+import com.journeyapps.barcodescanner.DefaultDecoderFactory
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.DecodeHintType
 
 class QRScannerFragment : Fragment() {
     private lateinit var barcodeView: DecoratedBarcodeView
@@ -37,6 +45,14 @@ class QRScannerFragment : Fragment() {
     private var currentQRData: QRCodeData? = null
     private val timerHandler = Handler(Looper.getMainLooper())
     private var timerRunnable: Runnable? = null
+    private var vibrator: Vibrator? = null
+    private var toneGenerator: ToneGenerator? = null
+    private val scannedSessions = mutableSetOf<String>() // Track scanned sessions in this app session
+    
+    companion object {
+        private const val TAG = "QRScannerFragment"
+        private const val PERMISSION_REQUEST_CODE = 100
+    }
 
 
     override fun onCreateView(
@@ -53,8 +69,13 @@ class QRScannerFragment : Fragment() {
         initializeViews(view)
         locationManager = LocationManager(requireContext())
         
-        // Initialize barcode view
-        barcodeView.barcodeView.decoderFactory = com.journeyapps.barcodescanner.DefaultDecoderFactory()
+        // Initialize vibrator and tone generator for feedback
+        vibrator = requireContext().getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+        try {
+            toneGenerator = ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100)
+        } catch (e: Exception) {
+            android.util.Log.w(TAG, "Could not initialize tone generator", e)
+        }
         
         if (checkPermissions()) {
             startScanning()
@@ -76,43 +97,80 @@ class QRScannerFragment : Fragment() {
     }
 
     private fun requestPermissions() {
-        val permissionsToRequest = mutableListOf<String>()
-        
-        if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA) 
-            != PackageManager.PERMISSION_GRANTED) {
-            permissionsToRequest.add(Manifest.permission.CAMERA)
-        }
-        
-        if (!locationManager.hasLocationPermission()) {
-            permissionsToRequest.add(Manifest.permission.ACCESS_FINE_LOCATION)
-            permissionsToRequest.add(Manifest.permission.ACCESS_COARSE_LOCATION)
-        }
-        
-        if (permissionsToRequest.isNotEmpty()) {
-            ActivityCompat.requestPermissions(
-                requireActivity(),
-                permissionsToRequest.toTypedArray(),
-                PERMISSION_REQUEST_CODE
-            )
-        }
+        // Only request camera permission - location not required
+        ActivityCompat.requestPermissions(
+            requireActivity(),
+            arrayOf(Manifest.permission.CAMERA),
+            PERMISSION_REQUEST_CODE
+        )
     }
 
     private fun startScanning() {
         try {
+            // Advanced camera settings for maximum compatibility
+            barcodeView.barcodeView.cameraSettings.apply {
+                requestedCameraId = -1 // Auto-select best camera
+                isAutoFocusEnabled = true
+                isContinuousFocusEnabled = true
+                isAutoTorchEnabled = false
+                isBarcodeSceneModeEnabled = true
+                isExposureEnabled = true // Better for varying lighting
+                isMeteringEnabled = true // Better exposure metering
+            }
+            
+            // Configure decode hints for better QR code detection
+            val hints = mapOf(
+                DecodeHintType.TRY_HARDER to true, // More thorough scanning
+                DecodeHintType.POSSIBLE_FORMATS to listOf(BarcodeFormat.QR_CODE),
+                DecodeHintType.CHARACTER_SET to "UTF-8",
+                // Try to decode inverted (white on black) QR codes too
+                DecodeHintType.ALSO_INVERTED to true
+            )
+            
+            // Set custom decoder with hints
+            val formats = listOf(BarcodeFormat.QR_CODE)
+            barcodeView.barcodeView.decoderFactory = DefaultDecoderFactory(formats, hints, null, 0)
+            
             // Initialize camera
             barcodeView.initializeFromIntent(requireActivity().intent)
             barcodeView.decodeContinuous(object : BarcodeCallback {
                 override fun barcodeResult(result: BarcodeResult) {
-                    if (!isProcessing) {
+                    if (!isProcessing && result.text != null && result.text.isNotEmpty()) {
                         isProcessing = true
+                        // Provide feedback
+                        playSuccessSound()
+                        vibratePhone()
                         handleQRCodeResult(result.text)
                     }
                 }
             })
             barcodeView.resume()
         } catch (e: Exception) {
-            android.util.Log.e("QRScannerFragment", "Error starting camera", e)
+            android.util.Log.e(TAG, "Error starting camera", e)
             showToast("Error starting camera: ${e.message}")
+        }
+    }
+    
+    private fun playSuccessSound() {
+        try {
+            toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP, 200)
+        } catch (e: Exception) {
+            android.util.Log.w(TAG, "Could not play success sound", e)
+        }
+    }
+    
+    private fun vibratePhone() {
+        try {
+            vibrator?.let {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    it.vibrate(VibrationEffect.createOneShot(200, VibrationEffect.DEFAULT_AMPLITUDE))
+                } else {
+                    @Suppress("DEPRECATION")
+                    it.vibrate(200)
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.w(TAG, "Could not vibrate", e)
         }
     }
 
@@ -137,32 +195,13 @@ class QRScannerFragment : Fragment() {
                 // 1) Expiration
                 if (qrData.isExpired()) {
                     showToast("This QR code has expired")
+                    progressBar.visibility = View.GONE
+                    isProcessing = false
+                    stopTimer()
                     return@launch
                 }
 
-                // 2) Location validation (required)
-                if (qrData.hasLocation()) {
-                    when (val locationResult = validateLocation(qrData)) {
-                        is LocationManager.LocationValidationResult.Invalid -> {
-                            showToast(locationResult.message)
-                            return@launch
-                        }
-                        is LocationManager.LocationValidationResult.Error -> {
-                            showToast("Location validation failed: ${locationResult.message}")
-                            return@launch
-                        }
-                        is LocationManager.LocationValidationResult.Valid -> {
-                            showToast(locationResult.message)
-                        }
-                        is LocationManager.LocationValidationResult.Warning -> {
-                            showToast(locationResult.message)
-                            return@launch
-                        }
-                    }
-                } else {
-                    showToast("This QR code was generated without location data. Attendance requires location verification.")
-                    return@launch
-                }
+                // 2) Location validation removed - no longer required
 
                 // 3) Validate session
                 val sessionDoc = db.collection("attendance_sessions")
@@ -170,16 +209,25 @@ class QRScannerFragment : Fragment() {
                     .get().await()
                 if (!sessionDoc.exists()) {
                     showToast("Invalid or expired session")
+                    progressBar.visibility = View.GONE
+                    isProcessing = false
+                    stopTimer()
                     return@launch
                 }
                 val sessionTeacherId = sessionDoc.getString("teacherId")
                 if (qrData.teacherId != sessionTeacherId) {
                     showToast("This QR code is not for this class/teacher")
+                    progressBar.visibility = View.GONE
+                    isProcessing = false
+                    stopTimer()
                     return@launch
                 }
                 val expiresAt = sessionDoc.getLong("expiresAt") ?: 0L
                 if (System.currentTimeMillis() > expiresAt) {
                     showToast("This QR code session has expired")
+                    progressBar.visibility = View.GONE
+                    isProcessing = false
+                    stopTimer()
                     return@launch
                 }
 
@@ -188,15 +236,35 @@ class QRScannerFragment : Fragment() {
                 val userDoc = db.collection("users").document(currentUser.uid).get().await()
                 val studentName = userDoc.getString("name") ?: "Unknown Student"
 
-                // 5) Prevent duplicates
-                val existing = db.collection("attendance")
+                // 5) Prevent duplicates - Multi-layer protection
+                
+                // Layer 1: Check if already scanned in this app session (instant feedback)
+                if (scannedSessions.contains(qrData.sessionId)) {
+                    android.util.Log.d(TAG, "Duplicate scan detected (app session) - Session: ${qrData.sessionId}")
+                    showToast("You've already marked attendance for this class!")
+                    progressBar.visibility = View.GONE
+                    isProcessing = false
+                    stopTimer()
+                    return@launch
+                }
+                
+                // Layer 2: Check database by sessionId (prevents scanning same QR session twice)
+                val existingBySession = db.collection("attendance")
                     .whereEqualTo("userId", currentUser.uid)
                     .whereEqualTo("sessionId", qrData.sessionId)
                     .get().await()
-                if (!existing.isEmpty) {
-                    showToast("Attendance already marked for this session")
+                    
+                if (!existingBySession.isEmpty) {
+                    android.util.Log.d(TAG, "Duplicate scan detected - already scanned this QR session")
+                    scannedSessions.add(qrData.sessionId) // Track it locally too
+                    showToast("You've already scanned this QR code!")
+                    progressBar.visibility = View.GONE
+                    isProcessing = false
+                    stopTimer()
                     return@launch
                 }
+                
+                android.util.Log.d(TAG, "No duplicates found, marking attendance for ${qrData.subject}")
 
                 // 6) Save attendance
                 val attendanceData = hashMapOf(
@@ -212,24 +280,45 @@ class QRScannerFragment : Fragment() {
                     "location" to "",
                     "notes" to ""
                 )
-                db.collection("attendance").add(attendanceData)
-                    .addOnSuccessListener {
-                        showToast("Attendance marked successfully!")
-                        // Navigate back to dashboard
-                        parentFragmentManager.beginTransaction()
-                            .replace(R.id.fragmentContainer, StudentDashboardFragment())
-                            .commit()
+                android.util.Log.d(TAG, "=== SAVING ATTENDANCE TO FIRESTORE ===")
+                android.util.Log.d(TAG, "userId: ${currentUser.uid}")
+                android.util.Log.d(TAG, "studentName: $studentName")
+                android.util.Log.d(TAG, "sessionId: ${qrData.sessionId}")
+                android.util.Log.d(TAG, "teacherId: ${qrData.teacherId}")
+                android.util.Log.d(TAG, "scheduleId: ${qrData.scheduleId}")
+                android.util.Log.d(TAG, "subject: ${qrData.subject}")
+                android.util.Log.d(TAG, "section: ${qrData.section}")
+                android.util.Log.d(TAG, "status: ${AttendanceStatus.PRESENT.name}")
+                val docRef = db.collection("attendance").add(attendanceData).await()
+                android.util.Log.d(TAG, "✓✓✓ ATTENDANCE SAVED! Document ID: ${docRef.id} ✓✓✓")
+                
+                // Track this session as scanned
+                scannedSessions.add(qrData.sessionId)
+                
+                android.util.Log.d(TAG, "Attendance marked successfully - Session: ${qrData.sessionId}, Subject: ${qrData.subject}")
+                
+                progressBar.visibility = View.GONE
+                stopTimer()
+                isProcessing = false
+                showToast("Attendance marked successfully!")
+                
+                // Navigate back to dashboard with attendance info to show immediately
+                val dashboardFragment = StudentDashboardFragment().apply {
+                    arguments = Bundle().apply {
+                        putString("justMarkedSubject", qrData.subject)
+                        putLong("justMarkedTime", System.currentTimeMillis())
                     }
-                    .addOnFailureListener { e ->
-                        showToast("Failed to mark attendance: ${e.message}")
-                    }
+                }
+                parentFragmentManager.beginTransaction()
+                    .replace(R.id.fragmentContainer, dashboardFragment)
+                    .commit()
+                    
             } catch (e: Exception) {
                 showToast(e.message ?: "Error processing QR code")
-            } finally {
                 progressBar.visibility = View.GONE
                 isProcessing = false
                 stopTimer()
-                // Restart scanning after a short delay
+                // Restart scanning after error
                 barcodeView.postDelayed({
                     if (isAdded && !isDetached) {
                         startScanning()
@@ -277,6 +366,9 @@ class QRScannerFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         stopTimer()
+        // Clean up resources
+        toneGenerator?.release()
+        toneGenerator = null
     }
     
     fun refreshScanner() {
@@ -341,11 +433,6 @@ class QRScannerFragment : Fragment() {
             if (cameraGranted) {
                 // Camera permission granted, start scanning
                 startScanning()
-                
-                // Check location permission separately
-                if (!locationManager.hasLocationPermission()) {
-                    Toast.makeText(requireContext(), "Location permission is required for attendance validation", Toast.LENGTH_LONG).show()
-                }
             } else {
                 Toast.makeText(requireContext(), "Camera permission is required for QR scanning", Toast.LENGTH_LONG).show()
                 
@@ -355,9 +442,5 @@ class QRScannerFragment : Fragment() {
                     .commit()
             }
         }
-    }
-
-    companion object {
-        private const val PERMISSION_REQUEST_CODE = 100
     }
 }

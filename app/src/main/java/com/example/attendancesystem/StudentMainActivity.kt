@@ -6,10 +6,16 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import com.google.android.material.navigation.NavigationView
 import android.widget.ImageView
+import android.content.Context
+import androidx.work.WorkManager
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.ExistingPeriodicWorkPolicy
+import java.util.concurrent.TimeUnit
 
 class StudentMainActivity : AppCompatActivity() {
     
     private lateinit var drawerLayout: DrawerLayout
+    private lateinit var navigationView: NavigationView
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,7 +38,7 @@ class StudentMainActivity : AppCompatActivity() {
     
     private fun setupDrawerNavigation() {
         drawerLayout = findViewById(R.id.drawerLayout)
-        val navigationView = findViewById<NavigationView>(R.id.navigationView)
+        navigationView = findViewById<NavigationView>(R.id.navigationView)
         val drawerHandle = findViewById<ImageView>(R.id.drawerHandle)
         
         // Handle drawer toggle
@@ -91,6 +97,12 @@ class StudentMainActivity : AppCompatActivity() {
                 loadFragment(StudentDashboardFragment())
             }
         }
+    }
+    
+    // Public method for fragments to navigate to dashboard
+    fun navigateToDashboard() {
+        navigationView.setCheckedItem(R.id.drawer_home)
+        loadFragment(StudentDashboardFragment())
     }
     
     override fun onBackPressed() {

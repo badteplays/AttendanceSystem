@@ -200,25 +200,33 @@ class TeacherSchedulesFragment : Fragment() {
         val schedule = hashMapOf(
             "teacherId" to currentUser.uid,
             "subject" to subject,
-            "section" to section,
+            "section" to section.uppercase(), // Normalize to uppercase
             "day" to day,
             "startTime" to startTime24,
             "endTime" to endTime24,
             "lastGeneratedDate" to ""
         )
 
+        android.util.Log.d("TeacherSchedules", "=== SAVING SCHEDULE TO FIRESTORE ===")
+        android.util.Log.d("TeacherSchedules", "teacherId: ${currentUser.uid}")
+        android.util.Log.d("TeacherSchedules", "subject: $subject")
+        android.util.Log.d("TeacherSchedules", "section: ${section.uppercase()}")
+        android.util.Log.d("TeacherSchedules", "day: $day")
+        android.util.Log.d("TeacherSchedules", "startTime: $startTime24")
+        android.util.Log.d("TeacherSchedules", "endTime: $endTime24")
+
         Toast.makeText(requireContext(), "Creating schedule...", Toast.LENGTH_SHORT).show()
 
         db.collection("schedules")
             .add(schedule)
-            .addOnSuccessListener {
-                android.util.Log.d("TeacherSchedules", "Schedule added successfully!")
-                Toast.makeText(requireContext(), "Schedule created", Toast.LENGTH_SHORT).show()
+            .addOnSuccessListener { documentReference ->
+                android.util.Log.d("TeacherSchedules", "✓✓✓ Schedule SAVED successfully! Document ID: ${documentReference.id} ✓✓✓")
+                Toast.makeText(requireContext(), "Schedule created (ID: ${documentReference.id})", Toast.LENGTH_SHORT).show()
                 hideScheduleForm()
                 loadSchedules() // Refresh the list
             }
             .addOnFailureListener { e ->
-                android.util.Log.e("TeacherSchedules", "Failed to add schedule: ${e.message}", e)
+                android.util.Log.e("TeacherSchedules", "✗✗✗ FAILED to save schedule: ${e.message}", e)
                 Toast.makeText(requireContext(), "Failed to create schedule: ${e.message}", Toast.LENGTH_LONG).show()
             }
     }
@@ -236,22 +244,24 @@ class TeacherSchedulesFragment : Fragment() {
     fun loadSchedules() {
         progressBar.visibility = View.VISIBLE
         val user = FirebaseAuth.getInstance().currentUser ?: return
+        android.util.Log.d("TeacherSchedules", "=== LOADING SCHEDULES FOR TEACHER: ${user.uid} ===")
         db.collection("schedules")
             .whereEqualTo("teacherId", user.uid)
             .get()
             .addOnSuccessListener { docs ->
+                android.util.Log.d("TeacherSchedules", "Found ${docs.size()} schedules in Firestore")
                 schedules.clear()
                 for (d in docs) {
-                    schedules.add(
-                        TeacherScheduleRow(
-                            id = d.id,
-                            subject = d.getString("subject") ?: "",
-                            section = d.getString("section") ?: "",
-                            day = d.getString("day") ?: "",
-                            startTime = d.getString("startTime") ?: "",
-                            endTime = d.getString("endTime") ?: ""
-                        )
+                    val scheduleRow = TeacherScheduleRow(
+                        id = d.id,
+                        subject = d.getString("subject") ?: "",
+                        section = d.getString("section") ?: "",
+                        day = d.getString("day") ?: "",
+                        startTime = d.getString("startTime") ?: "",
+                        endTime = d.getString("endTime") ?: ""
                     )
+                    schedules.add(scheduleRow)
+                    android.util.Log.d("TeacherSchedules", "  → Schedule ${d.id}: ${scheduleRow.subject} | ${scheduleRow.section} | ${scheduleRow.day} | ${scheduleRow.startTime}-${scheduleRow.endTime}")
                 }
                 // Total header removed per request
                 adapter.notifyDataSetChanged()
@@ -410,7 +420,7 @@ private fun TeacherSchedulesFragment.showEditDialog(row: TeacherScheduleRow) {
 
         val updates = mapOf(
             "subject" to subject,
-            "section" to section,
+            "section" to section.uppercase(), // Normalize to uppercase for consistency
             "day" to day,
             "startTime" to start24,
             "endTime" to end24

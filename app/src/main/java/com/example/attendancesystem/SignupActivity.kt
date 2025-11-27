@@ -84,7 +84,7 @@ class SignupActivity : AppCompatActivity() {
                         "createdAt" to System.currentTimeMillis()
                     )
                     if (selectedRole == "student") {
-                        user["section"] = section
+                        user["section"] = section.uppercase() // Normalize to uppercase
                     } else if (selectedRole == "teacher") {
                         user["department"] = department
                     }

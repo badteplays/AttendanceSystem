@@ -131,34 +131,119 @@ class TeacherAnalyticsFragment : Fragment() {
 
     private fun loadAnalyticsData() {
         try {
+            val currentUser = auth.currentUser
+            if (currentUser == null) {
+                android.widget.Toast.makeText(requireContext(), "Not authenticated", android.widget.Toast.LENGTH_SHORT).show()
+                return
+            }
+
             val selectedPeriod = periodSpinner.selectedItem?.toString() ?: "Last 30 Days"
             val selectedSubject = subjectSpinner.selectedItem?.toString() ?: "All Subjects"
             val selectedSection = sectionSpinner.selectedItem?.toString() ?: "All Sections"
 
+            // Get period date range
             val calendar = Calendar.getInstance()
             val endDate = calendar.time
             when (selectedPeriod) {
                 "Last 7 Days" -> calendar.add(Calendar.DAY_OF_YEAR, -7)
                 "Last 30 Days" -> calendar.add(Calendar.DAY_OF_YEAR, -30)
                 "Last 3 Months" -> calendar.add(Calendar.MONTH, -3)
-                "All Time" -> calendar.add(Calendar.YEAR, -1)
+                "All Time" -> calendar.add(Calendar.YEAR, -10) // Far back enough
             }
             val startDate = calendar.time
 
-            // Server query: range + orderBy on timestamp; attach realtime listener
-            val query: Query = db.collection("attendance")
-                .whereGreaterThanOrEqualTo("timestamp", startDate)
-                .whereLessThanOrEqualTo("timestamp", endDate)
-                .orderBy("timestamp")
-
+            // Query both active and archived attendance for complete analytics
             analyticsListener?.remove()
-            analyticsListener = query.addSnapshotListener { documents, e ->
-                if (e != null) {
-                    android.widget.Toast.makeText(requireContext(), "Analytics listen failed: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
-                    return@addSnapshotListener
-                }
+            analyticsListener = db.collection("attendance")
+                .whereEqualTo("teacherId", currentUser.uid)
+                .addSnapshotListener { documents, e ->
+                    if (e != null) {
+                        android.util.Log.e("TeacherAnalytics", "Analytics error: ${e.message}", e)
+                        android.widget.Toast.makeText(requireContext(), "Analytics error: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+                        updateStatistics(emptyList())
+                        return@addSnapshotListener
+                    }
 
-                var data = documents?.map { doc ->
+                    // Get active attendance data
+                    val activeData = documents?.mapNotNull { doc ->
+                        val timestamp = doc.getTimestamp("timestamp")?.toDate()
+                        // Filter by date range in memory
+                        if (timestamp != null && timestamp.after(startDate) && timestamp.before(endDate)) {
+                            TeacherAnalyticsData(
+                                studentName = doc.getString("studentName") ?: "",
+                                subject = doc.getString("subject") ?: "",
+                                section = doc.getString("section") ?: "",
+                                status = doc.getString("status") ?: "PRESENT",
+                                timestamp = timestamp
+                            )
+                        } else null
+                    } ?: emptyList()
+
+                    // Also fetch archived attendance data
+                    db.collection("archived_attendance")
+                        .whereEqualTo("teacherId", currentUser.uid)
+                        .get()
+                        .addOnSuccessListener { archivedDocuments ->
+                            val archivedData = archivedDocuments.mapNotNull { doc ->
+                                val timestamp = doc.getTimestamp("timestamp")?.toDate()
+                                // Filter by date range in memory
+                                if (timestamp != null && timestamp.after(startDate) && timestamp.before(endDate)) {
+                                    TeacherAnalyticsData(
+                                        studentName = doc.getString("studentName") ?: "",
+                                        subject = doc.getString("subject") ?: "",
+                                        section = doc.getString("section") ?: "",
+                                        status = doc.getString("status") ?: "PRESENT",
+                                        timestamp = timestamp
+                                    )
+                                } else null
+                            }
+
+                            // Combine active and archived data
+                            var combinedData = activeData + archivedData
+
+                            // Filter to classes the teacher actually owns
+                            combinedData = combinedData.filter { d ->
+                                teacherSubjects.contains(d.subject) && subjectSections[d.subject]?.contains(d.section) == true
+                            }
+
+                            // Apply UI filters
+                            if (selectedSubject != "All Subjects") {
+                                combinedData = combinedData.filter { it.subject == selectedSubject }
+                            }
+                            if (selectedSection != "All Sections") {
+                                combinedData = combinedData.filter { it.section.equals(selectedSection, ignoreCase = true) }
+                            }
+
+                            updateStatistics(combinedData)
+                        }
+                        .addOnFailureListener { ex ->
+                            android.util.Log.e("TeacherAnalytics", "Error loading archived data: ${ex.message}", ex)
+                            // Still show active data even if archived fails
+                            var data = activeData
+                            data = data.filter { d ->
+                                teacherSubjects.contains(d.subject) && subjectSections[d.subject]?.contains(d.section) == true
+                            }
+                            if (selectedSubject != "All Subjects") {
+                                data = data.filter { it.subject == selectedSubject }
+                            }
+                            if (selectedSection != "All Sections") {
+                                data = data.filter { it.section.equals(selectedSection, ignoreCase = true) }
+                            }
+                            updateStatistics(data)
+                        }
+                }
+        } catch (e: Exception) {
+            android.widget.Toast.makeText(requireContext(), "Analytics error: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun loadAnalyticsDataFallback(teacherId: String, selectedSubject: String, selectedSection: String) {
+        // Simplified query without timestamp filters - includes archived attendance
+        db.collection("attendance")
+            .whereEqualTo("teacherId", teacherId)
+            .get()
+            .addOnSuccessListener { documents ->
+                val activeData = documents.map { doc ->
                     TeacherAnalyticsData(
                         studentName = doc.getString("studentName") ?: "",
                         subject = doc.getString("subject") ?: "",
@@ -166,26 +251,61 @@ class TeacherAnalyticsFragment : Fragment() {
                         status = doc.getString("status") ?: "PRESENT",
                         timestamp = doc.getTimestamp("timestamp")?.toDate() ?: Date()
                     )
-                } ?: emptyList()
-
-                // Filter to classes the teacher actually owns
-                data = data.filter { d ->
-                    teacherSubjects.contains(d.subject) && subjectSections[d.subject]?.contains(d.section) == true
                 }
 
-                // Apply UI filters in memory to avoid extra indexes
-                if (selectedSubject != "All Subjects") {
-                    data = data.filter { it.subject == selectedSubject }
-                }
-                if (selectedSection != "All Sections") {
-                    data = data.filter { it.section.equals(selectedSection, ignoreCase = true) }
-                }
+                // Also fetch archived attendance
+                db.collection("archived_attendance")
+                    .whereEqualTo("teacherId", teacherId)
+                    .get()
+                    .addOnSuccessListener { archivedDocuments ->
+                        val archivedData = archivedDocuments.map { doc ->
+                            TeacherAnalyticsData(
+                                studentName = doc.getString("studentName") ?: "",
+                                subject = doc.getString("subject") ?: "",
+                                section = doc.getString("section") ?: "",
+                                status = doc.getString("status") ?: "PRESENT",
+                                timestamp = doc.getTimestamp("timestamp")?.toDate() ?: Date()
+                            )
+                        }
 
-                updateStatistics(data)
+                        // Combine data
+                        var combinedData = activeData + archivedData
+
+                        // Filter to classes the teacher actually owns
+                        combinedData = combinedData.filter { d ->
+                            teacherSubjects.contains(d.subject) && subjectSections[d.subject]?.contains(d.section) == true
+                        }
+
+                        // Apply UI filters
+                        if (selectedSubject != "All Subjects") {
+                            combinedData = combinedData.filter { it.subject == selectedSubject }
+                        }
+                        if (selectedSection != "All Sections") {
+                            combinedData = combinedData.filter { it.section.equals(selectedSection, ignoreCase = true) }
+                        }
+
+                        updateStatistics(combinedData)
+                    }
+                    .addOnFailureListener { e ->
+                        // If archived fails, just use active data
+                        var data = activeData
+                        data = data.filter { d ->
+                            teacherSubjects.contains(d.subject) && subjectSections[d.subject]?.contains(d.section) == true
+                        }
+                        if (selectedSubject != "All Subjects") {
+                            data = data.filter { it.subject == selectedSubject }
+                        }
+                        if (selectedSection != "All Sections") {
+                            data = data.filter { it.section.equals(selectedSection, ignoreCase = true) }
+                        }
+                        updateStatistics(data)
+                    }
             }
-        } catch (e: Exception) {
-            android.widget.Toast.makeText(requireContext(), "Analytics error: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
-        }
+            .addOnFailureListener { e ->
+                android.widget.Toast.makeText(requireContext(), "Failed to load analytics: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+                // Show zero stats
+                updateStatistics(emptyList())
+            }
     }
 
     override fun onDestroyView() {
@@ -195,26 +315,57 @@ class TeacherAnalyticsFragment : Fragment() {
     }
 
     private fun updateStatistics(attendanceData: List<TeacherAnalyticsData>) {
+        // Count total attendance records for this filter
         val totalRecords = attendanceData.size
+        
+        // Count unique students for this filter
         val uniqueStudents = attendanceData.map { it.studentName }.distinct().size
+        
+        // Calculate attendance statistics
         val presentCount = attendanceData.count { it.status == "PRESENT" }
         val lateCount = attendanceData.count { it.status == "LATE" }
-        val attendanceRate = if (totalRecords > 0) (presentCount + lateCount).toFloat() / totalRecords * 100 else 0f
-        val punctualityRate = if (totalRecords > 0) presentCount.toFloat() / totalRecords * 100 else 0f
+        val absentCount = attendanceData.count { it.status == "ABSENT" }
+        val cuttingCount = attendanceData.count { it.status == "CUTTING" }
+        
+        // Attendance rate = (Present + Late) / Total
+        val attendanceRate = if (totalRecords > 0) {
+            (presentCount + lateCount).toFloat() / totalRecords * 100
+        } else 0f
+        
+        // Punctuality rate = Present only / Total
+        val punctualityRate = if (totalRecords > 0) {
+            presentCount.toFloat() / totalRecords * 100
+        } else 0f
 
+        // Update UI
         totalClassesText.text = totalRecords.toString()
         totalStudentsText.text = uniqueStudents.toString()
         attendanceRateText.text = String.format("%.1f%%", attendanceRate)
         punctualityRateText.text = String.format("%.1f%%", punctualityRate)
 
-        val bestClass = attendanceData.groupBy { "${it.subject} - ${it.section}" }
-            .map { (className, records) ->
-                val classAttendanceRate = records.count { it.status == "PRESENT" }.toFloat() / records.size * 100
-                className to classAttendanceRate
+        // Find best performing section (if viewing all sections)
+        val selectedSection = sectionSpinner.selectedItem?.toString() ?: "All Sections"
+        if (selectedSection == "All Sections" && attendanceData.isNotEmpty()) {
+            val bestClass = attendanceData.groupBy { "${it.subject} - ${it.section}" }
+                .filter { it.value.isNotEmpty() }
+                .map { (className, records) ->
+                    val classAttendanceRate = records.count { it.status == "PRESENT" || it.status == "LATE" }.toFloat() / records.size * 100
+                    className to classAttendanceRate
+                }
+                .maxByOrNull { it.second }
+            bestPerformingClassText.text = bestClass?.first ?: "N/A"
+            avgAttendanceText.text = String.format("%.1f%%", bestClass?.second ?: 0f)
+        } else {
+            // When a specific section is selected, show that section's stats
+            val selectedSubject = subjectSpinner.selectedItem?.toString() ?: "All Subjects"
+            if (selectedSubject != "All Subjects" && selectedSection != "All Sections") {
+                bestPerformingClassText.text = "$selectedSubject - $selectedSection"
+                avgAttendanceText.text = String.format("%.1f%%", attendanceRate)
+            } else {
+                bestPerformingClassText.text = "N/A"
+                avgAttendanceText.text = "0%"
             }
-            .maxByOrNull { it.second }
-        bestPerformingClassText.text = bestClass?.first ?: "N/A"
-        avgAttendanceText.text = String.format("%.1f%%", bestClass?.second ?: 0f)
+        }
     }
 }
 

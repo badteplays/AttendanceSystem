@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/drawer_home"
+        android:title="Dashboard"
+        android:icon="@drawable/ic_home" />
+    <item
+        android:id="@+id/drawer_scan"
+        android:title="Scan QR"
+        android:icon="@drawable/ic_qr_code" />
+    <item
+        android:id="@+id/drawer_schedule"
+        android:title="Schedule"
+        android:icon="@drawable/ic_calendar" />
+    <item
+        android:id="@+id/drawer_routines"
+        android:title="My Routines"
+        android:icon="@drawable/ic_schedule" />
+    <item
+        android:id="@+id/drawer_history"
+        android:title="History"
+        android:icon="@drawable/ic_hours" />
+    <item
+        android:id="@+id/drawer_profile"
+        android:title="Profile"
+        android:icon="@drawable/ic_person" />
+</menu>
+

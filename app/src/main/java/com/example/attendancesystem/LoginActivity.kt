@@ -1,4 +1,4 @@
-package com.example.attendancesystem
+image.pngpackage com.example.attendancesystem
 
 import android.content.Intent
 import android.os.Bundle
@@ -9,6 +9,11 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
+import androidx.work.WorkManager
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.ExistingPeriodicWorkPolicy
+import java.util.concurrent.TimeUnit
+import android.content.Context
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
@@ -22,35 +27,66 @@ class LoginActivity : AppCompatActivity() {
 
         auth = Firebase.auth
 
-        // Check if user is already logged in
-        if (auth.currentUser != null) {
-            // If user is both teacher and student, prompt for role selection
+        // Check if user explicitly logged out
+        val prefs = getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
+        val explicitLogout = prefs.getBoolean("explicit_logout", false)
+
+        // Check if user is already logged in (and didn't just log out)
+        val currentUser = auth.currentUser
+        if (currentUser != null && !explicitLogout) {
+            android.util.Log.d("LoginActivity", "User already logged in: ${currentUser.uid}")
+            
+            // Hide login form while checking
+            binding.btnLogin.isEnabled = false
+            binding.btnLogin.text = "Checking session..."
+            
+            // Check user's role and navigate
             db.collection("users")
-                .document(auth.currentUser!!.uid)
+                .document(currentUser.uid)
                 .get()
                 .addOnSuccessListener { document ->
                     if (!document.exists()) {
+                        android.util.Log.e("LoginActivity", "User document not found, signing out")
                         auth.signOut()
+                        binding.btnLogin.isEnabled = true
+                        binding.btnLogin.text = "Login"
                         Toast.makeText(this, "Account not found. Please sign up.", Toast.LENGTH_SHORT).show()
+                        // Setup listeners only when staying on login screen
+                        setupClickListeners()
                         return@addOnSuccessListener
                     }
+                    
                     val isTeacher = document.getBoolean("isTeacher") ?: false
-                    val isStudent = document.getBoolean("isStudent") ?: true // Default to student if not set
+                    val isStudent = document.getBoolean("isStudent") ?: true
+                    
+                    android.util.Log.d("LoginActivity", "User role - Teacher: $isTeacher, Student: $isStudent")
+                    
                     if (isTeacher && isStudent) {
                         // User has both roles, prompt selection
+                        android.util.Log.d("LoginActivity", "User has both roles, showing role selection")
                         startActivity(Intent(this, RoleSelectionActivity::class.java))
                         finish()
                     } else {
+                        // Navigate to appropriate screen
+                        android.util.Log.d("LoginActivity", "Auto-navigating to dashboard")
                         navigateToAppropriateScreen()
                     }
                 }
-                .addOnFailureListener {
+                .addOnFailureListener { e ->
+                    android.util.Log.e("LoginActivity", "Error loading user data: ${e.message}", e)
+                    binding.btnLogin.isEnabled = true
+                    binding.btnLogin.text = "Login"
                     Toast.makeText(this, "Error loading user data", Toast.LENGTH_SHORT).show()
+                    // Setup listeners only when staying on login screen
+                    setupClickListeners()
                 }
             return
         }
-
-        setupClickListeners()
+        
+        // User not logged in or explicitly logged out - setup normal login flow
+        setupClickListeners() else {
+            android.util.Log.d("LoginActivity", "No user logged in, showing login screen")
+        }
     }
 
     private fun setupClickListeners() {
@@ -139,6 +175,10 @@ class LoginActivity : AppCompatActivity() {
             return
         }
 
+        // Clear the explicit logout flag since we're logging in
+        val prefs = getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
+        prefs.edit().putBoolean("explicit_logout", false).apply()
+
         db.collection("users")
             .document(currentUser.uid)
             .get()
@@ -150,10 +190,16 @@ class LoginActivity : AppCompatActivity() {
                     return@addOnSuccessListener
                 }
                 val isTeacher = document.getBoolean("isTeacher") ?: false
+                
+                // Schedule background reminders for students
+                if (!isTeacher) {
+                    scheduleStudentReminders()
+                }
+                
                 val intent = if (isTeacher) {
                     Intent(this, TeacherMainActivity::class.java)
                 } else {
-                    Intent(this, StudentDashboardActivity::class.java)
+                    Intent(this, StudentMainActivity::class.java)
                 }
                 startActivity(intent)
                 finish()
@@ -161,5 +207,30 @@ class LoginActivity : AppCompatActivity() {
             .addOnFailureListener {
                 Toast.makeText(this, "Error loading user data", Toast.LENGTH_SHORT).show()
             }
+    }
+    
+    private fun scheduleStudentReminders() {
+        try {
+            val prefs = getSharedPreferences("student_prefs", Context.MODE_PRIVATE)
+            val notificationsEnabled = prefs.getBoolean("notifications_enabled", true)
+            
+            if (notificationsEnabled) {
+                // Schedule periodic work to check for upcoming classes every 15 minutes
+                // This will run in the background even when the app is closed
+                val workRequest = PeriodicWorkRequestBuilder<StudentReminderWorker>(
+                    15, TimeUnit.MINUTES
+                ).build()
+                
+                WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+                    "student_reminder_work",
+                    ExistingPeriodicWorkPolicy.KEEP, // Keep existing if already scheduled
+                    workRequest
+                )
+                
+                android.util.Log.d("LoginActivity", "Background class reminders scheduled (runs even when app is closed)")
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("LoginActivity", "Error scheduling reminders: ${e.message}", e)
+        }
     }
 }

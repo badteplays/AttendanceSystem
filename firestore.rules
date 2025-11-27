@@ -1,0 +1,124 @@
+// Firestore Security Rules
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helpers
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function isTeacher() {
+      return isAuthenticated() &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isTeacher == true;
+    }
+    function isStudent() {
+      return isAuthenticated() &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isStudent == true;
+    }
+
+    // Students collection (if you keep it)
+    match /students/{studentId} {
+      allow read: if isStudent() && request.auth.uid == studentId;
+      allow write: if isTeacher();
+    }
+
+    // Attendance sessions
+    match /attendance_sessions/{sessionId} {
+      allow write: if isTeacher();
+      allow read: if isAuthenticated();
+    }
+
+    // Schedules
+    match /schedules/{scheduleId} {
+      // Teachers create only their own
+      allow create: if isTeacher() && request.resource.data.teacherId == request.auth.uid;
+
+      // Teachers can read/update/delete their own schedules
+      allow read, update, delete: if isTeacher() && resource.data.teacherId == request.auth.uid;
+
+      // Students can read schedules for their section
+      allow read: if isStudent();
+
+      // Attendance subcollection under a schedule (if used)
+      match /attendance/{attendanceId} {
+        allow create: if isTeacher();
+        allow read: if (isTeacher() && resource.data.teacherId == request.auth.uid)
+                    || (isStudent() && resource.data.studentId == request.auth.uid);
+        allow update, delete: if isTeacher() && resource.data.teacherId == request.auth.uid;
+      }
+    }
+
+    // Users — allow teachers to read (to list students), users can read/write their own
+    match /users/{userId} {
+      // Read: a user can read self; any teacher can read any user (needed for Manual Add student list)
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isTeacher());
+
+      // Write: keep self-only (tight) — adjust if teachers should update limited fields
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Attendance (flat collection)
+    match /attendance/{attendanceId} {
+      // Teachers can create manual attendance
+      allow create: if isTeacher()
+        // OR student scan flow (OR combines with the rule above)
+        || (isStudent()
+          && request.resource.data.userId == request.auth.uid
+          && exists(/databases/$(database)/documents/attendance_sessions/$(request.resource.data.sessionId))
+          && get(/databases/$(database)/documents/attendance_sessions/$(request.resource.data.sessionId)).data.expiresAt
+                > request.time.toMillis()
+          && !exists(/databases/$(database)/documents/attendance/$(attendanceId)));
+
+      // Read own; teachers can read their classes’ attendance
+      allow read: if (isStudent() && resource.data.userId == request.auth.uid)
+                  || (isTeacher() && (
+                        resource.data.teacherId == request.auth.uid ||
+                        // Fallback: allow if teacher owns the linked schedule
+                        (resource.data.scheduleId != null &&
+                         get(/databases/$(database)/documents/schedules/$(resource.data.scheduleId)).data.teacherId == request.auth.uid)
+                  ));
+
+      allow update: if false;
+      allow delete: if isTeacher() && (
+        resource.data.teacherId == request.auth.uid ||
+        (resource.data.scheduleId != null &&
+         get(/databases/$(database)/documents/schedules/$(resource.data.scheduleId)).data.teacherId == request.auth.uid)
+      );
+    }
+
+    // Archived Attendance (for historical analytics preservation)
+    match /archived_attendance/{attendanceId} {
+      // Teachers can create (archive) attendance records
+      allow create: if isTeacher() && request.resource.data.teacherId == request.auth.uid;
+
+      // Read permissions: students can read their own, teachers can read their classes
+      allow read: if (isStudent() && resource.data.userId == request.auth.uid)
+                  || (isTeacher() && (
+                        resource.data.teacherId == request.auth.uid ||
+                        // Fallback: allow if teacher owns the linked schedule
+                        (resource.data.scheduleId != null &&
+                         get(/databases/$(database)/documents/schedules/$(resource.data.scheduleId)).data.teacherId == request.auth.uid)
+                  ));
+
+      // No updates to archived data
+      allow update: if false;
+      
+      // Teachers can delete archived records if needed
+      allow delete: if isTeacher() && (
+        resource.data.teacherId == request.auth.uid ||
+        (resource.data.scheduleId != null &&
+         get(/databases/$(database)/documents/schedules/$(resource.data.scheduleId)).data.teacherId == request.auth.uid)
+      );
+    }
+
+    // Routines collection (student personal routines)
+    match /routines/{routineId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+  }
+}
+
+

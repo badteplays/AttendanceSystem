@@ -82,6 +82,10 @@ class TeacherOptionsFragment : Fragment() {
                 .setTitle("Logout")
                 .setMessage("Are you sure you want to logout?")
                 .setPositiveButton("Logout") { _, _ ->
+                    // Set explicit logout flag to prevent auto-login
+                    val prefs = requireContext().getSharedPreferences("auth_prefs", android.content.Context.MODE_PRIVATE)
+                    prefs.edit().putBoolean("explicit_logout", true).apply()
+                    
                     auth.signOut()
                     val intent = Intent(requireContext(), LoginActivity::class.java)
                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK

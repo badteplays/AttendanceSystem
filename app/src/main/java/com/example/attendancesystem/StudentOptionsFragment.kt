@@ -14,6 +14,7 @@ import androidx.fragment.app.Fragment
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.example.attendancesystem.utils.ProfilePictureManager
+import com.example.attendancesystem.utils.ThemeManager
 
 class StudentOptionsFragment : Fragment() {
     private lateinit var textUserName: TextView
@@ -23,8 +24,10 @@ class StudentOptionsFragment : Fragment() {
     private lateinit var textInitials: TextView
     private lateinit var spinnerReminderTime: Spinner
     private lateinit var reminderTimeLayout: LinearLayout
+    private lateinit var textCurrentTheme: TextView
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
+    private lateinit var themeManager: ThemeManager
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -50,8 +53,11 @@ class StudentOptionsFragment : Fragment() {
         textInitials = view.findViewById(R.id.textInitials)
         spinnerReminderTime = view.findViewById(R.id.spinnerReminderTime)
         reminderTimeLayout = view.findViewById(R.id.reminderTimeLayout)
+        textCurrentTheme = view.findViewById(R.id.textCurrentTheme)
         
+        themeManager = ThemeManager.getInstance(requireContext())
         setupReminderTimeSpinner()
+        updateThemeDisplay()
     }
     
     private fun setupReminderTimeSpinner() {
@@ -127,6 +133,11 @@ class StudentOptionsFragment : Fragment() {
     }
 
     private fun setupClickListeners(view: View) {
+        // Theme picker
+        view.findViewById<LinearLayout>(R.id.buttonTheme)?.setOnClickListener {
+            showThemePicker()
+        }
+
         // Logout option
         view.findViewById<LinearLayout>(R.id.buttonLogout).setOnClickListener { confirmLogout() }
 
@@ -232,5 +243,33 @@ class StudentOptionsFragment : Fragment() {
             val wm = androidx.work.WorkManager.getInstance(requireContext())
             wm.cancelUniqueWork("student_reminder_work")
         } catch (_: Exception) { }
+    }
+
+    private fun showThemePicker() {
+        val themes = arrayOf("Light", "Dark", "System")
+        val currentTheme = themeManager.getCurrentTheme()
+        
+        AlertDialog.Builder(requireContext())
+            .setTitle("Choose Theme")
+            .setSingleChoiceItems(themes, currentTheme) { dialog, which ->
+                val mode = when (which) {
+                    0 -> ThemeManager.THEME_LIGHT
+                    1 -> ThemeManager.THEME_DARK
+                    else -> ThemeManager.THEME_SYSTEM
+                }
+                themeManager.setTheme(mode)
+                updateThemeDisplay()
+                dialog.dismiss()
+                
+                // Recreate activity to apply theme immediately
+                requireActivity().recreate()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+    
+    private fun updateThemeDisplay() {
+        val currentTheme = themeManager.getCurrentTheme()
+        textCurrentTheme.text = themeManager.getThemeName(currentTheme)
     }
 }
