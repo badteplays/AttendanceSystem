@@ -383,6 +383,6 @@ This project is developed as an educational attendance management system.
 ---
 
 **Version**: 1.0  
-**Last Updated**: November 2024  
+**Last Updated**: November 2025
 **Min SDK**: 24 (Android 7.0)  
 **Target SDK**: 35 (Android 15)
