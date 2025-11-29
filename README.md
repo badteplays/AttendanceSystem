@@ -368,14 +368,6 @@ Recent updates include:
 - Fixed race conditions in login flow
 - Improved permission request handling
 
-## 👥 Contributors
-
-Developed for efficient attendance management in educational institutions.
-
-## 📄 License
-
-This project is developed as an educational attendance management system.
-
 ## 🔗 Repository
 
 [GitHub Repository](https://github.com/badteplays/AttendanceSystem)
@@ -383,6 +375,10 @@ This project is developed as an educational attendance management system.
 ---
 
 **Version**: 1.0  
-**Last Updated**: November 2024  
+**Last Updated**: November 2025
 **Min SDK**: 24 (Android 7.0)  
 **Target SDK**: 35 (Android 15)
+
+
+** As of right now the Teacher recent attendance recyler is having problemssss**
+** Same wit the Student Status not changing after class ends**
