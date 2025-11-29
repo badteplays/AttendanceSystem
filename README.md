@@ -378,3 +378,7 @@ Recent updates include:
 **Last Updated**: November 2025
 **Min SDK**: 24 (Android 7.0)  
 **Target SDK**: 35 (Android 15)
+
+
+** As of right now the Teacher recent attendance recyler is having problemssss**
+** Same wit the Student Status not changing after class ends**
