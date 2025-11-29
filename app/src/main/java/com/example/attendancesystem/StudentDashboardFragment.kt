@@ -28,7 +28,7 @@ import java.util.*
 import android.graphics.Color
 
 class StudentDashboardFragment : Fragment() {
-    // UI Components
+
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     private lateinit var textWelcomeStudent: TextView
     private lateinit var textName: TextView
@@ -48,7 +48,7 @@ class StudentDashboardFragment : Fragment() {
     private var attendanceListener: ListenerRegistration? = null
 
     override fun onCreateView(
-        inflater: LayoutInflater, 
+        inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
@@ -57,7 +57,7 @@ class StudentDashboardFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        
+
         initializeViews(view)
         loadUserData()
         loadTodayStatus()
@@ -95,32 +95,28 @@ class StudentDashboardFragment : Fragment() {
     private fun loadTodayStatus() {
         val currentUser = auth.currentUser ?: return
         val prefs = requireContext().getSharedPreferences("student_attendance", Context.MODE_PRIVATE)
-        
-        // Check if we just scanned a QR code
+
         val justMarkedSubject = arguments?.getString("justMarkedSubject")
         val justMarkedTime = arguments?.getLong("justMarkedTime", 0L) ?: 0L
-        
+
         if (justMarkedSubject != null && justMarkedTime > 0) {
-            // Save marked status to SharedPreferences
+
             prefs.edit().apply {
                 putString("markedSubject", justMarkedSubject)
                 putLong("markedTime", justMarkedTime)
                 apply()
             }
-            
-            // Show "Present" immediately after scanning
+
             val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
             val timeString = timeFormat.format(Date(justMarkedTime))
-            
+
             android.util.Log.d("StudentDashboard", "✓✓✓ Just marked attendance! Showing immediately ✓✓✓")
             updateStatusUI("Present - $justMarkedSubject", "Marked at $timeString", Color.parseColor("#4CAF50"))
-            
-            // Clear the arguments
+
             arguments?.clear()
             return
         }
-        
-        // Check for current class to determine if we should show saved status or "Not marked yet"
+
         android.util.Log.d("StudentDashboard", "Checking for current class")
         db.collection("users").document(currentUser.uid)
             .get()
@@ -133,82 +129,77 @@ class StudentDashboardFragment : Fragment() {
                 updateStatusUI("Not marked yet", "", Color.parseColor("#9E9E9E"))
             }
     }
-    
+
     private fun checkCurrentClassWithMarkedStatus(userId: String, section: String, prefs: android.content.SharedPreferences) {
-        // Get current day and time
+
         val calendar = Calendar.getInstance()
         val currentDay = calendar.getDisplayName(Calendar.DAY_OF_WEEK, Calendar.LONG, Locale.getDefault()) ?: ""
         val nowMinutes = calendar.get(Calendar.HOUR_OF_DAY) * 60 + calendar.get(Calendar.MINUTE)
-        
+
         android.util.Log.d("StudentDashboard", "=== CHECKING CURRENT CLASS ===")
         android.util.Log.d("StudentDashboard", "Current day: $currentDay, Current time: ${nowMinutes / 60}:${String.format("%02d", nowMinutes % 60)}")
         android.util.Log.d("StudentDashboard", "Section: $section")
-        
-        // Find current class based on schedule - query all schedules for section
+
         db.collection("schedules")
             .whereEqualTo("section", section)
             .get()
             .addOnSuccessListener { allSchedules ->
-                // If no results with uppercase, try lowercase for backward compatibility
+
                 if (allSchedules.isEmpty) {
                     android.util.Log.d("StudentDashboard", "No schedules found with uppercase section, trying lowercase...")
                     checkSchedulesWithLowercaseSection(userId, section.lowercase(), currentDay, nowMinutes, prefs)
                     return@addOnSuccessListener
                 }
-                
-                // Filter by day (case-insensitive)
-                val schedules = allSchedules.filter { 
+
+                val schedules = allSchedules.filter {
                     it.getString("day")?.equals(currentDay, ignoreCase = true) == true
                 }
                 android.util.Log.d("StudentDashboard", "Found ${schedules.size} schedules for today out of ${allSchedules.size()} total schedules")
                 var currentSchedule: com.google.firebase.firestore.DocumentSnapshot? = null
-                
-                // Find which class is happening RIGHT NOW
+
                 for (schedule in schedules) {
                     val startTime = schedule.getString("startTime") ?: continue
                     val endTime = schedule.getString("endTime") ?: continue
-                    
+
                     val startMin = parseTimeToMinutes(startTime)
                     val endMin = parseTimeToMinutes(endTime)
-                    
+
                     val isWithinClass = if (endMin < startMin) {
-                        // Class crosses midnight
+
                         nowMinutes >= startMin || nowMinutes <= endMin
                     } else {
                         nowMinutes >= startMin && nowMinutes <= endMin
                     }
-                    
+
                     if (isWithinClass) {
                         currentSchedule = schedule
                         break
                     }
                 }
-                
+
                 if (currentSchedule != null) {
                     val scheduleId = currentSchedule!!.id
                     val subject = currentSchedule!!.getString("subject") ?: ""
-                    
-                    // There's a current class - check if we have marked status saved
+
                     val markedSubject = prefs.getString("markedSubject", null)
                     val markedTime = prefs.getLong("markedTime", 0L)
-                    
+
                     if (markedSubject == subject && markedTime > 0) {
-                        // Show saved "Present" status for this class
+
                         val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
                         val timeString = timeFormat.format(Date(markedTime))
                         android.util.Log.d("StudentDashboard", "✓ Current class '$subject' matches saved marked status")
                         updateStatusUI("Present - $subject", "Marked at $timeString", Color.parseColor("#4CAF50"))
                     } else {
-                        // Current class but not marked yet
+
                         android.util.Log.d("StudentDashboard", "Current class '$subject' - not marked yet")
                         updateStatusUI("Not marked yet", "Scan QR for $subject", Color.parseColor("#9E9E9E"))
                     }
                 } else {
-                    // No current class - clear saved status and show "Not marked yet"
+
                     prefs.edit().clear().apply()
                     android.util.Log.d("StudentDashboard", "No current class - clearing saved status")
-                    
-                    // Find next class today
+
                     val nextClass = schedules.mapNotNull { schedule ->
                         val startTime = schedule.getString("startTime") ?: return@mapNotNull null
                         val startMin = parseTimeToMinutes(startTime)
@@ -216,11 +207,11 @@ class StudentDashboardFragment : Fragment() {
                             Pair(startMin, schedule.getString("subject") ?: "")
                         } else null
                     }.minByOrNull { it.first }
-                    
+
                     if (nextClass != null) {
                         val hour = nextClass.first / 60
                         val minute = nextClass.first % 60
-                        val timeStr = String.format("%d:%02d %s", 
+                        val timeStr = String.format("%d:%02d %s",
                             if (hour == 0) 12 else if (hour > 12) hour - 12 else hour,
                             minute,
                             if (hour < 12) "AM" else "PM"
@@ -236,12 +227,12 @@ class StudentDashboardFragment : Fragment() {
                 updateStatusUI("Not marked yet", "", Color.parseColor("#9E9E9E"))
             }
     }
-    
+
     private fun checkSchedulesWithLowercaseSection(
-        userId: String, 
-        lowercaseSection: String, 
-        currentDay: String, 
-        nowMinutes: Int, 
+        userId: String,
+        lowercaseSection: String,
+        currentDay: String,
+        nowMinutes: Int,
         prefs: android.content.SharedPreferences
     ) {
         db.collection("schedules")
@@ -249,60 +240,56 @@ class StudentDashboardFragment : Fragment() {
             .get()
             .addOnSuccessListener { allSchedules ->
                 android.util.Log.d("StudentDashboard", "Found ${allSchedules.size()} schedules with lowercase section")
-                
-                // Filter by day (case-insensitive)
-                val schedules = allSchedules.filter { 
+
+                val schedules = allSchedules.filter {
                     it.getString("day")?.equals(currentDay, ignoreCase = true) == true
                 }
                 android.util.Log.d("StudentDashboard", "Found ${schedules.size} schedules for today out of ${allSchedules.size()} total schedules")
                 var currentSchedule: com.google.firebase.firestore.DocumentSnapshot? = null
-                
-                // Find which class is happening RIGHT NOW
+
                 for (schedule in schedules) {
                     val startTime = schedule.getString("startTime") ?: continue
                     val endTime = schedule.getString("endTime") ?: continue
-                    
+
                     val startMin = parseTimeToMinutes(startTime)
                     val endMin = parseTimeToMinutes(endTime)
-                    
+
                     val isWithinClass = if (endMin < startMin) {
-                        // Class crosses midnight
+
                         nowMinutes >= startMin || nowMinutes <= endMin
                     } else {
                         nowMinutes >= startMin && nowMinutes <= endMin
                     }
-                    
+
                     if (isWithinClass) {
                         currentSchedule = schedule
                         break
                     }
                 }
-                
+
                 if (currentSchedule != null) {
                     val scheduleId = currentSchedule!!.id
                     val subject = currentSchedule!!.getString("subject") ?: ""
-                    
-                    // There's a current class - check if we have marked status saved
+
                     val markedSubject = prefs.getString("markedSubject", null)
                     val markedTime = prefs.getLong("markedTime", 0L)
-                    
+
                     if (markedSubject == subject && markedTime > 0) {
-                        // Show saved "Present" status for this class
+
                         val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
                         val timeString = timeFormat.format(Date(markedTime))
                         android.util.Log.d("StudentDashboard", "✓ Current class '$subject' matches saved marked status")
                         updateStatusUI("Present - $subject", "Marked at $timeString", Color.parseColor("#4CAF50"))
                     } else {
-                        // Current class but not marked yet
+
                         android.util.Log.d("StudentDashboard", "Current class '$subject' - not marked yet")
                         updateStatusUI("Not marked yet", "Scan QR for $subject", Color.parseColor("#9E9E9E"))
                     }
                 } else {
-                    // No current class
+
                     prefs.edit().clear().apply()
                     android.util.Log.d("StudentDashboard", "No current class")
-                    
-                    // Find next class today
+
                     val nextClass = schedules
                         .mapNotNull { schedule ->
                             val startTime = schedule.getString("startTime") ?: return@mapNotNull null
@@ -312,11 +299,11 @@ class StudentDashboardFragment : Fragment() {
                             } else null
                         }
                         .minByOrNull { it.first }
-                    
+
                     if (nextClass != null) {
                         val hour = nextClass.first / 60
                         val minute = nextClass.first % 60
-                        val timeStr = String.format("%d:%02d %s", 
+                        val timeStr = String.format("%d:%02d %s",
                             if (hour == 0) 12 else if (hour > 12) hour - 12 else hour,
                             minute,
                             if (hour < 12) "AM" else "PM"
@@ -332,23 +319,22 @@ class StudentDashboardFragment : Fragment() {
                 updateStatusUI("Not marked yet", "", Color.parseColor("#9E9E9E"))
             }
     }
-    
+
     private fun checkAttendanceForCurrentClass(userId: String, scheduleId: String, subject: String) {
-        // Get today's start
+
         val calendar = Calendar.getInstance()
         calendar.set(Calendar.HOUR_OF_DAY, 0)
         calendar.set(Calendar.MINUTE, 0)
         calendar.set(Calendar.SECOND, 0)
         calendar.set(Calendar.MILLISECOND, 0)
         val todayStart = com.google.firebase.Timestamp(calendar.time)
-        
+
         android.util.Log.d("StudentDashboard", "=== QUERYING ATTENDANCE FOR CURRENT CLASS ===")
         android.util.Log.d("StudentDashboard", "userId: $userId")
         android.util.Log.d("StudentDashboard", "scheduleId: $scheduleId")
         android.util.Log.d("StudentDashboard", "subject: $subject")
         android.util.Log.d("StudentDashboard", "timestamp >= $todayStart")
-        
-        // Set up real-time listener for this specific class
+
         attendanceListener?.remove()
         attendanceListener = db.collection("attendance")
             .whereEqualTo("userId", userId)
@@ -361,30 +347,30 @@ class StudentDashboardFragment : Fragment() {
                     updateStatusUI("Not marked yet", "Scan QR to mark attendance", Color.parseColor("#9E9E9E"))
                     return@addSnapshotListener
                 }
-                
+
                 if (snapshot != null && !snapshot.isEmpty) {
                     val attendance = snapshot.documents.first()
                     val status = attendance.getString("status") ?: "PRESENT"
                     val timestamp = attendance.getTimestamp("timestamp")
-                    
+
                     android.util.Log.d("StudentDashboard", "✓✓✓ ATTENDANCE FOUND! ✓✓✓")
                     android.util.Log.d("StudentDashboard", "Document ID: ${attendance.id}")
                     android.util.Log.d("StudentDashboard", "status: $status")
                     android.util.Log.d("StudentDashboard", "timestamp: $timestamp")
                     android.util.Log.d("StudentDashboard", "Total documents in snapshot: ${snapshot.documents.size}")
-                    
+
                     val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
                     val timeString = timestamp?.toDate()?.let { timeFormat.format(it) } ?: ""
-                    
+
                     when (status) {
                         "PRESENT" -> updateStatusUI("Present - $subject", timeString, Color.parseColor("#4CAF50"))
                         "LATE" -> updateStatusUI("Late - $subject", timeString, Color.parseColor("#FF9800"))
                         "EXCUSED" -> updateStatusUI("Excused - $subject", timeString, Color.parseColor("#2196F3"))
-                        "ABSENT" -> updateStatusUI("Absent - $subject", timeString, Color.parseColor("#F44336"))
+                        "CUTTING" -> updateStatusUI("Cutting - $subject", timeString, Color.parseColor("#F44336"))
                         else -> updateStatusUI("Marked - $subject", timeString, Color.parseColor("#4CAF50"))
                     }
                 } else {
-                    // No attendance for current class yet
+
                     android.util.Log.d("StudentDashboard", "✗✗✗ NO ATTENDANCE FOUND ✗✗✗")
                     android.util.Log.d("StudentDashboard", "Subject being queried: $subject")
                     android.util.Log.d("StudentDashboard", "ScheduleId being queried: $scheduleId")
@@ -392,7 +378,7 @@ class StudentDashboardFragment : Fragment() {
                 }
             }
     }
-    
+
     private fun parseTimeToMinutes(time: String): Int {
         return try {
             val parts = time.split(":")
@@ -403,7 +389,7 @@ class StudentDashboardFragment : Fragment() {
             0
         }
     }
-    
+
     private fun updateStatusUI(statusText: String, timeText: String, color: Int) {
         textTodayStatus.text = statusText
         textStatusTime.text = timeText
@@ -418,7 +404,6 @@ class StudentDashboardFragment : Fragment() {
             return
         }
 
-        // Listen for changes to the user's Firestore document for live profile pic updates
         db.collection("users").document(currentUser.uid)
             .addSnapshotListener { snapshot, _ ->
                 if (snapshot != null && snapshot.exists()) {
@@ -431,7 +416,6 @@ class StudentDashboardFragment : Fragment() {
                     textName.text = studentName
                     textCourse.text = studentSection
 
-                    // Use ProfilePictureManager to load profile picture globally
                     val profileManager = ProfilePictureManager.getInstance()
                     profileManager.loadProfilePicture(requireContext(), imageProfilePic, textInitials, studentName, "ST")
                 }
@@ -439,29 +423,28 @@ class StudentDashboardFragment : Fragment() {
     }
 
     private fun setupClickListeners() {
-        // Set up quick action buttons
+
         buttonScanQR.setOnClickListener {
             try {
-                // Switch to QR Scanner fragment
+
                 switchToFragment(QRScannerFragment())
             } catch (e: Exception) {
                 Toast.makeText(requireContext(), "Error opening scanner: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
-        
+
         buttonViewHistory.setOnClickListener {
             try {
-                // Switch to History fragment
+
                 switchToFragment(StudentAttendanceHistoryFragment())
             } catch (e: Exception) {
                 Toast.makeText(requireContext(), "Error opening history: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
-        
-        // Set up floating action button
+
         fabScanQR.setOnClickListener {
             try {
-                // Switch to QR Scanner fragment
+
                 switchToFragment(QRScannerFragment())
             } catch (e: Exception) {
                 Toast.makeText(requireContext(), "Error opening scanner: ${e.message}", Toast.LENGTH_SHORT).show()

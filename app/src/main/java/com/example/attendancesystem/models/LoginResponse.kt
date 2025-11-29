@@ -7,4 +7,4 @@ data class LoginResponse(
     val userId: String = "",
     val userType: String = "",
     val userName: String = ""
-) 
+)

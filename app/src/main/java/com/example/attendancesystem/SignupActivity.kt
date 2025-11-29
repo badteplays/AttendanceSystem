@@ -9,6 +9,11 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
+import androidx.work.WorkManager
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.ExistingPeriodicWorkPolicy
+import java.util.concurrent.TimeUnit
+import android.content.Context
 
 class SignupActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySignupBinding
@@ -22,7 +27,6 @@ class SignupActivity : AppCompatActivity() {
 
         auth = Firebase.auth
 
-        // Show/hide Section or Department field based on radio button
         val sectionLayout = findViewById<com.google.android.material.textfield.TextInputLayout>(R.id.textInputSection)
         val departmentLayout = findViewById<com.google.android.material.textfield.TextInputLayout>(R.id.textInputDepartment)
         val teacherRadio = findViewById<android.widget.RadioButton>(R.id.teacherRadio)
@@ -68,7 +72,6 @@ class SignupActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            // Show loading
             binding.btnSignup.isEnabled = false
             binding.btnSignup.text = "Creating Account..."
             
@@ -78,13 +81,12 @@ class SignupActivity : AppCompatActivity() {
                         "email" to email,
                         "name" to name,
                         "role" to selectedRole,
-                        // Add explicit role booleans for Firestore rules
                         "isTeacher" to (selectedRole == "teacher"),
                         "isStudent" to (selectedRole == "student"),
                         "createdAt" to System.currentTimeMillis()
                     )
                     if (selectedRole == "student") {
-                        user["section"] = section.uppercase() // Normalize to uppercase
+                        user["section"] = section.uppercase()
                     } else if (selectedRole == "teacher") {
                         user["department"] = department
                     }
@@ -93,6 +95,11 @@ class SignupActivity : AppCompatActivity() {
                         .set(user)
                         .addOnSuccessListener {
                             Toast.makeText(this, "Account created successfully!", Toast.LENGTH_SHORT).show()
+                            
+                            if (selectedRole == "student") {
+                                scheduleStudentReminders()
+                            }
+                            
                             if (selectedRole == "teacher") {
                                 startActivity(Intent(this, TeacherMainActivity::class.java))
                             } else {
@@ -104,7 +111,6 @@ class SignupActivity : AppCompatActivity() {
                             binding.btnSignup.isEnabled = true
                             binding.btnSignup.text = "Sign Up"
                             Toast.makeText(this, "Failed to save user info: ${e.message}", Toast.LENGTH_LONG).show()
-                            // Delete the auth user since Firestore save failed
                             result.user?.delete()
                         }
                 }
@@ -112,7 +118,6 @@ class SignupActivity : AppCompatActivity() {
                     binding.btnSignup.isEnabled = true
                     binding.btnSignup.text = "Sign Up"
                     
-                    // Better error messages
                     val errorMessage = when {
                         e.message?.contains("already in use", ignoreCase = true) == true -> 
                             "This email is already registered. Please login or use a different email."
@@ -129,6 +134,29 @@ class SignupActivity : AppCompatActivity() {
         binding.txtLogin.setOnClickListener {
             startActivity(Intent(this, LoginActivity::class.java))
             finish()
+        }
+    }
+    
+    private fun scheduleStudentReminders() {
+        try {
+            val prefs = getSharedPreferences("student_prefs", Context.MODE_PRIVATE)
+            val notificationsEnabled = prefs.getBoolean("notifications_enabled", true)
+            
+            if (notificationsEnabled) {
+                val workRequest = PeriodicWorkRequestBuilder<StudentReminderWorker>(
+                    15, TimeUnit.MINUTES
+                ).build()
+                
+                WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+                    "student_reminder_work",
+                    ExistingPeriodicWorkPolicy.KEEP,
+                    workRequest
+                )
+                
+                android.util.Log.d("SignupActivity", "Background class reminders scheduled (runs even when app is closed)")
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("SignupActivity", "Error scheduling reminders: ${e.message}", e)
         }
     }
 }

@@ -26,27 +26,27 @@ class AddRoutineDialog(
     private lateinit var textEndTime: TextView
     private lateinit var buttonSave: Button
     private lateinit var buttonCancel: Button
-    
+
     private var selectedStartTime = ""
     private var selectedEndTime = ""
     private var selectedColor = "#4CAF50"
-    
+
     private val colors = listOf(
         "#4CAF50", "#2196F3", "#FF9800", "#E91E63", "#9C27B0"
     )
-    
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestWindowFeature(Window.FEATURE_NO_TITLE)
         setContentView(R.layout.dialog_add_routine)
-        
+
         initializeViews()
         setupDaySpinner()
         setupTimePickers()
         setupColorPicker()
         setupButtons()
     }
-    
+
     private fun initializeViews() {
         editTitle = findViewById(R.id.editRoutineTitle)
         editDescription = findViewById(R.id.editRoutineDescription)
@@ -58,14 +58,14 @@ class AddRoutineDialog(
         buttonSave = findViewById(R.id.buttonSave)
         buttonCancel = findViewById(R.id.buttonCancel)
     }
-    
+
     private fun setupDaySpinner() {
         val days = arrayOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
         val adapter = ArrayAdapter(context, android.R.layout.simple_spinner_item, days)
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerDay.adapter = adapter
     }
-    
+
     private fun setupTimePickers() {
         layoutStartTime.setOnClickListener {
             showTimePicker { hour, minute ->
@@ -73,7 +73,7 @@ class AddRoutineDialog(
                 textStartTime.text = formatTimeTo12Hour(hour, minute)
             }
         }
-        
+
         layoutEndTime.setOnClickListener {
             showTimePicker { hour, minute ->
                 selectedEndTime = String.format("%02d:%02d", hour, minute)
@@ -81,12 +81,12 @@ class AddRoutineDialog(
             }
         }
     }
-    
+
     private fun showTimePicker(onTimeSelected: (Int, Int) -> Unit) {
         val calendar = Calendar.getInstance()
         val hour = calendar.get(Calendar.HOUR_OF_DAY)
         val minute = calendar.get(Calendar.MINUTE)
-        
+
         TimePickerDialog(
             context,
             { _, selectedHour, selectedMinute ->
@@ -94,10 +94,10 @@ class AddRoutineDialog(
             },
             hour,
             minute,
-            false // 12-hour format with AM/PM
+            false
         ).show()
     }
-    
+
     private fun formatTimeTo12Hour(hour: Int, minute: Int): String {
         val amPm = if (hour < 12) "AM" else "PM"
         val displayHour = when {
@@ -107,7 +107,7 @@ class AddRoutineDialog(
         }
         return String.format("%d:%02d %s", displayHour, minute, amPm)
     }
-    
+
     private fun setupColorPicker() {
         val colorViews = listOf(
             findViewById<View>(R.id.colorOption1),
@@ -116,36 +116,35 @@ class AddRoutineDialog(
             findViewById<View>(R.id.colorOption4),
             findViewById<View>(R.id.colorOption5)
         )
-        
+
         colorViews.forEachIndexed { index, view ->
             view.setOnClickListener {
                 selectedColor = colors[index]
-                // Highlight selected color
+
                 colorViews.forEach { it.alpha = 0.5f }
                 view.alpha = 1.0f
             }
         }
-        
-        // Select first color by default
+
         colorViews[0].alpha = 1.0f
         colorViews.drop(1).forEach { it.alpha = 0.5f }
     }
-    
+
     private fun setupButtons() {
         buttonCancel.setOnClickListener {
             dismiss()
         }
-        
+
         buttonSave.setOnClickListener {
             validateAndSave()
         }
     }
-    
+
     private fun validateAndSave() {
         val title = editTitle.text?.toString()?.trim() ?: ""
         val description = editDescription.text?.toString()?.trim() ?: ""
         val day = spinnerDay.selectedItem?.toString() ?: ""
-        
+
         when {
             title.isEmpty() -> {
                 Toast.makeText(context, "Please enter a title", Toast.LENGTH_SHORT).show()
@@ -164,7 +163,7 @@ class AddRoutineDialog(
                 return
             }
         }
-        
+
         val routine = Routine(
             title = title,
             description = description,
@@ -173,11 +172,11 @@ class AddRoutineDialog(
             endTime = selectedEndTime,
             color = selectedColor
         )
-        
+
         onRoutineCreated(routine)
         dismiss()
     }
-    
+
     private fun isValidTimeRange(start: String, end: String): Boolean {
         return try {
             val startParts = start.split(":")

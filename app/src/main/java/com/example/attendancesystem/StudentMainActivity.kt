@@ -19,24 +19,22 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
 class StudentMainActivity : AppCompatActivity() {
-    
+
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var navigationView: NavigationView
-    
+
     companion object {
         private const val PERMISSION_REQUEST_CODE = 101
     }
-    
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_student_main)
-        
+
         setupDrawerNavigation()
-        
-        // Request necessary permissions
+
         requestNecessaryPermissions()
-        
-        // Load initial fragment (supports deep-linking via intent extra)
+
         if (savedInstanceState == null) {
             val fragmentToLoad = when (intent.getStringExtra("fragment")) {
                 "schedule" -> StudentScheduleFragment()
@@ -48,13 +46,12 @@ class StudentMainActivity : AppCompatActivity() {
             loadFragment(fragmentToLoad)
         }
     }
-    
+
     private fun setupDrawerNavigation() {
         drawerLayout = findViewById(R.id.drawerLayout)
         navigationView = findViewById<NavigationView>(R.id.navigationView)
         val drawerHandle = findViewById<ImageView>(R.id.drawerHandle)
-        
-        // Handle drawer toggle
+
         drawerHandle.setOnClickListener {
             if (drawerLayout.isDrawerOpen(navigationView)) {
                 drawerLayout.closeDrawer(navigationView)
@@ -62,8 +59,7 @@ class StudentMainActivity : AppCompatActivity() {
                 drawerLayout.openDrawer(navigationView)
             }
         }
-        
-        // Handle navigation item selection
+
         navigationView.setNavigationItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.drawer_home -> {
@@ -97,7 +93,7 @@ class StudentMainActivity : AppCompatActivity() {
             }
         }
     }
-    
+
     private fun loadFragment(fragment: Fragment) {
         try {
             supportFragmentManager.beginTransaction()
@@ -105,19 +101,18 @@ class StudentMainActivity : AppCompatActivity() {
                 .commit()
         } catch (e: Exception) {
             android.util.Log.e("StudentMainActivity", "Error loading fragment: ${e.message}", e)
-            // Fallback to dashboard if fragment loading fails
+
             if (fragment !is StudentDashboardFragment) {
                 loadFragment(StudentDashboardFragment())
             }
         }
     }
-    
-    // Public method for fragments to navigate to dashboard
+
     fun navigateToDashboard() {
         navigationView.setCheckedItem(R.id.drawer_home)
         loadFragment(StudentDashboardFragment())
     }
-    
+
     override fun onBackPressed() {
         val navigationView = findViewById<NavigationView>(R.id.navigationView)
         if (drawerLayout.isDrawerOpen(navigationView)) {
@@ -126,25 +121,22 @@ class StudentMainActivity : AppCompatActivity() {
             super.onBackPressed()
         }
     }
-    
+
     private fun requestNecessaryPermissions() {
         val permissionsToRequest = mutableListOf<String>()
-        
-        // Camera permission (for QR scanning)
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) 
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
             != PackageManager.PERMISSION_GRANTED) {
             permissionsToRequest.add(Manifest.permission.CAMERA)
         }
-        
-        // Notification permission (Android 13+) for class reminders
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) 
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
                 != PackageManager.PERMISSION_GRANTED) {
                 permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
-        
-        // Request all necessary permissions at once
+
         if (permissionsToRequest.isNotEmpty()) {
             android.util.Log.d("StudentMainActivity", "Requesting permissions: ${permissionsToRequest.joinToString()}")
             ActivityCompat.requestPermissions(
@@ -154,26 +146,26 @@ class StudentMainActivity : AppCompatActivity() {
             )
         }
     }
-    
+
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        
+
         if (requestCode == PERMISSION_REQUEST_CODE) {
             val deniedPermissions = mutableListOf<String>()
-            
+
             permissions.forEachIndexed { index, permission ->
                 if (grantResults[index] != PackageManager.PERMISSION_GRANTED) {
                     deniedPermissions.add(permission)
                 }
             }
-            
+
             if (deniedPermissions.isNotEmpty()) {
                 val message = when {
-                    deniedPermissions.contains(Manifest.permission.CAMERA) && 
+                    deniedPermissions.contains(Manifest.permission.CAMERA) &&
                     deniedPermissions.contains(Manifest.permission.POST_NOTIFICATIONS) -> {
                         "Camera and notification permissions are recommended for full functionality"
                     }

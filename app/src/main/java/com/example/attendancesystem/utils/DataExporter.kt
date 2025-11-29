@@ -13,16 +13,16 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class DataExporter(private val context: Context) {
-    
+
     companion object {
         private const val CSV_HEADER = "Date,Time,Student Name,Subject,Section,Status,Teacher,Notes"
         private const val EXPORT_FOLDER = "AttendanceReports"
     }
-    
+
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
     private val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
     private val fileNameFormat = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
-    
+
     data class AttendanceRecord(
         val studentName: String,
         val subject: String,
@@ -32,10 +32,8 @@ class DataExporter(private val context: Context) {
         val teacherName: String,
         val notes: String
     )
-    
-    /**
-     * Export attendance records to CSV format
-     */
+
+
     fun exportToCSV(
         records: List<AttendanceRecord>,
         fileName: String? = null,
@@ -47,16 +45,15 @@ class DataExporter(private val context: Context) {
             if (!exportDir.exists()) {
                 exportDir.mkdirs()
             }
-            
+
             val finalFileName = fileName ?: "attendance_report_${fileNameFormat.format(Date())}.csv"
             val file = File(exportDir, finalFileName)
-            
+
             FileWriter(file).use { writer ->
-                // Write header
+
                 writer.append(CSV_HEADER)
                 writer.append("\n")
-                
-                // Write data rows
+
                 records.forEach { record ->
                     val row = buildString {
                         append(escapeCSV(dateFormat.format(record.timestamp))).append(",")
@@ -71,19 +68,17 @@ class DataExporter(private val context: Context) {
                     writer.append(row)
                     writer.append("\n")
                 }
-                
+
                 writer.flush()
             }
-            
+
             onSuccess(file)
         } catch (e: Exception) {
             onError("Failed to export data: ${e.message}")
         }
     }
-    
-    /**
-     * Export attendance summary to CSV format
-     */
+
+
     fun exportSummaryToCSV(
         records: List<AttendanceRecord>,
         fileName: String? = null,
@@ -95,11 +90,10 @@ class DataExporter(private val context: Context) {
             if (!exportDir.exists()) {
                 exportDir.mkdirs()
             }
-            
+
             val finalFileName = fileName ?: "attendance_summary_${fileNameFormat.format(Date())}.csv"
             val file = File(exportDir, finalFileName)
-            
-            // Group records by student
+
             val studentSummary = records.groupBy { it.studentName }
                 .map { (studentName, studentRecords) ->
                     val totalClasses = studentRecords.size
@@ -108,7 +102,7 @@ class DataExporter(private val context: Context) {
                     val absentCount = studentRecords.count { it.status == AttendanceStatus.ABSENT }
                     val excusedCount = studentRecords.count { it.status == AttendanceStatus.EXCUSED }
                     val attendanceRate = if (totalClasses > 0) (presentCount + lateCount).toFloat() / totalClasses * 100 else 0f
-                    
+
                     StudentSummary(
                         studentName = studentName,
                         totalClasses = totalClasses,
@@ -119,13 +113,12 @@ class DataExporter(private val context: Context) {
                         attendanceRate = attendanceRate
                     )
                 }
-            
+
             FileWriter(file).use { writer ->
-                // Write header
+
                 writer.append("Student Name,Total Classes,Present,Late,Absent,Excused,Attendance Rate (%)")
                 writer.append("\n")
-                
-                // Write data rows
+
                 studentSummary.forEach { summary ->
                     val row = buildString {
                         append(escapeCSV(summary.studentName)).append(",")
@@ -139,19 +132,17 @@ class DataExporter(private val context: Context) {
                     writer.append(row)
                     writer.append("\n")
                 }
-                
+
                 writer.flush()
             }
-            
+
             onSuccess(file)
         } catch (e: Exception) {
             onError("Failed to export summary: ${e.message}")
         }
     }
-    
-    /**
-     * Export class statistics to CSV format
-     */
+
+
     fun exportClassStatsToCSV(
         records: List<AttendanceRecord>,
         fileName: String? = null,
@@ -163,11 +154,10 @@ class DataExporter(private val context: Context) {
             if (!exportDir.exists()) {
                 exportDir.mkdirs()
             }
-            
+
             val finalFileName = fileName ?: "class_statistics_${fileNameFormat.format(Date())}.csv"
             val file = File(exportDir, finalFileName)
-            
-            // Group records by class (subject + section)
+
             val classStats = records.groupBy { "${it.subject} - ${it.section}" }
                 .map { (className, classRecords) ->
                     val totalSessions = classRecords.map { dateFormat.format(it.timestamp) }.distinct().size
@@ -178,7 +168,7 @@ class DataExporter(private val context: Context) {
                     val excusedCount = classRecords.count { it.status == AttendanceStatus.EXCUSED }
                     val attendanceRate = if (totalAttendance > 0) (presentCount + lateCount).toFloat() / totalAttendance * 100 else 0f
                     val averageStudentsPerSession = if (totalSessions > 0) totalAttendance.toFloat() / totalSessions else 0f
-                    
+
                     ClassStats(
                         className = className,
                         totalSessions = totalSessions,
@@ -191,13 +181,12 @@ class DataExporter(private val context: Context) {
                         averageStudentsPerSession = averageStudentsPerSession
                     )
                 }
-            
+
             FileWriter(file).use { writer ->
-                // Write header
+
                 writer.append("Class,Total Sessions,Total Attendance Records,Present,Late,Absent,Excused,Attendance Rate (%),Avg Students/Session")
                 writer.append("\n")
-                
-                // Write data rows
+
                 classStats.forEach { stats ->
                     val row = buildString {
                         append(escapeCSV(stats.className)).append(",")
@@ -213,19 +202,17 @@ class DataExporter(private val context: Context) {
                     writer.append(row)
                     writer.append("\n")
                 }
-                
+
                 writer.flush()
             }
-            
+
             onSuccess(file)
         } catch (e: Exception) {
             onError("Failed to export class statistics: ${e.message}")
         }
     }
-    
-    /**
-     * Share exported file via system sharing
-     */
+
+
     fun shareFile(file: File, title: String = "Share Attendance Report") {
         try {
             val uri = FileProvider.getUriForFile(
@@ -233,7 +220,7 @@ class DataExporter(private val context: Context) {
                 "${context.packageName}.fileprovider",
                 file
             )
-            
+
             val intent = Intent(Intent.ACTION_SEND).apply {
                 type = "text/csv"
                 putExtra(Intent.EXTRA_STREAM, uri)
@@ -241,7 +228,7 @@ class DataExporter(private val context: Context) {
                 putExtra(Intent.EXTRA_TEXT, "Attendance report generated from Attendance System")
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
-            
+
             val chooser = Intent.createChooser(intent, title)
             chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(chooser)
@@ -249,10 +236,8 @@ class DataExporter(private val context: Context) {
             throw Exception("Failed to share file: ${e.message}")
         }
     }
-    
-    /**
-     * Get list of exported files
-     */
+
+
     fun getExportedFiles(): List<File> {
         val exportDir = File(context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), EXPORT_FOLDER)
         return if (exportDir.exists()) {
@@ -261,17 +246,13 @@ class DataExporter(private val context: Context) {
             emptyList()
         }
     }
-    
-    /**
-     * Delete exported file
-     */
+
+
     fun deleteExportedFile(file: File): Boolean {
         return file.exists() && file.delete()
     }
-    
-    /**
-     * Escape CSV values to handle commas, quotes, and newlines
-     */
+
+
     private fun escapeCSV(value: String): String {
         val trimmedValue = value.trim()
         return if (trimmedValue.contains(",") || trimmedValue.contains("\"") || trimmedValue.contains("\n")) {
@@ -280,7 +261,7 @@ class DataExporter(private val context: Context) {
             trimmedValue
         }
     }
-    
+
     data class StudentSummary(
         val studentName: String,
         val totalClasses: Int,
@@ -290,7 +271,7 @@ class DataExporter(private val context: Context) {
         val excusedCount: Int,
         val attendanceRate: Float
     )
-    
+
     data class ClassStats(
         val className: String,
         val totalSessions: Int,
@@ -302,4 +283,4 @@ class DataExporter(private val context: Context) {
         val attendanceRate: Float,
         val averageStudentsPerSession: Float
     )
-} 
+}

@@ -33,7 +33,7 @@ class TeacherOptionsFragment : Fragment() {
                     val success = profileManager.saveProfilePicture(requireContext(), uri)
                     if (success) {
                         Toast.makeText(requireContext(), "Profile picture updated", Toast.LENGTH_SHORT).show()
-                        // Optionally update UI on this screen by reloading into the included layout's views
+
                         view?.findViewById<TextView>(R.id.textUserName)?.let { _ ->
                             profileManager.loadProfilePicture(
                                 requireContext(),
@@ -60,12 +60,10 @@ class TeacherOptionsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Theme button
         view.findViewById<LinearLayout>(R.id.buttonTheme)?.setOnClickListener {
             showThemePicker()
         }
 
-        // About us button
         view.findViewById<LinearLayout>(R.id.buttonAboutUs)?.setOnClickListener {
             val url = "https://badteplays.github.io/FPL-WEBSITE/website.html"
             try {
@@ -76,16 +74,15 @@ class TeacherOptionsFragment : Fragment() {
             }
         }
 
-        // Logout button
         view.findViewById<LinearLayout>(R.id.buttonLogout)?.setOnClickListener {
             AlertDialog.Builder(requireContext())
                 .setTitle("Logout")
                 .setMessage("Are you sure you want to logout?")
                 .setPositiveButton("Logout") { _, _ ->
-                    // Set explicit logout flag to prevent auto-login
+
                     val prefs = requireContext().getSharedPreferences("auth_prefs", android.content.Context.MODE_PRIVATE)
                     prefs.edit().putBoolean("explicit_logout", true).apply()
-                    
+
                     auth.signOut()
                     val intent = Intent(requireContext(), LoginActivity::class.java)
                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -95,18 +92,15 @@ class TeacherOptionsFragment : Fragment() {
                 .show()
         }
 
-        // Profile picture change
         view.findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.fabChangePhoto)?.setOnClickListener {
             val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
             intent.type = "image/*"
             imagePickerLauncher.launch(intent)
         }
 
-        // Show current theme name
         val themeManager = ThemeManager.getInstance(requireContext())
         view.findViewById<TextView>(R.id.textCurrentTheme)?.text = themeManager.getThemeName(themeManager.getCurrentTheme())
 
-        // Load teacher profile (name, email, picture)
         val textName = view.findViewById<TextView>(R.id.textUserName)
         val textEmail = view.findViewById<TextView>(R.id.textUserEmail)
         val imageProfile = view.findViewById<ImageView>(R.id.imageProfilePic)

@@ -31,7 +31,7 @@ class ServerManager private constructor(private val context: Context) {
     suspend fun checkServerConnection(): Boolean {
         return withContext(Dispatchers.IO) {
             try {
-                // Try to read a test document
+
                 db.collection("health")
                     .document("status")
                     .get()
@@ -67,7 +67,6 @@ class ServerManager private constructor(private val context: Context) {
                 .add(attendanceRecord)
                 .await()
 
-            // Invalidate the QR code after use
             qrDoc.reference.update("isValid", false).await()
 
             Result.success(Unit)
@@ -84,11 +83,11 @@ class ServerManager private constructor(private val context: Context) {
                 "timestamp" to Timestamp.now(),
                 "isValid" to true
             )
-            
+
             db.collection("qrcodes")
                 .add(qrDoc)
                 .await()
-            
+
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -140,8 +139,8 @@ class ServerManager private constructor(private val context: Context) {
                     document.reference.update("active", false).await()
                 }
             } catch (e: Exception) {
-                // Handle error silently
+
             }
         }
     }
-} 
+}

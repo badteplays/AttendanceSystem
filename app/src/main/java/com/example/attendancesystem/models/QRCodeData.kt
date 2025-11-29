@@ -69,11 +69,11 @@ data class QRCodeData(
         val remaining = expirationTime - System.currentTimeMillis()
         return if (remaining > 0) remaining else 0
     }
-    
+
     fun hasLocation(): Boolean {
         return latitude != null && longitude != null
     }
-    
+
     fun getLocationData(): com.example.attendancesystem.utils.LocationManager.LocationData? {
         return if (hasLocation()) {
             com.example.attendancesystem.utils.LocationManager.LocationData(

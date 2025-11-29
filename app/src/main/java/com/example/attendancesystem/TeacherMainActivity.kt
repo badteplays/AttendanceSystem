@@ -34,8 +34,7 @@ class TeacherMainActivity : AppCompatActivity() {
                 else -> false
             }.also { drawerLayout?.closeDrawers() }
         }
-        
-        // Request necessary permissions
+
         requestCameraPermission()
 
         if (savedInstanceState == null) {
@@ -55,16 +54,16 @@ class TeacherMainActivity : AppCompatActivity() {
                 .commit()
         } catch (e: Exception) {
             android.util.Log.e("TeacherMainActivity", "Error loading fragment: ${e.message}", e)
-            // Fallback to dashboard if fragment loading fails
+
             if (fragment !is TeacherDashboardFragment) {
                 load(TeacherDashboardFragment())
             }
         }
     }
-    
+
     private fun requestCameraPermission() {
-        // Camera permission (for generating QR codes)
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) 
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
             != PackageManager.PERMISSION_GRANTED) {
             android.util.Log.d("TeacherMainActivity", "Requesting camera permission")
             ActivityCompat.requestPermissions(
@@ -74,19 +73,19 @@ class TeacherMainActivity : AppCompatActivity() {
             )
         }
     }
-    
+
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        
+
         if (requestCode == PERMISSION_REQUEST_CODE) {
             if (grantResults.isNotEmpty() && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(
-                    this, 
-                    "Camera permission is needed to display QR codes for attendance", 
+                    this,
+                    "Camera permission is needed to display QR codes for attendance",
                     Toast.LENGTH_LONG
                 ).show()
                 android.util.Log.w("TeacherMainActivity", "Camera permission denied")

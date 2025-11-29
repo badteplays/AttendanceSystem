@@ -11,7 +11,7 @@ import java.io.IOException
 
 class NetworkManager(context: Context) {
     private val apiService = ApiService.create(context)
-    
+
     suspend fun register(request: RegisterRequest): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             val response = apiService.register(request)
@@ -76,4 +76,4 @@ class NetworkManager(context: Context) {
             ApiService.updateServerIp(context, newIp)
         }
     }
-} 
+}

@@ -7,16 +7,16 @@ data class Routine(
     val userId: String = "",
     val title: String = "",
     val description: String = "",
-    val day: String = "", // Monday, Tuesday, etc.
-    val startTime: String = "", // HH:mm format
-    val endTime: String = "", // HH:mm format
-    val color: String = "#4CAF50", // Hex color for UI
+    val day: String = "",
+    val startTime: String = "",
+    val endTime: String = "",
+    val color: String = "#4CAF50",
     val timestamp: Timestamp = Timestamp.now()
 ) {
     fun getTimeRange(): String {
         return "$startTime - $endTime"
     }
-    
+
     fun toMap(): HashMap<String, Any> {
         return hashMapOf(
             "userId" to userId,
@@ -29,7 +29,7 @@ data class Routine(
             "timestamp" to timestamp
         )
     }
-    
+
     companion object {
         fun fromMap(id: String, data: Map<String, Any>): Routine {
             return Routine(

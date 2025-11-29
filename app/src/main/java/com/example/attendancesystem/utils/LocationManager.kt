@@ -14,17 +14,17 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 class LocationManager(private val context: Context) {
-    
+
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1001
-        private const val CLASSROOM_RADIUS_METERS = 100.0 // 100 meters radius
-        private const val LOCATION_UPDATE_INTERVAL = 10000L // 10 seconds
-        private const val LOCATION_FASTEST_INTERVAL = 5000L // 5 seconds
+        private const val CLASSROOM_RADIUS_METERS = 100.0
+        private const val LOCATION_UPDATE_INTERVAL = 10000L
+        private const val LOCATION_FASTEST_INTERVAL = 5000L
     }
-    
-    private val fusedLocationClient: FusedLocationProviderClient = 
+
+    private val fusedLocationClient: FusedLocationProviderClient =
         LocationServices.getFusedLocationProviderClient(context)
-    
+
     private val locationRequest = LocationRequest.Builder(
         Priority.PRIORITY_HIGH_ACCURACY,
         LOCATION_UPDATE_INTERVAL
@@ -32,13 +32,13 @@ class LocationManager(private val context: Context) {
         setMinUpdateIntervalMillis(LOCATION_FASTEST_INTERVAL)
         setMaxUpdateDelayMillis(LOCATION_UPDATE_INTERVAL)
     }.build()
-    
+
     data class LocationData(
         val latitude: Double,
         val longitude: Double,
         val timestamp: Long = System.currentTimeMillis()
     )
-    
+
     fun hasLocationPermission(): Boolean {
         return ContextCompat.checkSelfPermission(
             context,
@@ -49,25 +49,25 @@ class LocationManager(private val context: Context) {
             Manifest.permission.ACCESS_COARSE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
     }
-    
+
     fun isLocationEnabled(): Boolean {
         val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
                locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
     }
-    
+
     suspend fun getCurrentLocation(): LocationData {
         return suspendCancellableCoroutine { continuation ->
             if (!hasLocationPermission()) {
                 continuation.resumeWithException(SecurityException("Location permission not granted"))
                 return@suspendCancellableCoroutine
             }
-            
+
             if (!isLocationEnabled()) {
                 continuation.resumeWithException(Exception("Location services are disabled"))
                 return@suspendCancellableCoroutine
             }
-            
+
             try {
                 fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
                     if (location != null) {
@@ -78,7 +78,7 @@ class LocationManager(private val context: Context) {
                         )
                         continuation.resume(locationData)
                     } else {
-                        // If last location is null, request fresh location
+
                         requestFreshLocation(continuation)
                     }
                 }.addOnFailureListener { exception ->
@@ -89,7 +89,7 @@ class LocationManager(private val context: Context) {
             }
         }
     }
-    
+
     private fun requestFreshLocation(continuation: kotlinx.coroutines.CancellableContinuation<LocationData>) {
         val locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
@@ -108,7 +108,7 @@ class LocationManager(private val context: Context) {
                 }
             }
         }
-        
+
         try {
             fusedLocationClient.requestLocationUpdates(
                 locationRequest,
@@ -119,7 +119,7 @@ class LocationManager(private val context: Context) {
             continuation.resumeWithException(e)
         }
     }
-    
+
     fun calculateDistance(loc1: LocationData, loc2: LocationData): Double {
         val results = FloatArray(1)
         Location.distanceBetween(
@@ -129,7 +129,7 @@ class LocationManager(private val context: Context) {
         )
         return results[0].toDouble()
     }
-    
+
     fun isWithinClassroomRadius(
         studentLocation: LocationData,
         teacherLocation: LocationData,
@@ -138,14 +138,14 @@ class LocationManager(private val context: Context) {
         val distance = calculateDistance(studentLocation, teacherLocation)
         return distance <= radiusMeters
     }
-    
+
     fun validateLocationForQRScan(
         studentLocation: LocationData,
         qrCodeLocation: LocationData
     ): LocationValidationResult {
         return try {
             val distance = calculateDistance(studentLocation, qrCodeLocation)
-            
+
             when {
                 distance <= CLASSROOM_RADIUS_METERS -> {
                     LocationValidationResult.Valid("Location verified successfully - you are within ${distance.toInt()}m of the teacher")
@@ -158,11 +158,11 @@ class LocationManager(private val context: Context) {
             LocationValidationResult.Error("Error validating location: ${e.message}")
         }
     }
-    
+
     sealed class LocationValidationResult {
         data class Valid(val message: String) : LocationValidationResult()
         data class Warning(val message: String) : LocationValidationResult()
         data class Invalid(val message: String) : LocationValidationResult()
         data class Error(val message: String) : LocationValidationResult()
     }
-} 
+}

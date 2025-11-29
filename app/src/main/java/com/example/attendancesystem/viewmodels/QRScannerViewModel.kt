@@ -26,20 +26,18 @@ class QRScannerViewModel(application: Application) : AndroidViewModel(applicatio
             try {
                 _loading.value = true
 
-                // Validate QR code expiration
                 if (qrCodeData.isExpired()) {
                     _scanResult.value = ScanResult.Error("QR code has expired")
                     return@launch
                 }
 
-                // Check if this student already has an attendance record for this session
                 firestore.collection("attendance")
                     .whereEqualTo("studentId", userId)
                     .whereEqualTo("scheduleId", qrCodeData.scheduleId)
                     .get()
                     .addOnSuccessListener { docs ->
                         if (docs.isEmpty) {
-                            // No attendance yet for this session, allow scan
+
                             firestore.collection("users").document(userId).get()
                                 .addOnSuccessListener { userDoc ->
                                     val studentName = userDoc.getString("name") ?: "Student"
@@ -85,7 +83,7 @@ class QRScannerViewModel(application: Application) : AndroidViewModel(applicatio
                                     _scanResult.postValue(ScanResult.Error("Could not fetch student name: ${e.message}"))
                                 }
                         } else {
-                            // Already scanned for this session
+
                             _scanResult.postValue(ScanResult.Error("You have already scanned for this session. Wait for the next QR code."))
                         }
                     }

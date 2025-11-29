@@ -19,7 +19,7 @@ class QRCodeWorker(
         val teacherId = FirebaseAuth.getInstance().currentUser?.uid ?: return ListenableWorker.Result.failure()
         val scheduleDoc = db.collection("schedules").document(scheduleId).get().await()
         val schedule = scheduleDoc.data ?: return ListenableWorker.Result.failure()
-        // Generate QR/session for this schedule
+
         val session = hashMapOf(
             "teacherId" to teacherId,
             "scheduleId" to scheduleId,
@@ -29,10 +29,10 @@ class QRCodeWorker(
             "time" to schedule["time"],
             "room" to schedule["room"],
             "createdAt" to System.currentTimeMillis(),
-            "expiresAt" to System.currentTimeMillis() + 15 * 60 * 1000 // 15 min expiry
+            "expiresAt" to System.currentTimeMillis() + 15 * 60 * 1000
         )
         db.collection("attendance_sessions").add(session).await()
-        // TODO: Optionally notify the teacher
+
         return ListenableWorker.Result.success()
     }
 }

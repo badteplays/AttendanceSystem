@@ -22,19 +22,17 @@ class TeacherReminderWorker(
         return try {
             val auth = FirebaseAuth.getInstance()
             val currentUser = auth.currentUser
-            
+
             if (currentUser == null) {
                 return Result.failure()
             }
 
-            // Get teacher's name from Firestore
             val db = FirebaseFirestore.getInstance()
             val userDoc = db.collection("users").document(currentUser.uid).get().await()
             val teacherName = userDoc.getString("name") ?: "Teacher"
 
-            // Check if teacher has any schedules for today
             val hasSchedulesToday = checkTodaySchedules(currentUser.uid)
-            
+
             if (hasSchedulesToday) {
                 showNotification(
                     "Daily Attendance Reminder",
@@ -75,7 +73,6 @@ class TeacherReminderWorker(
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val channelId = "teacher_reminder_channel"
 
-        // Create notification channel for Android 8.0+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 channelId,
@@ -87,7 +84,6 @@ class TeacherReminderWorker(
             notificationManager.createNotificationChannel(channel)
         }
 
-        // Create intent to open TeacherDashboardActivity
         val intent = Intent(context, TeacherMainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
@@ -98,7 +94,6 @@ class TeacherReminderWorker(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Build notification
         val notification = NotificationCompat.Builder(context, channelId)
             .setContentTitle(title)
             .setContentText(message)
@@ -110,4 +105,4 @@ class TeacherReminderWorker(
 
         notificationManager.notify(1001, notification)
     }
-} 
+}

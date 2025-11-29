@@ -56,22 +56,20 @@ class AttendanceDetailsDialog(
     }
 
     private fun setupData() {
-        // Set attendance details
+
         textStudentName.text = attendance.studentName
-        
+
         val dateFormat = SimpleDateFormat("MMM dd, yyyy 'at' HH:mm", Locale.getDefault())
         textTimestamp.text = dateFormat.format(attendance.timestamp.toDate())
-        
+
         textSubject.text = attendance.subject
         textSection.text = attendance.section
         editNotes.setText(attendance.notes)
 
-        // Setup status spinner
         val statusAdapter = ArrayAdapter(context, android.R.layout.simple_spinner_item, statusOptions)
         statusAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerStatus.adapter = statusAdapter
 
-        // Set current status
         val currentStatusIndex = statusOptions.indexOf(attendance.status.name)
         if (currentStatusIndex != -1) {
             spinnerStatus.setSelection(currentStatusIndex)
@@ -92,7 +90,6 @@ class AttendanceDetailsDialog(
         val selectedStatus = AttendanceStatus.valueOf(statusOptions[spinnerStatus.selectedItemPosition])
         val notes = editNotes.text.toString().trim()
 
-        // Update attendance in Firestore
         val updateData: MutableMap<String, Any?> = hashMapOf(
             "status" to selectedStatus.name,
             "notes" to notes,
@@ -103,10 +100,10 @@ class AttendanceDetailsDialog(
             .document(attendance.id)
             .update(updateData)
             .addOnSuccessListener {
-                // Update local attendance object
+
                 attendance.status = selectedStatus
                 attendance.notes = notes
-                
+
                 onUpdated(attendance)
                 Toast.makeText(context, "Attendance updated successfully", Toast.LENGTH_SHORT).show()
                 dismiss()
@@ -115,4 +112,4 @@ class AttendanceDetailsDialog(
                 Toast.makeText(context, "Failed to update attendance: ${e.message}", Toast.LENGTH_SHORT).show()
             }
     }
-} 
+}

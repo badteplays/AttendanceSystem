@@ -9,5 +9,5 @@ data class Schedule(
     val endTime: String = "",
     val day: String = "",
     val room: String = "",
-    val lastGeneratedDate: String = "" // For auto QR generation control
+    val lastGeneratedDate: String = ""
 )

@@ -29,10 +29,8 @@ class StudentReminderWorker(
             val auth = FirebaseAuth.getInstance()
             val user = auth.currentUser ?: return Result.success()
 
-            // Get custom reminder time (default 10 minutes)
             val reminderMinutes = prefs.getInt("reminder_minutes", 10)
             
-            // Check if student has class starting in the configured time
             val upcomingClass = getUpcomingClass(user.uid, reminderMinutes)
             if (upcomingClass != null) {
                 val (subject, timeUntil) = upcomingClass
@@ -51,25 +49,28 @@ class StudentReminderWorker(
         return try {
             val db = FirebaseFirestore.getInstance()
             val userDoc = db.collection("users").document(studentId).get().await()
-            val section = userDoc.getString("section")?.lowercase() ?: return null
+            val section = userDoc.getString("section")?.uppercase() ?: return null
 
-            // Get current day name
+            android.util.Log.d("StudentReminder", "Checking for upcoming class - Section: $section, Reminder: $reminderMinutes min")
+
             val day = Calendar.getInstance().getDisplayName(
                 Calendar.DAY_OF_WEEK,
                 Calendar.LONG,
                 Locale.getDefault()
             ) ?: return null
 
-            // Get schedules for today
+            android.util.Log.d("StudentReminder", "Current day: $day")
+
             val schedules = db.collection("schedules")
                 .whereEqualTo("day", day)
                 .whereEqualTo("section", section)
                 .get().await()
+            
+            android.util.Log.d("StudentReminder", "Found ${schedules.size()} schedules for today")
 
             val now = Calendar.getInstance()
             val currentTimeInMinutes = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
 
-            // Find class starting within the reminder window
             for (doc in schedules.documents) {
                 val startTime = doc.getString("startTime") ?: continue
                 val subject = doc.getString("subject") ?: "Class"
@@ -82,14 +83,18 @@ class StudentReminderWorker(
                     
                     val minutesUntilClass = classTimeInMinutes - currentTimeInMinutes
                     
-                    // Check if class is starting within reminder window (+/- 2 minutes tolerance)
+                    android.util.Log.d("StudentReminder", "$subject at $startTime - Minutes until: $minutesUntilClass")
+                    
                     if (minutesUntilClass in (reminderMinutes - 2)..(reminderMinutes + 2)) {
+                        android.util.Log.d("StudentReminder", "Found upcoming class: $subject in $minutesUntilClass minutes")
                         return Pair(subject, minutesUntilClass)
                     }
                 } catch (e: Exception) {
+                    android.util.Log.e("StudentReminder", "Error parsing time: ${e.message}")
                     continue
                 }
             }
+            android.util.Log.d("StudentReminder", "No upcoming classes within reminder window")
             null
         } catch (e: Exception) {
             null

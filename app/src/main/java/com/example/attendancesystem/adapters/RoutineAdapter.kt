@@ -32,26 +32,25 @@ class RoutineAdapter(
 
     override fun onBindViewHolder(holder: RoutineViewHolder, position: Int) {
         val routine = routines[position]
-        
+
         holder.textRoutineTitle.text = routine.title
         holder.textRoutineDescription.text = routine.description.ifEmpty { "No description" }
         holder.textRoutineTime.text = routine.getTimeRange()
         holder.textRoutineDay.text = routine.day
-        
-        // Set color indicator
+
         try {
             holder.colorIndicator.setBackgroundColor(Color.parseColor(routine.color))
         } catch (e: Exception) {
             holder.colorIndicator.setBackgroundColor(Color.parseColor("#4CAF50"))
         }
-        
+
         holder.buttonDelete.setOnClickListener {
             onDeleteClick(routine)
         }
     }
 
     override fun getItemCount() = routines.size
-    
+
     fun updateRoutines(newRoutines: List<Routine>) {
         routines.clear()
         routines.addAll(newRoutines)

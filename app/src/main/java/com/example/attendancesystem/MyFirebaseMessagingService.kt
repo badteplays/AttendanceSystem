@@ -18,8 +18,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         if (!notificationsEnabled) return
         val title = remoteMessage.notification?.title ?: "Notification"
         val body = remoteMessage.notification?.body ?: ""
-        
-        // Determine the appropriate activity based on login state
+
         val intent = getAppropriateIntent()
         val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE)
         val channelId = "default_channel"
@@ -36,19 +35,17 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         }
         notificationManager.notify(0, notificationBuilder.build())
     }
-    
+
     private fun getAppropriateIntent(): Intent {
         val auth = FirebaseAuth.getInstance()
         val currentUser = auth.currentUser
-        
-        // If not logged in, go to LoginActivity which will handle auto-login
+
         if (currentUser == null) {
             return Intent(this, LoginActivity::class.java)
         }
-        
-        // User is logged in - send them to LoginActivity which will route them appropriately
-        // LoginActivity already has logic to detect logged-in users and navigate to correct dashboard
-        // This avoids blocking the main thread with Firestore queries
+
+
+
         return Intent(this, LoginActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
         }

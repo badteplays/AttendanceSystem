@@ -47,7 +47,7 @@ class SecurePreferencesManager private constructor(context: Context) {
     fun saveUserCredentials(username: String, password: String, userType: String) {
         val salt = BCrypt.gensalt()
         val hashedPassword = BCrypt.hashpw(password, salt)
-        
+
         sharedPreferences.edit().apply {
             putString(username, hashedPassword)
             putString("${username}_type", userType)
@@ -108,8 +108,8 @@ class SecurePreferencesManager private constructor(context: Context) {
         val lastAttemptTime = sharedPreferences.getLong("lastAttemptTime", 0)
         val loginAttempts = sharedPreferences.getInt("loginAttempts", 0)
         val lockoutDuration = TimeUnit.MINUTES.toMillis(15)
-        
-        return loginAttempts >= 5 && 
+
+        return loginAttempts >= 5 &&
                (System.currentTimeMillis() - lastAttemptTime) < lockoutDuration
     }
 
@@ -118,4 +118,4 @@ class SecurePreferencesManager private constructor(context: Context) {
         val lockoutDuration = TimeUnit.MINUTES.toMillis(15)
         return lockoutDuration - (System.currentTimeMillis() - lastAttemptTime)
     }
-} 
+}

@@ -144,18 +144,16 @@ class TeacherAnalyticsFragment : Fragment() {
             val selectedSubject = subjectSpinner.selectedItem?.toString() ?: "All Subjects"
             val selectedSection = sectionSpinner.selectedItem?.toString() ?: "All Sections"
 
-            // Get period date range
             val calendar = Calendar.getInstance()
             val endDate = calendar.time
             when (selectedPeriod) {
                 "Last 7 Days" -> calendar.add(Calendar.DAY_OF_YEAR, -7)
                 "Last 30 Days" -> calendar.add(Calendar.DAY_OF_YEAR, -30)
                 "Last 3 Months" -> calendar.add(Calendar.MONTH, -3)
-                "All Time" -> calendar.add(Calendar.YEAR, -10) // Far back enough
+                "All Time" -> calendar.add(Calendar.YEAR, -10)
             }
             val startDate = calendar.time
 
-            // Set up real-time listener for active attendance
             analyticsListener?.remove()
             analyticsListener = db.collection("attendance")
                 .whereEqualTo("teacherId", currentUser.uid)
@@ -168,10 +166,9 @@ class TeacherAnalyticsFragment : Fragment() {
                         return@addSnapshotListener
                     }
 
-                    // Process active attendance data
                     activeAttendanceData = documents?.mapNotNull { doc ->
                         val timestamp = doc.getTimestamp("timestamp")?.toDate()
-                        // Filter by date range in memory
+
                         if (timestamp != null && timestamp.after(startDate) && timestamp.before(endDate)) {
                             TeacherAnalyticsData(
                                 studentName = doc.getString("studentName") ?: "",
@@ -187,7 +184,6 @@ class TeacherAnalyticsFragment : Fragment() {
                     processCombinedAnalyticsData(selectedSubject, selectedSection, startDate, endDate)
                 }
 
-            // Set up real-time listener for archived attendance
             archivedAnalyticsListener?.remove()
             archivedAnalyticsListener = db.collection("archived_attendance")
                 .whereEqualTo("teacherId", currentUser.uid)
@@ -199,10 +195,9 @@ class TeacherAnalyticsFragment : Fragment() {
                         return@addSnapshotListener
                     }
 
-                    // Process archived attendance data
                     archivedAttendanceData = documents?.mapNotNull { doc ->
                         val timestamp = doc.getTimestamp("timestamp")?.toDate()
-                        // Filter by date range in memory
+
                         if (timestamp != null && timestamp.after(startDate) && timestamp.before(endDate)) {
                             TeacherAnalyticsData(
                                 studentName = doc.getString("studentName") ?: "",
@@ -228,15 +223,13 @@ class TeacherAnalyticsFragment : Fragment() {
         startDate: Date,
         endDate: Date
     ) {
-        // Combine active and archived data
+
         var combinedData = activeAttendanceData + archivedAttendanceData
 
-        // Filter to classes the teacher actually owns
         combinedData = combinedData.filter { d ->
             teacherSubjects.contains(d.subject) && subjectSections[d.subject]?.contains(d.section) == true
         }
 
-        // Apply UI filters
         if (selectedSubject != "All Subjects") {
             combinedData = combinedData.filter { it.subject == selectedSubject }
         }
@@ -249,7 +242,7 @@ class TeacherAnalyticsFragment : Fragment() {
     }
 
     private fun loadAnalyticsDataFallback(teacherId: String, selectedSubject: String, selectedSection: String) {
-        // Simplified query without timestamp filters - includes archived attendance
+
         db.collection("attendance")
             .whereEqualTo("teacherId", teacherId)
             .get()
@@ -264,7 +257,6 @@ class TeacherAnalyticsFragment : Fragment() {
                     )
                 }
 
-                // Also fetch archived attendance
                 db.collection("archived_attendance")
                     .whereEqualTo("teacherId", teacherId)
                     .get()
@@ -279,15 +271,12 @@ class TeacherAnalyticsFragment : Fragment() {
                             )
                         }
 
-                        // Combine data
                         var combinedData = activeData + archivedData
 
-                        // Filter to classes the teacher actually owns
                         combinedData = combinedData.filter { d ->
                             teacherSubjects.contains(d.subject) && subjectSections[d.subject]?.contains(d.section) == true
                         }
 
-                        // Apply UI filters
                         if (selectedSubject != "All Subjects") {
                             combinedData = combinedData.filter { it.subject == selectedSubject }
                         }
@@ -298,7 +287,7 @@ class TeacherAnalyticsFragment : Fragment() {
                         updateStatistics(combinedData)
                     }
                     .addOnFailureListener { e ->
-                        // If archived fails, just use active data
+
                         var data = activeData
                         data = data.filter { d ->
                             teacherSubjects.contains(d.subject) && subjectSections[d.subject]?.contains(d.section) == true
@@ -314,7 +303,7 @@ class TeacherAnalyticsFragment : Fragment() {
             }
             .addOnFailureListener { e ->
                 android.widget.Toast.makeText(requireContext(), "Failed to load analytics: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
-                // Show zero stats
+
                 updateStatistics(emptyList())
             }
     }
@@ -328,35 +317,29 @@ class TeacherAnalyticsFragment : Fragment() {
     }
 
     private fun updateStatistics(attendanceData: List<TeacherAnalyticsData>) {
-        // Count total attendance records for this filter
+
         val totalRecords = attendanceData.size
-        
-        // Count unique students for this filter
+
         val uniqueStudents = attendanceData.map { it.studentName }.distinct().size
-        
-        // Calculate attendance statistics
+
         val presentCount = attendanceData.count { it.status == "PRESENT" }
         val lateCount = attendanceData.count { it.status == "LATE" }
         val absentCount = attendanceData.count { it.status == "ABSENT" }
-        val excusedCount = attendanceData.count { it.status == "EXCUSED" }
-        
-        // Attendance rate = (Present + Late) / Total
+        val cuttingCount = attendanceData.count { it.status == "CUTTING" }
+
         val attendanceRate = if (totalRecords > 0) {
             (presentCount + lateCount).toFloat() / totalRecords * 100
         } else 0f
-        
-        // Punctuality rate = Present only / Total
+
         val punctualityRate = if (totalRecords > 0) {
             presentCount.toFloat() / totalRecords * 100
         } else 0f
 
-        // Update UI
         totalClassesText.text = totalRecords.toString()
         totalStudentsText.text = uniqueStudents.toString()
         attendanceRateText.text = String.format("%.1f%%", attendanceRate)
         punctualityRateText.text = String.format("%.1f%%", punctualityRate)
 
-        // Find best performing section (if viewing all sections)
         val selectedSection = sectionSpinner.selectedItem?.toString() ?: "All Sections"
         if (selectedSection == "All Sections" && attendanceData.isNotEmpty()) {
             val bestClass = attendanceData.groupBy { "${it.subject} - ${it.section}" }
@@ -369,7 +352,7 @@ class TeacherAnalyticsFragment : Fragment() {
             bestPerformingClassText.text = bestClass?.first ?: "N/A"
             avgAttendanceText.text = String.format("%.1f%%", bestClass?.second ?: 0f)
         } else {
-            // When a specific section is selected, show that section's stats
+
             val selectedSubject = subjectSpinner.selectedItem?.toString() ?: "All Subjects"
             if (selectedSubject != "All Subjects" && selectedSection != "All Sections") {
                 bestPerformingClassText.text = "$selectedSubject - $selectedSection"

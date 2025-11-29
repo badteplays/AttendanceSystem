@@ -7,7 +7,6 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
-// Data class for a schedule item
  data class ScheduleItem(
     val id: String = "",
     val subject: String = "",

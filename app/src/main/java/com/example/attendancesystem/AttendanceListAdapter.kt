@@ -16,7 +16,6 @@ class AttendanceListAdapter(
     private val onManualAddClick: () -> Unit
 ) : ListAdapter<Attendance, AttendanceListAdapter.ViewHolder>(AttendanceDiffCallback()) {
 
-    // For multi-select mode
     private val selectedItems = mutableSetOf<Int>()
     var multiSelectMode = false
     var onSelectionChanged: ((Set<Int>) -> Unit)? = null
@@ -48,15 +47,14 @@ class AttendanceListAdapter(
             android.util.Log.d("AttendanceAdapter", "Binding: ${attendance.studentName}, status: ${attendance.status}, timestamp: ${attendance.timestamp}")
             android.widget.Toast.makeText(binding.root.context, "Binding: ${attendance.studentName}", android.widget.Toast.LENGTH_SHORT).show()
             with(binding) {
-                // Show Student Name
+
                 txtStudentName.text = attendance.studentName
-                // Show Status
+
                 txtStatus.text = attendance.status.name
-                // Show Timestamp formatted
+
                 val sdf = java.text.SimpleDateFormat("MMM dd, yyyy HH:mm", java.util.Locale.getDefault())
                 txtTimestamp.text = sdf.format(attendance.timestamp.toDate())
 
-                // Show remove button
                 btnRemoveStudent.visibility = android.view.View.VISIBLE
                 btnRemoveStudent.setOnClickListener { onRemoveClick(attendance) }
 
@@ -65,7 +63,7 @@ class AttendanceListAdapter(
                     onLongClick?.invoke()
                     true
                 }
-                // Highlight if selected
+
                 root.alpha = if (isSelected) 0.5f else 1.0f
             }
         }

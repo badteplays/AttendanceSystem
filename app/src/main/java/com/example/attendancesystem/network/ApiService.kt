@@ -30,14 +30,14 @@ interface ApiService {
         private const val PREFS_NAME = "ServerPrefs"
         private const val KEY_SERVER_IP = "server_ip"
         private const val KEY_USE_HTTPS = "use_https"
-        private const val DEFAULT_IP = "192.168.1.100" // Replace with your local IP for testing
-        private const val DEFAULT_USE_HTTPS = false // Use HTTP for local testing
+        private const val DEFAULT_IP = "192.168.1.100"
+        private const val DEFAULT_USE_HTTPS = false
 
         fun create(context: Context): ApiService {
             val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             val serverIp = prefs.getString(KEY_SERVER_IP, DEFAULT_IP) ?: DEFAULT_IP
             val useHttps = prefs.getBoolean(KEY_USE_HTTPS, DEFAULT_USE_HTTPS)
-            
+
             val protocol = if (useHttps) "https" else "http"
             val port = if (useHttps) "443" else "5000"
             val baseUrl = "$protocol://$serverIp:$port/"
@@ -53,10 +53,9 @@ interface ApiService {
                 .writeTimeout(30, TimeUnit.SECONDS)
                 .retryOnConnectionFailure(true)
 
-            // Only add SSL configuration if using HTTPS
             if (useHttps) {
-                // For production, use proper certificate validation
-                // For now, we'll use HTTP for local testing to avoid certificate issues
+
+
                 android.util.Log.w("ApiService", "HTTPS is enabled but not recommended for local testing")
             }
 
@@ -74,10 +73,10 @@ interface ApiService {
             val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             prefs.edit().putString(KEY_SERVER_IP, newIp).apply()
         }
-        
+
         fun updateUseHttps(context: Context, useHttps: Boolean) {
             val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             prefs.edit().putBoolean(KEY_USE_HTTPS, useHttps).apply()
         }
     }
-} 
+}

@@ -76,7 +76,6 @@ class StudentAttendanceHistoryFragment : Fragment() {
             val tempActiveList = mutableListOf<AttendanceHistoryItem>()
             val tempArchivedList = mutableListOf<AttendanceHistoryItem>()
             
-            // Listen to active attendance
             attendanceListener?.remove()
             attendanceListener = db.collection("attendance")
                 .whereEqualTo("userId", user.uid)
@@ -102,7 +101,6 @@ class StudentAttendanceHistoryFragment : Fragment() {
                     updateCombinedList(tempActiveList, tempArchivedList)
                 }
             
-            // Listen to archived attendance
             archivedListener?.remove()
             archivedListener = db.collection("archived_attendance")
                 .whereEqualTo("userId", user.uid)
@@ -135,26 +133,22 @@ class StudentAttendanceHistoryFragment : Fragment() {
         attendanceList.addAll(activeList)
         attendanceList.addAll(archivedList)
         
-        // Sort by date descending (most recent first)
         attendanceList.sortByDescending { it.date }
         
         var totalClasses = attendanceList.size
         var attendedClasses = attendanceList.count { it.status == "PRESENT" }
 
-        // Calculate attendance percentage
         val percentage = if (totalClasses > 0) {
             (attendedClasses.toDouble() / totalClasses.toDouble() * 100)
         } else {
             0.0
         }
 
-        // Update UI based on data
         if (totalClasses > 0) {
             attendancePercentage.text = "Attendance: ${String.format("%.1f", percentage)}%"
             recyclerView.visibility = View.VISIBLE
             emptyState.visibility = View.GONE
             
-            // Show warning if attendance is below 75%
             if (percentage < 75) {
                 warningText.visibility = View.VISIBLE
                 warningText.text = "Warning: Your attendance is below 75%"

@@ -8,4 +8,4 @@ data class RegisterRequest(
     val studentId: String? = null,
     val department: String? = null,
     val course: String? = null
-) 
+)

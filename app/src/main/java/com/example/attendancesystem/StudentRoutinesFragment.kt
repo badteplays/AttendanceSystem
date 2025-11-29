@@ -20,17 +20,17 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 class StudentRoutinesFragment : Fragment() {
-    
+
     private lateinit var recyclerView: RecyclerView
     private lateinit var fabAddRoutine: FloatingActionButton
     private lateinit var emptyState: View
     private lateinit var progressBar: ProgressBar
     private lateinit var adapter: RoutineAdapter
-    
+
     private val routinesList = mutableListOf<Routine>()
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
-    
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -38,23 +38,23 @@ class StudentRoutinesFragment : Fragment() {
     ): View? {
         return inflater.inflate(R.layout.fragment_student_routines, container, false)
     }
-    
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        
+
         initializeViews(view)
         setupRecyclerView()
         setupFab()
         loadRoutines()
     }
-    
+
     private fun initializeViews(view: View) {
         recyclerView = view.findViewById(R.id.recyclerViewRoutines)
         fabAddRoutine = view.findViewById(R.id.fabAddRoutine)
         emptyState = view.findViewById(R.id.emptyStateRoutines)
         progressBar = view.findViewById(R.id.progressBarRoutines)
     }
-    
+
     private fun setupRecyclerView() {
         adapter = RoutineAdapter(routinesList) { routine ->
             confirmDelete(routine)
@@ -62,32 +62,31 @@ class StudentRoutinesFragment : Fragment() {
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         recyclerView.adapter = adapter
     }
-    
+
     private fun setupFab() {
         fabAddRoutine.setOnClickListener {
             showAddRoutineDialog()
         }
     }
-    
+
     private fun loadRoutines() {
         val currentUser = auth.currentUser ?: return
-        
+
         progressBar.visibility = View.VISIBLE
-        
+
         db.collection("routines")
             .whereEqualTo("userId", currentUser.uid)
             .get()
             .addOnSuccessListener { documents ->
                 routinesList.clear()
-                
+
                 for (doc in documents) {
                     val routine = Routine.fromMap(doc.id, doc.data)
                     routinesList.add(routine)
                 }
-                
-                // Sort by day and time
+
                 routinesList.sortWith(compareBy({ getDayOrder(it.day) }, { it.startTime }))
-                
+
                 adapter.notifyDataSetChanged()
                 updateEmptyState()
                 progressBar.visibility = View.GONE
@@ -97,7 +96,7 @@ class StudentRoutinesFragment : Fragment() {
                 progressBar.visibility = View.GONE
             }
     }
-    
+
     private fun getDayOrder(day: String): Int {
         return when (day) {
             "Monday" -> 1
@@ -110,7 +109,7 @@ class StudentRoutinesFragment : Fragment() {
             else -> 8
         }
     }
-    
+
     private fun updateEmptyState() {
         if (routinesList.isEmpty()) {
             emptyState.visibility = View.VISIBLE
@@ -120,33 +119,30 @@ class StudentRoutinesFragment : Fragment() {
             recyclerView.visibility = View.VISIBLE
         }
     }
-    
+
     private fun showAddRoutineDialog() {
         val dialog = AddRoutineDialog(requireContext()) { routine ->
-            // Validate against class schedule before saving
+
             validateAndSaveRoutine(routine)
         }
         dialog.show()
     }
-    
+
     private fun validateAndSaveRoutine(routine: Routine) {
         lifecycleScope.launch {
             try {
                 progressBar.visibility = View.VISIBLE
-                
-                // Get student's section
+
                 val currentUser = auth.currentUser ?: return@launch
                 val userDoc = db.collection("users").document(currentUser.uid).get().await()
                 val section = userDoc.getString("section")?.uppercase() ?: ""
-                
-                // Get class schedule for the selected day
+
                 val schedules = db.collection("schedules")
                     .whereEqualTo("day", routine.day)
                     .whereEqualTo("section", section)
                     .get()
                     .await()
-                
-                // Check for conflicts
+
                 val conflict = checkTimeConflict(routine, schedules.documents.map { doc ->
                     Triple(
                         doc.getString("subject") ?: "Class",
@@ -154,18 +150,18 @@ class StudentRoutinesFragment : Fragment() {
                         doc.getString("endTime") ?: ""
                     )
                 })
-                
+
                 progressBar.visibility = View.GONE
-                
+
                 if (conflict != null) {
-                    // Show conflict error
+
                     AlertDialog.Builder(requireContext())
                         .setTitle("Schedule Conflict")
                         .setMessage("Your routine conflicts with ${conflict.first} (${conflict.second} - ${conflict.third}). Please choose a different time slot.")
                         .setPositiveButton("OK", null)
                         .show()
                 } else {
-                    // No conflict, save routine
+
                     saveRoutine(routine)
                 }
             } catch (e: Exception) {
@@ -174,27 +170,26 @@ class StudentRoutinesFragment : Fragment() {
             }
         }
     }
-    
+
     private fun checkTimeConflict(
         routine: Routine,
         classes: List<Triple<String, String, String>>
     ): Triple<String, String, String>? {
         val routineStart = timeToMinutes(routine.startTime)
         val routineEnd = timeToMinutes(routine.endTime)
-        
+
         for (classInfo in classes) {
             val classStart = timeToMinutes(classInfo.second)
             val classEnd = timeToMinutes(classInfo.third)
-            
-            // Check if times overlap
+
             if (routineStart < classEnd && routineEnd > classStart) {
-                return classInfo // Conflict found
+                return classInfo
             }
         }
-        
-        return null // No conflict
+
+        return null
     }
-    
+
     private fun timeToMinutes(time: String): Int {
         return try {
             val parts = time.split(":")
@@ -205,12 +200,12 @@ class StudentRoutinesFragment : Fragment() {
             0
         }
     }
-    
+
     private fun saveRoutine(routine: Routine) {
         val currentUser = auth.currentUser ?: return
-        
+
         val routineData = routine.copy(userId = currentUser.uid)
-        
+
         db.collection("routines")
             .add(routineData.toMap())
             .addOnSuccessListener {
@@ -221,7 +216,7 @@ class StudentRoutinesFragment : Fragment() {
                 Toast.makeText(requireContext(), "Failed to add routine: ${e.message}", Toast.LENGTH_SHORT).show()
             }
     }
-    
+
     private fun confirmDelete(routine: Routine) {
         AlertDialog.Builder(requireContext())
             .setTitle("Delete Routine")
@@ -232,7 +227,7 @@ class StudentRoutinesFragment : Fragment() {
             .setNegativeButton("Cancel", null)
             .show()
     }
-    
+
     private fun deleteRoutine(routine: Routine) {
         db.collection("routines")
             .document(routine.id)

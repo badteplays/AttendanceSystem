@@ -24,7 +24,7 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
     private lateinit var auth: FirebaseAuth
     private val db = FirebaseFirestore.getInstance()
-    
+
     companion object {
         private const val PERMISSION_REQUEST_CODE = 100
     }
@@ -36,20 +36,16 @@ class LoginActivity : AppCompatActivity() {
 
         auth = Firebase.auth
 
-        // Check if user explicitly logged out
         val prefs = getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
         val explicitLogout = prefs.getBoolean("explicit_logout", false)
 
-        // Check if user is already logged in (and didn't just log out)
         val currentUser = auth.currentUser
         if (currentUser != null && !explicitLogout) {
             android.util.Log.d("LoginActivity", "User already logged in: ${currentUser.uid}")
-            
-            // Hide login form while checking
+
             binding.btnLogin.isEnabled = false
             binding.btnLogin.text = "Checking session..."
-            
-            // Check user's role and navigate
+
             db.collection("users")
                 .document(currentUser.uid)
                 .get()
@@ -60,23 +56,23 @@ class LoginActivity : AppCompatActivity() {
                         binding.btnLogin.isEnabled = true
                         binding.btnLogin.text = "Login"
                         Toast.makeText(this, "Account not found. Please sign up.", Toast.LENGTH_SHORT).show()
-                        // Setup listeners only when staying on login screen
+
                         setupClickListeners()
                         return@addOnSuccessListener
                     }
-                    
+
                     val isTeacher = document.getBoolean("isTeacher") ?: false
                     val isStudent = document.getBoolean("isStudent") ?: true
-                    
+
                     android.util.Log.d("LoginActivity", "User role - Teacher: $isTeacher, Student: $isStudent")
-                    
+
                     if (isTeacher && isStudent) {
-                        // User has both roles, prompt selection
+
                         android.util.Log.d("LoginActivity", "User has both roles, showing role selection")
                         startActivity(Intent(this, RoleSelectionActivity::class.java))
                         finish()
                     } else {
-                        // Navigate to appropriate screen
+
                         android.util.Log.d("LoginActivity", "Auto-navigating to dashboard")
                         navigateToAppropriateScreen()
                     }
@@ -86,16 +82,13 @@ class LoginActivity : AppCompatActivity() {
                     binding.btnLogin.isEnabled = true
                     binding.btnLogin.text = "Login"
                     Toast.makeText(this, "Error loading user data", Toast.LENGTH_SHORT).show()
-                    // Setup listeners only when staying on login screen
+
                     setupClickListeners()
                 }
             return
         }
-        
-        // User not logged in or explicitly logged out - setup normal login flow
-        setupClickListeners() else {
-            android.util.Log.d("LoginActivity", "No user logged in, showing login screen")
-        }
+
+        setupClickListeners()
     }
 
     private fun setupClickListeners() {
@@ -109,9 +102,8 @@ class LoginActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            // Show loading state
             showLoading(true)
-            
+
             auth.signInWithEmailAndPassword(email, password)
                 .addOnSuccessListener { result ->
                     db.collection("users")
@@ -121,7 +113,7 @@ class LoginActivity : AppCompatActivity() {
                             showLoading(false)
                             val userIsTeacher = doc.getBoolean("isTeacher") ?: false
                             if (userIsTeacher == isTeacher) {
-                                // Ensure user profile has correct role fields for Firestore rules
+
                                 ensureUserProfile(if (isTeacher) "teacher" else "student")
                                 navigateToAppropriateScreen()
                             } else {
@@ -144,7 +136,7 @@ class LoginActivity : AppCompatActivity() {
             startActivity(Intent(this, SignupActivity::class.java))
         }
     }
-    
+
     private fun showLoading(show: Boolean) {
         binding.btnLogin.isEnabled = !show
         binding.txtSignup.isEnabled = !show
@@ -152,14 +144,14 @@ class LoginActivity : AppCompatActivity() {
         binding.editPassword.isEnabled = !show
         binding.teacherRadio.isEnabled = !show
         binding.studentRadio.isEnabled = !show
-        
+
         if (show) {
             binding.btnLogin.text = "Logging in..."
         } else {
             binding.btnLogin.text = "Login"
         }
     }
-    
+
     private fun showError(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
@@ -184,7 +176,6 @@ class LoginActivity : AppCompatActivity() {
             return
         }
 
-        // Clear the explicit logout flag since we're logging in
         val prefs = getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
         prefs.edit().putBoolean("explicit_logout", false).apply()
 
@@ -193,21 +184,19 @@ class LoginActivity : AppCompatActivity() {
             .get()
             .addOnSuccessListener { document ->
                 if (!document.exists()) {
-                    // User does not exist in Firestore, sign out and return to login
+
                     auth.signOut()
                     Toast.makeText(this, "Account not found. Please sign up.", Toast.LENGTH_SHORT).show()
                     return@addOnSuccessListener
                 }
                 val isTeacher = document.getBoolean("isTeacher") ?: false
-                
-                // Schedule background reminders for students
+
                 if (!isTeacher) {
                     scheduleStudentReminders()
                 }
-                
-                // Request necessary permissions before navigating
+
                 requestNecessaryPermissions(isTeacher)
-                
+
                 val intent = if (isTeacher) {
                     Intent(this, TeacherMainActivity::class.java)
                 } else {
@@ -220,50 +209,47 @@ class LoginActivity : AppCompatActivity() {
                 Toast.makeText(this, "Error loading user data", Toast.LENGTH_SHORT).show()
             }
     }
-    
+
     private fun scheduleStudentReminders() {
         try {
             val prefs = getSharedPreferences("student_prefs", Context.MODE_PRIVATE)
             val notificationsEnabled = prefs.getBoolean("notifications_enabled", true)
-            
+
             if (notificationsEnabled) {
-                // Schedule periodic work to check for upcoming classes every 15 minutes
-                // This will run in the background even when the app is closed
+
+
                 val workRequest = PeriodicWorkRequestBuilder<StudentReminderWorker>(
                     15, TimeUnit.MINUTES
                 ).build()
-                
+
                 WorkManager.getInstance(this).enqueueUniquePeriodicWork(
                     "student_reminder_work",
-                    ExistingPeriodicWorkPolicy.KEEP, // Keep existing if already scheduled
+                    ExistingPeriodicWorkPolicy.KEEP,
                     workRequest
                 )
-                
+
                 android.util.Log.d("LoginActivity", "Background class reminders scheduled (runs even when app is closed)")
             }
         } catch (e: Exception) {
             android.util.Log.e("LoginActivity", "Error scheduling reminders: ${e.message}", e)
         }
     }
-    
+
     private fun requestNecessaryPermissions(isTeacher: Boolean) {
         val permissionsToRequest = mutableListOf<String>()
-        
-        // Camera permission (for both teachers and students - QR scanning)
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) 
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
             != PackageManager.PERMISSION_GRANTED) {
             permissionsToRequest.add(Manifest.permission.CAMERA)
         }
-        
-        // Notification permission (Android 13+) - especially important for students
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) 
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
                 != PackageManager.PERMISSION_GRANTED) {
                 permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
-        
-        // Request all necessary permissions at once
+
         if (permissionsToRequest.isNotEmpty()) {
             android.util.Log.d("LoginActivity", "Requesting permissions: ${permissionsToRequest.joinToString()}")
             ActivityCompat.requestPermissions(
@@ -273,26 +259,26 @@ class LoginActivity : AppCompatActivity() {
             )
         }
     }
-    
+
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        
+
         if (requestCode == PERMISSION_REQUEST_CODE) {
             val deniedPermissions = mutableListOf<String>()
-            
+
             permissions.forEachIndexed { index, permission ->
                 if (grantResults[index] != PackageManager.PERMISSION_GRANTED) {
                     deniedPermissions.add(permission)
                 }
             }
-            
+
             if (deniedPermissions.isNotEmpty()) {
                 val message = when {
-                    deniedPermissions.contains(Manifest.permission.CAMERA) && 
+                    deniedPermissions.contains(Manifest.permission.CAMERA) &&
                     deniedPermissions.contains(Manifest.permission.POST_NOTIFICATIONS) -> {
                         "Camera and notification permissions are needed for full app functionality"
                     }

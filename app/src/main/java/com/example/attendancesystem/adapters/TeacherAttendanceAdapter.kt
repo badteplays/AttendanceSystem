@@ -10,8 +10,8 @@ import com.example.attendancesystem.R
 import com.example.attendancesystem.models.TeacherAttendanceItem
 
 class TeacherAttendanceAdapter(
-    private val attendanceList: List<TeacherAttendanceItem>,
-    private val onRemove: ((TeacherAttendanceItem) -> Unit)? = null
+    private val attendanceList: MutableList<TeacherAttendanceItem>,
+    private var onRemove: ((TeacherAttendanceItem) -> Unit)? = null
 ) : RecyclerView.Adapter<TeacherAttendanceAdapter.ViewHolder>() {
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -34,16 +34,15 @@ class TeacherAttendanceAdapter(
         holder.timeTaken.text = item.timeTaken
         holder.section.text = item.section
         holder.status.text = item.status
-        
+
         // Set status background color
-        val backgroundRes = when (item.status) {
             "PRESENT" -> R.drawable.status_present_bg
             "EXCUSED" -> R.drawable.status_excused_bg
+            "CUTTING" -> R.drawable.status_cutting_bg
             "ABSENT" -> R.drawable.status_absent_bg
-            else -> R.drawable.status_present_bg
         }
-        
-        holder.status.background = ContextCompat.getDrawable(holder.itemView.context, backgroundRes)
+
+
 
         holder.buttonRemove?.setOnClickListener {
             onRemove?.invoke(item)
@@ -52,3 +51,7 @@ class TeacherAttendanceAdapter(
 
     override fun getItemCount() = attendanceList.size
 }
+
+    fun updateOnRemoveListener(listener: (TeacherAttendanceItem) -> Unit) {
+        this.onRemove = listener
+    }

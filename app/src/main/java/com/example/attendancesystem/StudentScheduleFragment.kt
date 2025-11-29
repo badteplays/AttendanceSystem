@@ -40,11 +40,11 @@ class StudentScheduleFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        
+
         try {
             initializeViews(view)
             setupRecyclerView()
-            // Show a simple message first to test if fragment loads
+
             showEmptyState("Schedule loading...")
             loadStudentSection()
         } catch (e: Exception) {
@@ -82,9 +82,9 @@ class StudentScheduleFragment : Fragment() {
             showEmptyState("User not authenticated")
             return
         }
-        
+
         try {
-            // First get the student's section
+
             db.collection("users").document(currentUser.uid)
                 .get()
                 .addOnSuccessListener { document ->
@@ -110,9 +110,9 @@ class StudentScheduleFragment : Fragment() {
 
     private fun loadStudentSchedules() {
         progressBar.visibility = View.VISIBLE
-        
+
         try {
-            // Query schedules that match the student's section (normalized to uppercase and trimmed)
+
             val normalizedSection = studentSection.trim().uppercase()
             android.util.Log.d("StudentScheduleFragment", "Loading schedules for section: '$normalizedSection' (original: '$studentSection')")
             db.collection("schedules")
@@ -120,8 +120,7 @@ class StudentScheduleFragment : Fragment() {
                 .get()
                 .addOnSuccessListener { documents ->
                     android.util.Log.d("StudentScheduleFragment", "Found ${documents.size()} schedules with uppercase query")
-                    
-                    // If no results with uppercase, try lowercase for backward compatibility
+
                     if (documents.isEmpty) {
                         android.util.Log.d("StudentScheduleFragment", "No results with uppercase, trying lowercase...")
                         tryLowercaseQuery(normalizedSection.lowercase())
@@ -139,7 +138,7 @@ class StudentScheduleFragment : Fragment() {
             showEmptyState("Error: ${e.message}")
         }
     }
-    
+
     private fun tryLowercaseQuery(lowercaseSection: String) {
         android.util.Log.d("StudentScheduleFragment", "Querying with lowercase section: '$lowercaseSection'")
         db.collection("schedules")
@@ -155,76 +154,71 @@ class StudentScheduleFragment : Fragment() {
                 showEmptyState("Error loading schedules: ${e.message}")
             }
     }
-    
+
     private fun processScheduleDocuments(documents: com.google.firebase.firestore.QuerySnapshot) {
-        scheduleList.clear()
-        var todayClassesCount = 0
-        val today = getCurrentDayOfWeek()
+                scheduleList.clear()
+                var todayClassesCount = 0
+                val today = getCurrentDayOfWeek()
 
-        for (document in documents) {
-            val subject = document.getString("subject") ?: ""
-            val section = document.getString("section") ?: ""
-            val day = document.getString("day") ?: ""
-            val startTime = document.getString("startTime") ?: ""
-            val endTime = document.getString("endTime") ?: ""
-            val notes = document.getString("notes") ?: ""
-            val teacherId = document.getString("teacherId") ?: ""
+                for (document in documents) {
+                    val subject = document.getString("subject") ?: ""
+                    val section = document.getString("section") ?: ""
+                    val day = document.getString("day") ?: ""
+                    val startTime = document.getString("startTime") ?: ""
+                    val endTime = document.getString("endTime") ?: ""
+                    val notes = document.getString("notes") ?: ""
+                    val teacherId = document.getString("teacherId") ?: ""
 
-            android.util.Log.d("StudentScheduleFragment", "Found schedule: subject=$subject, section=$section, day=$day, time=$startTime-$endTime")
+                    android.util.Log.d("StudentScheduleFragment", "Found schedule: subject=$subject, section=$section, day=$day, time=$startTime-$endTime")
 
-            // Convert to 12-hour format for display
-            val timeString = convertTo12HourFormat(startTime, endTime)
-            
-            // Check if this is today's class
-            if (day.equals(today, ignoreCase = true)) {
-                todayClassesCount++
-            }
+                    val timeString = convertTo12HourFormat(startTime, endTime)
 
-            scheduleList.add(StudentScheduleItem(
-                id = document.id,
-                subject = subject,
-                section = section,
-                day = day,
-                time = timeString,
-                startTime = startTime,
-                endTime = endTime,
-                notes = notes,
-                teacherId = teacherId
-            ))
-        }
+                    if (day.equals(today, ignoreCase = true)) {
+                        todayClassesCount++
+                    }
 
-        // Update UI
-        if (scheduleList.isNotEmpty()) {
-            recyclerView.visibility = View.VISIBLE
-            emptyState.visibility = View.GONE
-            
-            // Format header text
-            val totalText = if (scheduleList.size == 1) "1 class" else "${scheduleList.size} classes"
-            textTotalClasses.text = totalText
-            
-            val todayText = when (todayClassesCount) {
-                0 -> "No classes today"
-                1 -> "1 class today"
-                else -> "$todayClassesCount classes today"
-            }
-            textTodayClasses.text = todayText
-        } else {
-            showEmptyState("No classes scheduled for your section")
-        }
+                    scheduleList.add(StudentScheduleItem(
+                        id = document.id,
+                        subject = subject,
+                        section = section,
+                        day = day,
+                        time = timeString,
+                        startTime = startTime,
+                        endTime = endTime,
+                        notes = notes,
+                        teacherId = teacherId
+                    ))
+                }
 
-        adapter.notifyDataSetChanged()
-        progressBar.visibility = View.GONE
+                if (scheduleList.isNotEmpty()) {
+                    recyclerView.visibility = View.VISIBLE
+                    emptyState.visibility = View.GONE
+
+                    val totalText = if (scheduleList.size == 1) "1 class" else "${scheduleList.size} classes"
+                    textTotalClasses.text = totalText
+
+                    val todayText = when (todayClassesCount) {
+                        0 -> "No classes today"
+                        1 -> "1 class today"
+                        else -> "$todayClassesCount classes today"
+                    }
+                    textTodayClasses.text = todayText
+                } else {
+                    showEmptyState("No classes scheduled for your section")
+                }
+
+                adapter.notifyDataSetChanged()
+                progressBar.visibility = View.GONE
     }
 
     private fun showEmptyState(message: String) {
         recyclerView.visibility = View.GONE
         emptyState.visibility = View.VISIBLE
         progressBar.visibility = View.GONE
-        
+
         textTotalClasses.text = "0"
         textTodayClasses.text = "0"
-        
-        // Update empty state message if needed
+
         val emptyMessage = emptyState.findViewById<TextView>(R.id.emptyMessage)
         emptyMessage?.text = message
     }
@@ -239,13 +233,13 @@ class StudentScheduleFragment : Fragment() {
         return try {
             val inputFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
             val outputFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
-            
+
             val startDate = inputFormat.parse(startTime)
             val endDate = inputFormat.parse(endTime)
-            
+
             val formattedStart = outputFormat.format(startDate ?: Date())
             val formattedEnd = outputFormat.format(endDate ?: Date())
-            
+
             "$formattedStart - $formattedEnd"
         } catch (e: Exception) {
             "$startTime - $endTime"

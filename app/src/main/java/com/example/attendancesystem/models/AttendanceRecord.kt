@@ -12,4 +12,4 @@ data class AttendanceRecord(
     val scheduleId: String = "",
     val location: String = "",
     val notes: String = ""
-) 
+)
