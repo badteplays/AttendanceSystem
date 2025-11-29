@@ -382,3 +382,5 @@ Recent updates include:
 
 ** As of right now the Teacher recent attendance recyler is having problemssss**
 ** Same wit the Student Status not changing after class ends**
+** Notifications not popping up for some reasons**
+** Width not working with tablets** 
