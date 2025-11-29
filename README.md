@@ -368,14 +368,6 @@ Recent updates include:
 - Fixed race conditions in login flow
 - Improved permission request handling
 
-## 👥 Contributors
-
-Developed for efficient attendance management in educational institutions.
-
-## 📄 License
-
-This project is developed as an educational attendance management system.
-
 ## 🔗 Repository
 
 [GitHub Repository](https://github.com/badteplays/AttendanceSystem)
