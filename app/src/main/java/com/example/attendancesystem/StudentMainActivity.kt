@@ -7,21 +7,22 @@ import androidx.fragment.app.Fragment
 import com.google.android.material.navigation.NavigationView
 import android.widget.ImageView
 import android.content.Context
-import androidx.work.WorkManager
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.ExistingPeriodicWorkPolicy
-import java.util.concurrent.TimeUnit
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.example.attendancesystem.notifications.LocalNotificationManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class StudentMainActivity : AppCompatActivity() {
 
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var navigationView: NavigationView
+    private lateinit var notificationManager: LocalNotificationManager
 
     companion object {
         private const val PERMISSION_REQUEST_CODE = 101
@@ -31,8 +32,9 @@ class StudentMainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_student_main)
 
+        notificationManager = LocalNotificationManager.getInstance(this)
+        
         setupDrawerNavigation()
-
         requestNecessaryPermissions()
 
         if (savedInstanceState == null) {
@@ -45,6 +47,9 @@ class StudentMainActivity : AppCompatActivity() {
             }
             loadFragment(fragmentToLoad)
         }
+        
+        // Schedule notifications when student opens the app
+        scheduleClassNotifications()
     }
 
     private fun setupDrawerNavigation() {
@@ -179,6 +184,26 @@ class StudentMainActivity : AppCompatActivity() {
                 }
                 Toast.makeText(this, message, Toast.LENGTH_LONG).show()
                 android.util.Log.w("StudentMainActivity", "Denied permissions: ${deniedPermissions.joinToString()}")
+            } else {
+                // All permissions granted, reschedule notifications
+                scheduleClassNotifications()
+            }
+        }
+    }
+    
+    private fun scheduleClassNotifications() {
+        val prefs = getSharedPreferences("student_prefs", Context.MODE_PRIVATE)
+        if (!prefs.getBoolean("notifications_enabled", true)) {
+            android.util.Log.d("StudentMainActivity", "Notifications disabled, skipping schedule")
+            return
+        }
+        
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                notificationManager.scheduleAllClassNotifications()
+                android.util.Log.d("StudentMainActivity", "Class notifications scheduled")
+            } catch (e: Exception) {
+                android.util.Log.e("StudentMainActivity", "Error scheduling notifications: ${e.message}", e)
             }
         }
     }

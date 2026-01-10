@@ -2,13 +2,13 @@ package com.example.attendancesystem
 
 import android.app.Application
 import android.content.Context
+import com.example.attendancesystem.notifications.LocalNotificationManager
 import com.example.attendancesystem.utils.ThemeManager
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import androidx.work.WorkManager
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.ExistingPeriodicWorkPolicy
-import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class AttendanceApplication : Application() {
     
@@ -18,10 +18,10 @@ class AttendanceApplication : Application() {
         val themeManager = ThemeManager.getInstance(this)
         themeManager.initializeTheme()
         
-        initializeStudentReminders()
+        initializeNotifications()
     }
     
-    private fun initializeStudentReminders() {
+    private fun initializeNotifications() {
         try {
             val auth = FirebaseAuth.getInstance()
             val currentUser = auth.currentUser
@@ -37,31 +37,27 @@ class AttendanceApplication : Application() {
                             val notificationsEnabled = prefs.getBoolean("notifications_enabled", true)
                             
                             if (notificationsEnabled) {
-                                scheduleStudentReminders()
+                                scheduleClassNotifications()
                             }
                         }
                     }
             }
         } catch (e: Exception) {
-            android.util.Log.e("AttendanceApp", "Error initializing reminders: ${e.message}", e)
+            android.util.Log.e("AttendanceApp", "Error initializing notifications: ${e.message}", e)
         }
     }
     
-    private fun scheduleStudentReminders() {
-        try {
-            val workRequest = PeriodicWorkRequestBuilder<StudentReminderWorker>(
-                15, TimeUnit.MINUTES
-            ).build()
-            
-            WorkManager.getInstance(this).enqueueUniquePeriodicWork(
-                "student_reminder_work",
-                ExistingPeriodicWorkPolicy.KEEP,
-                workRequest
-            )
-            
-            android.util.Log.d("AttendanceApp", "Background class reminders scheduled (runs every 15 min, even when app is closed)")
-        } catch (e: Exception) {
-            android.util.Log.e("AttendanceApp", "Error scheduling reminders: ${e.message}", e)
+    private fun scheduleClassNotifications() {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val notificationManager = LocalNotificationManager.getInstance(this@AttendanceApplication)
+                notificationManager.scheduleAllClassNotifications()
+                android.util.Log.d("AttendanceApp", "Class notifications scheduled with precise timing")
+            } catch (e: Exception) {
+                android.util.Log.e("AttendanceApp", "Error scheduling notifications: ${e.message}", e)
+            }
         }
     }
+}
+
 }

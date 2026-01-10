@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Attendance">
+    <meta name="description" content="Scan QR codes to mark your attendance">
+    
+    <title>Attendance Scanner</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <!-- QR Scanner Library -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --accent-primary: #818CF8;
+            --accent-secondary: #6366F1;
+            --accent-tertiary: #22d3ee;
+            --accent-gradient: linear-gradient(135deg, #4F46E5 0%, #8B5CF6 50%, #06B6D4 100%);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --success: #10b981;
+            --error: #ef4444;
+            --warning: #f59e0b;
+            --border-color: rgba(148, 163, 184, 0.15);
+            --shadow-glow: 0 0 40px rgba(129, 140, 248, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            min-height: 100dvh;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        .bg-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(ellipse at 20% 0%, rgba(34, 211, 238, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, rgba(6, 182, 212, 0.06) 0%, transparent 50%),
+                var(--bg-primary);
+            z-index: -1;
+        }
+
+        /* App Container */
+        .app {
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--accent-gradient);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .logo-text {
+            font-weight: 600;
+            font-size: 1.25rem;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .user-name {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .logout-btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .logout-btn:hover {
+            border-color: var(--error);
+            color: var(--error);
+        }
+
+        /* Main Content */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+            max-width: 500px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Screens */
+        .screen {
+            display: none;
+            flex-direction: column;
+            gap: 1.5rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Login Screen */
+        .login-header {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .login-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .login-header p {
+            color: var(--text-secondary);
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .form-group input {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            font-size: 1rem;
+            color: var(--text-primary);
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.1);
+        }
+
+        .form-group input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .btn {
+            background: var(--accent-gradient);
+            border: none;
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--bg-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-tertiary);
+            box-shadow: none;
+        }
+
+        /* Scanner Screen */
+        .scanner-container {
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .scanner-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .scanner-header h2 {
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        .scanner-header p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        #qr-reader {
+            width: 100%;
+            aspect-ratio: 1;
+            background: #000;
+        }
+
+        #qr-reader video {
+            border-radius: 0;
+        }
+
+        #qr-reader__scan_region {
+            background: transparent !important;
+        }
+
+        #qr-reader__dashboard {
+            display: none !important;
+        }
+
+        .scanner-controls {
+            padding: 1rem 1.5rem;
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .scanner-controls .btn {
+            flex: 1;
+        }
+
+        /* Status Card */
+        .status-card {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .status-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            margin: 0 auto 1rem;
+        }
+
+        .status-icon.success {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+        }
+
+        .status-icon.error {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--error);
+        }
+
+        .status-icon.pending {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+        }
+
+        .status-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .status-message {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+        }
+
+        /* Info Cards */
+        .info-card {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 1.25rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .info-card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .info-card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(34, 211, 238, 0.1);
+            color: var(--accent-primary);
+            font-size: 1.25rem;
+        }
+
+        .info-card-title {
+            font-weight: 600;
+        }
+
+        .info-card-content {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Class Info */
+        .class-info {
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        .class-info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .class-info-item:last-child {
+            border-bottom: none;
+        }
+
+        .class-info-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .class-info-value {
+            font-weight: 500;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--accent-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 2rem auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            border-color: var(--success);
+        }
+
+        .toast.error {
+            border-color: var(--error);
+        }
+
+        /* Hidden utility */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Auth Switch Link */
+        .auth-switch {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 1rem;
+        }
+
+        .auth-switch a {
+            color: var(--accent-primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .auth-switch a:hover {
+            text-decoration: underline;
+        }
+
+        /* Form Hint */
+        .form-hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 400px) {
+            .header {
+                padding: 1rem;
+            }
+
+            .main {
+                padding: 1rem;
+            }
+
+            .logo-text {
+                font-size: 1rem;
+            }
+        }
+
+        /* Safe area for iOS */
+        @supports (padding: max(0px)) {
+            .header {
+                padding-top: max(1.5rem, env(safe-area-inset-top));
+            }
+            
+            .main {
+                padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-pattern"></div>
+    
+    <div class="app">
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">📋</div>
+                <span class="logo-text">Attendance</span>
+            </div>
+            <div class="user-info hidden" id="userInfo">
+                <span class="user-name" id="userName"></span>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </header>
+
+        <main class="main">
+            <!-- Login Screen -->
+            <section class="screen active" id="loginScreen">
+                <div class="login-header">
+                    <h1>Welcome Back</h1>
+                    <p>Sign in to mark your attendance</p>
+                </div>
+                
+                <form id="loginForm" onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            placeholder="student@school.edu"
+                            required
+                            autocomplete="email"
+                        >
+                    </div>
+                    
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label for="password">Password</label>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            placeholder="••••••••"
+                            required
+                            autocomplete="current-password"
+                        >
+                    </div>
+                    
+                    <button type="submit" class="btn" style="margin-top: 1.5rem; width: 100%;" id="loginBtn">
+                        Sign In
+                    </button>
+                </form>
+                
+                <p class="auth-switch">
+                    Don't have an account? 
+                    <a href="#" onclick="showScreen('signup'); return false;">Create Account</a>
+                </p>
+            </section>
+
+            <!-- Signup Screen -->
+            <section class="screen" id="signupScreen">
+                <div class="login-header">
+                    <h1>Create Account</h1>
+                    <p>Sign up as a student to start scanning</p>
+                </div>
+                
+                <form id="signupForm" onsubmit="handleSignup(event)">
+                    <div class="form-group">
+                        <label for="signupName">Full Name</label>
+                        <input 
+                            type="text" 
+                            id="signupName" 
+                            placeholder="John Doe"
+                            required
+                            autocomplete="name"
+                        >
+                    </div>
+                    
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label for="signupEmail">Email</label>
+                        <input 
+                            type="email" 
+                            id="signupEmail" 
+                            placeholder="student@school.edu"
+                            required
+                            autocomplete="email"
+                        >
+                    </div>
+                    
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label for="signupSection">Section</label>
+                        <input 
+                            type="text" 
+                            id="signupSection" 
+                            placeholder="e.g., BSIT-3A"
+                            required
+                            autocomplete="off"
+                        >
+                        <span class="form-hint">Enter your class section (will be converted to uppercase)</span>
+                    </div>
+                    
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label for="signupPassword">Password</label>
+                        <input 
+                            type="password" 
+                            id="signupPassword" 
+                            placeholder="At least 6 characters"
+                            required
+                            minlength="6"
+                            autocomplete="new-password"
+                        >
+                    </div>
+                    
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label for="signupConfirmPassword">Confirm Password</label>
+                        <input 
+                            type="password" 
+                            id="signupConfirmPassword" 
+                            placeholder="Repeat your password"
+                            required
+                            minlength="6"
+                            autocomplete="new-password"
+                        >
+                    </div>
+                    
+                    <button type="submit" class="btn" style="margin-top: 1.5rem; width: 100%;" id="signupBtn">
+                        Create Account
+                    </button>
+                </form>
+                
+                <p class="auth-switch">
+                    Already have an account? 
+                    <a href="#" onclick="showScreen('login'); return false;">Sign In</a>
+                </p>
+            </section>
+
+            <!-- Scanner Screen -->
+            <section class="screen" id="scannerScreen">
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <div class="info-card-icon">👋</div>
+                        <span class="info-card-title" id="welcomeText">Welcome!</span>
+                    </div>
+                    <p class="info-card-content">Scan the QR code displayed by your teacher to mark your attendance.</p>
+                </div>
+
+                <div class="scanner-container">
+                    <div class="scanner-header">
+                        <h2>QR Scanner</h2>
+                        <p>Point your camera at the QR code</p>
+                    </div>
+                    <div id="qr-reader"></div>
+                    <div class="scanner-controls">
+                        <button class="btn btn-secondary" onclick="toggleCamera()">
+                            Switch Camera
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Success Screen -->
+            <section class="screen" id="successScreen">
+                <div class="status-card">
+                    <div class="status-icon success">✓</div>
+                    <h2 class="status-title">Attendance Marked!</h2>
+                    <p class="status-message" id="successMessage">Your attendance has been recorded successfully.</p>
+                    
+                    <div class="class-info" id="classDetails" style="text-align: left; margin-bottom: 1.5rem;">
+                        <!-- Filled dynamically -->
+                    </div>
+                    
+                    <button class="btn" onclick="resetScanner()" style="width: 100%;">
+                        Scan Another QR Code
+                    </button>
+                </div>
+            </section>
+
+            <!-- Error Screen -->
+            <section class="screen" id="errorScreen">
+                <div class="status-card">
+                    <div class="status-icon error">✕</div>
+                    <h2 class="status-title">Scan Failed</h2>
+                    <p class="status-message" id="errorMessage">Something went wrong. Please try again.</p>
+                    
+                    <button class="btn" onclick="resetScanner()" style="width: 100%;">
+                        Try Again
+                    </button>
+                </div>
+            </section>
+
+            <!-- Loading Screen -->
+            <section class="screen" id="loadingScreen">
+                <div class="status-card">
+                    <div class="spinner"></div>
+                    <h2 class="status-title">Processing...</h2>
+                    <p class="status-message">Recording your attendance</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <span id="toastIcon">✓</span>
+        <span id="toastMessage">Success!</span>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+

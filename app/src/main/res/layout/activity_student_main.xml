@@ -22,23 +22,38 @@
 
         <com.google.android.material.navigation.NavigationView
             android:id="@+id/navigationView"
-            android:layout_width="wrap_content"
+            android:layout_width="300dp"
             android:layout_height="match_parent"
             android:layout_gravity="end"
+            android:background="@color/surface"
+            app:itemIconTint="@color/nav_drawer_item_color"
+            app:itemTextColor="@color/nav_drawer_item_color"
+            app:itemBackground="@drawable/nav_item_background"
+            app:headerLayout="@layout/nav_header_student"
             app:menu="@menu/menu_student_drawer" />
 
     </androidx.drawerlayout.widget.DrawerLayout>
 
-    <ImageView
+    <!-- Floating Menu Button - Premium Style -->
+    <FrameLayout
         android:id="@+id/drawerHandle"
-        android:layout_width="32dp"
+        android:layout_width="48dp"
         android:layout_height="48dp"
-        android:layout_margin="8dp"
-        android:src="@drawable/ic_menu_drawer"
-        android:tint="?attr/colorOnBackground"
-        android:padding="8dp"
+        android:layout_margin="16dp"
+        android:background="@drawable/card_glass_border"
+        android:clickable="true"
+        android:focusable="true"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:contentDescription="Open navigation" />
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_menu_drawer"
+            app:tint="@color/text_secondary"
+            android:contentDescription="Open navigation" />
+
+    </FrameLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

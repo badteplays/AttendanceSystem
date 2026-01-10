@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dark header with subtle gradient glow effect -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Base dark gradient -->
+    <item>
+        <shape>
+            <gradient
+                android:type="linear"
+                android:angle="135"
+                android:startColor="#1A1A25"
+                android:centerColor="#12121A"
+                android:endColor="#0F0F18" />
+            <corners
+                android:bottomLeftRadius="32dp"
+                android:bottomRightRadius="32dp" />
+        </shape>
+    </item>
+    <!-- Subtle glow overlay -->
+    <item>
+        <shape>
+            <gradient
+                android:type="radial"
+                android:gradientRadius="400dp"
+                android:centerX="0.3"
+                android:centerY="0.2"
+                android:startColor="#1500D4FF"
+                android:endColor="#00000000" />
+            <corners
+                android:bottomLeftRadius="32dp"
+                android:bottomRightRadius="32dp" />
+        </shape>
+    </item>
+</layer-list>
+
+

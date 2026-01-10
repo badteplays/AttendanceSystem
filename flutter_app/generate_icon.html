@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Attendance App Icon Generator</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0A0A0F;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px;
+        }
+        h1 { color: #6366F1; margin-bottom: 10px; }
+        p { color: #94A3B8; margin-bottom: 30px; }
+        .icon-container { margin: 20px; }
+        canvas { border-radius: 24px; box-shadow: 0 20px 60px rgba(99, 102, 241, 0.3); }
+        button {
+            background: linear-gradient(135deg, #6366F1, #EC4899);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            margin: 10px;
+            transition: transform 0.2s;
+        }
+        button:hover { transform: scale(1.05); }
+        .sizes { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin-top: 30px; }
+        .size-item { text-align: center; }
+        .size-item canvas { margin-bottom: 10px; }
+        .size-label { color: #94A3B8; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <h1>🎯 Attendance App Icon</h1>
+    <p>Click buttons below to download your app icon in various sizes</p>
+    
+    <div class="icon-container">
+        <canvas id="mainIcon" width="1024" height="1024"></canvas>
+    </div>
+    
+    <div>
+        <button onclick="downloadIcon(1024)">Download 1024x1024 (App Store)</button>
+        <button onclick="downloadIcon(512)">Download 512x512</button>
+        <button onclick="downloadIcon(192)">Download 192x192 (Android)</button>
+        <button onclick="downloadIcon(180)">Download 180x180 (iOS)</button>
+        <button onclick="downloadAllSizes()">Download All Sizes</button>
+    </div>
+    
+    <div class="sizes" id="previews"></div>
+
+    <script>
+        function drawIcon(ctx, size) {
+            const s = size / 512;
+            
+            // Background gradient
+            const bgGrad = ctx.createLinearGradient(0, 0, size, size);
+            bgGrad.addColorStop(0, '#6366F1');
+            bgGrad.addColorStop(0.5, '#8B5CF6');
+            bgGrad.addColorStop(1, '#EC4899');
+            
+            // Draw rounded rectangle background
+            ctx.beginPath();
+            const radius = 115 * s;
+            ctx.roundRect(0, 0, size, size, radius);
+            ctx.fillStyle = bgGrad;
+            ctx.fill();
+            
+            // QR pattern (bottom left)
+            ctx.fillStyle = 'rgba(255,255,255,0.15)';
+            const qrX = 70 * s, qrY = 280 * s;
+            ctx.beginPath();
+            ctx.roundRect(qrX, qrY, 45*s, 45*s, 8*s);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.roundRect(qrX + 55*s, qrY, 45*s, 45*s, 8*s);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.roundRect(qrX, qrY + 55*s, 45*s, 45*s, 8*s);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.roundRect(qrX + 55*s, qrY + 55*s, 20*s, 20*s, 4*s);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.roundRect(qrX + 80*s, qrY + 55*s, 20*s, 20*s, 4*s);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.roundRect(qrX + 55*s, qrY + 80*s, 20*s, 20*s, 4*s);
+            ctx.fill();
+            
+            // Main checkmark circle (outer glow)
+            ctx.beginPath();
+            ctx.arc(300*s, 220*s, 130*s, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255,255,255,0.2)';
+            ctx.fill();
+            
+            // Main checkmark circle (inner white)
+            ctx.beginPath();
+            ctx.arc(300*s, 220*s, 105*s, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255,255,255,0.95)';
+            ctx.fill();
+            
+            // Checkmark
+            const checkGrad = ctx.createLinearGradient(245*s, 170*s, 360*s, 260*s);
+            checkGrad.addColorStop(0, '#6366F1');
+            checkGrad.addColorStop(1, '#EC4899');
+            ctx.strokeStyle = checkGrad;
+            ctx.lineWidth = 28 * s;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.beginPath();
+            ctx.moveTo(245*s, 220*s);
+            ctx.lineTo(280*s, 260*s);
+            ctx.lineTo(360*s, 170*s);
+            ctx.stroke();
+            
+            // Fingerprint lines
+            ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+            ctx.lineWidth = 4 * s;
+            ctx.lineCap = 'round';
+            
+            const fpX = 360 * s, fpY = 320 * s;
+            ctx.beginPath();
+            ctx.moveTo(fpX, fpY);
+            ctx.quadraticCurveTo(fpX + 30*s, fpY + 30*s, fpX, fpY + 60*s);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(fpX + 20*s, fpY - 10*s);
+            ctx.quadraticCurveTo(fpX + 55*s, fpY + 35*s, fpX + 20*s, fpY + 80*s);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(fpX + 40*s, fpY - 15*s);
+            ctx.quadraticCurveTo(fpX + 80*s, fpY + 40*s, fpX + 40*s, fpY + 95*s);
+            ctx.stroke();
+            
+            // Decorative dots
+            ctx.fillStyle = 'rgba(255,255,255,0.3)';
+            ctx.beginPath();
+            ctx.arc(120*s, 120*s, 12*s, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = 'rgba(255,255,255,0.2)';
+            ctx.beginPath();
+            ctx.arc(160*s, 150*s, 8*s, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = 'rgba(255,255,255,0.25)';
+            ctx.beginPath();
+            ctx.arc(420*s, 420*s, 15*s, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = 'rgba(255,255,255,0.15)';
+            ctx.beginPath();
+            ctx.arc(380*s, 450*s, 10*s, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Text
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.font = `bold ${60*s}px -apple-system, BlinkMacSystemFont, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.fillText('ATTEND', 256*s, 445*s);
+        }
+        
+        // Draw main icon
+        const mainCanvas = document.getElementById('mainIcon');
+        const mainCtx = mainCanvas.getContext('2d');
+        drawIcon(mainCtx, 1024);
+        
+        // Generate previews
+        const sizes = [512, 192, 180, 144, 96, 72, 48];
+        const previewsDiv = document.getElementById('previews');
+        
+        sizes.forEach(size => {
+            const div = document.createElement('div');
+            div.className = 'size-item';
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            drawIcon(ctx, size);
+            
+            const label = document.createElement('div');
+            label.className = 'size-label';
+            label.textContent = `${size}x${size}`;
+            
+            div.appendChild(canvas);
+            div.appendChild(label);
+            previewsDiv.appendChild(div);
+        });
+        
+        function downloadIcon(size) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            drawIcon(ctx, size);
+            
+            const link = document.createElement('a');
+            link.download = `app_icon_${size}x${size}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+        
+        function downloadAllSizes() {
+            const allSizes = [1024, 512, 192, 180, 167, 152, 144, 120, 96, 87, 80, 76, 72, 60, 58, 48, 40, 29, 20];
+            allSizes.forEach((size, i) => {
+                setTimeout(() => downloadIcon(size), i * 200);
+            });
+        }
+    </script>
+</body>
+</html>

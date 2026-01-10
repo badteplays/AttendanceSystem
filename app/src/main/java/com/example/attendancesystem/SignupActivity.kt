@@ -14,6 +14,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.ExistingPeriodicWorkPolicy
 import java.util.concurrent.TimeUnit
 import android.content.Context
+import com.example.attendancesystem.security.SecurityUtils
 
 class SignupActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySignupBinding
@@ -59,36 +60,50 @@ class SignupActivity : AppCompatActivity() {
             val password = binding.editPassword.text.toString().trim()
             val selectedRole = if (findViewById<android.widget.RadioButton>(R.id.teacherRadio).isChecked) "teacher" else "student"
 
-            if (email.isEmpty() || name.isEmpty() || password.isEmpty()) {
-                Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show()
+            // Input validation with security checks
+            if (!SecurityUtils.isValidEmail(email)) {
+                Toast.makeText(this, "Please enter a valid email address", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            if (selectedRole == "student" && section.isEmpty()) {
-                Toast.makeText(this, "Please enter your section", Toast.LENGTH_SHORT).show()
+            if (!SecurityUtils.isValidName(name)) {
+                Toast.makeText(this, "Please enter a valid name (letters only)", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            if (!SecurityUtils.isValidPassword(password)) {
+                Toast.makeText(this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            if (selectedRole == "student" && !SecurityUtils.isValidSection(section)) {
+                Toast.makeText(this, "Please enter a valid section (e.g., BSIT-3A)", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             if (selectedRole == "teacher" && department.isEmpty()) {
                 Toast.makeText(this, "Please enter your department/role", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
+            
+            // Sanitize inputs
+            val sanitizedEmail = SecurityUtils.sanitizeEmail(email)
+            val sanitizedName = SecurityUtils.sanitizeString(name)
+            val sanitizedSection = SecurityUtils.sanitizeSection(section)
 
             binding.btnSignup.isEnabled = false
             binding.btnSignup.text = "Creating Account..."
             
-            auth.createUserWithEmailAndPassword(email, password)
+            auth.createUserWithEmailAndPassword(sanitizedEmail, password)
                 .addOnSuccessListener { result ->
                     val user = hashMapOf(
-                        "email" to email,
-                        "name" to name,
+                        "email" to sanitizedEmail,
+                        "name" to sanitizedName,
                         "role" to selectedRole,
                         "isTeacher" to (selectedRole == "teacher"),
                         "isStudent" to (selectedRole == "student"),
                         "createdAt" to System.currentTimeMillis()
                     )
                     if (selectedRole == "student") {
-                        user["section"] = section.uppercase()
+                        user["section"] = sanitizedSection
                     } else if (selectedRole == "teacher") {
-                        user["department"] = department
+                        user["department"] = SecurityUtils.sanitizeString(department)
                     }
                     db.collection("users")
                         .document(result.user!!.uid)

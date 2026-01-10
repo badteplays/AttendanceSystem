@@ -35,12 +35,18 @@ class StudentDashboardFragment : Fragment() {
     private lateinit var textCourse: TextView
     private lateinit var imageProfilePic: ImageView
     private lateinit var textInitials: TextView
-    private lateinit var buttonScanQR: Button
-    private lateinit var buttonViewHistory: Button
+    private lateinit var buttonScanQR: View
+    private lateinit var buttonViewHistory: View
     private lateinit var fabScanQR: FloatingActionButton
     private lateinit var textTodayStatus: TextView
     private lateinit var textStatusTime: TextView
     private lateinit var statusIndicator: View
+    
+    // Stats counters
+    private lateinit var textPresentCount: TextView
+    private lateinit var textAbsentCount: TextView
+    private lateinit var textLateCount: TextView
+    
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
     private var userId: String = ""
@@ -61,6 +67,7 @@ class StudentDashboardFragment : Fragment() {
         initializeViews(view)
         loadUserData()
         loadTodayStatus()
+        loadAttendanceStats()
         setupClickListeners()
         setupSwipeRefresh()
     }
@@ -79,6 +86,11 @@ class StudentDashboardFragment : Fragment() {
             textTodayStatus = view.findViewById(R.id.textTodayStatus)
             textStatusTime = view.findViewById(R.id.textStatusTime)
             statusIndicator = view.findViewById(R.id.statusIndicator)
+            
+            // Initialize stat counters
+            textPresentCount = view.findViewById(R.id.textPresentCount)
+            textAbsentCount = view.findViewById(R.id.textAbsentCount)
+            textLateCount = view.findViewById(R.id.textLateCount)
         } catch (e: Exception) {
             android.util.Log.e("StudentDashboard", "Error initializing views", e)
         }
@@ -88,8 +100,62 @@ class StudentDashboardFragment : Fragment() {
         swipeRefreshLayout.setOnRefreshListener {
             loadUserData()
             loadTodayStatus()
+            loadAttendanceStats()
             swipeRefreshLayout.isRefreshing = false
         }
+    }
+    
+    /**
+     * Loads attendance statistics for the current month
+     */
+    private fun loadAttendanceStats() {
+        val currentUser = auth.currentUser ?: return
+        
+        // Get start of current month
+        val calendar = Calendar.getInstance()
+        calendar.set(Calendar.DAY_OF_MONTH, 1)
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+        val monthStart = com.google.firebase.Timestamp(calendar.time)
+        
+        android.util.Log.d("StudentDashboard", "Loading attendance stats from: $monthStart")
+        
+        db.collection("attendance")
+            .whereEqualTo("userId", currentUser.uid)
+            .whereGreaterThanOrEqualTo("timestamp", monthStart)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                var presentCount = 0
+                var absentCount = 0
+                var lateCount = 0
+                
+                for (doc in snapshot.documents) {
+                    val status = doc.getString("status")?.uppercase() ?: "PRESENT"
+                    when (status) {
+                        "PRESENT" -> presentCount++
+                        "ABSENT" -> absentCount++
+                        "LATE" -> lateCount++
+                        "EXCUSED" -> presentCount++ // Count excused as present
+                        "CUTTING" -> absentCount++ // Count cutting as absent
+                    }
+                }
+                
+                android.util.Log.d("StudentDashboard", "Stats - Present: $presentCount, Absent: $absentCount, Late: $lateCount")
+                
+                // Update UI
+                textPresentCount.text = presentCount.toString()
+                textAbsentCount.text = absentCount.toString()
+                textLateCount.text = lateCount.toString()
+            }
+            .addOnFailureListener { e ->
+                android.util.Log.e("StudentDashboard", "Error loading stats: ${e.message}", e)
+                // Set defaults on error
+                textPresentCount.text = "0"
+                textAbsentCount.text = "0"
+                textLateCount.text = "0"
+            }
     }
 
     private fun loadTodayStatus() {
@@ -111,7 +177,10 @@ class StudentDashboardFragment : Fragment() {
             val timeString = timeFormat.format(Date(justMarkedTime))
 
             android.util.Log.d("StudentDashboard", "✓✓✓ Just marked attendance! Showing immediately ✓✓✓")
-            updateStatusUI("Present - $justMarkedSubject", "Marked at $timeString", Color.parseColor("#4CAF50"))
+            updateStatusUI("Present - $justMarkedSubject", "Marked at $timeString", Color.parseColor("#22C55E"))
+            
+            // Reload stats after marking
+            loadAttendanceStats()
 
             arguments?.clear()
             return
@@ -126,7 +195,7 @@ class StudentDashboardFragment : Fragment() {
             }
             .addOnFailureListener { e ->
                 android.util.Log.e("StudentDashboard", "Error loading user: ${e.message}", e)
-                updateStatusUI("Not marked yet", "", Color.parseColor("#9E9E9E"))
+                updateStatusUI("Not marked yet", "", Color.parseColor("#71717A"))
             }
     }
 
@@ -189,11 +258,11 @@ class StudentDashboardFragment : Fragment() {
                         val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
                         val timeString = timeFormat.format(Date(markedTime))
                         android.util.Log.d("StudentDashboard", "✓ Current class '$subject' matches saved marked status")
-                        updateStatusUI("Present - $subject", "Marked at $timeString", Color.parseColor("#4CAF50"))
+                        updateStatusUI("Present - $subject", "Marked at $timeString", Color.parseColor("#22C55E"))
                     } else {
 
                         android.util.Log.d("StudentDashboard", "Current class '$subject' - not marked yet")
-                        updateStatusUI("Not marked yet", "Scan QR for $subject", Color.parseColor("#9E9E9E"))
+                        updateStatusUI("Not marked yet", "Scan QR for $subject", Color.parseColor("#71717A"))
                     }
                 } else {
 
@@ -216,15 +285,15 @@ class StudentDashboardFragment : Fragment() {
                             minute,
                             if (hour < 12) "AM" else "PM"
                         )
-                        updateStatusUI("Next class: ${nextClass.second}", "at $timeStr", Color.parseColor("#2196F3"))
+                        updateStatusUI("Next class: ${nextClass.second}", "at $timeStr", Color.parseColor("#3B82F6"))
                     } else {
-                        updateStatusUI("Not marked yet", "No class right now", Color.parseColor("#9E9E9E"))
+                        updateStatusUI("No more classes today", "", Color.parseColor("#71717A"))
                     }
                 }
             }
             .addOnFailureListener { e ->
                 android.util.Log.e("StudentDashboard", "Error loading schedules: ${e.message}", e)
-                updateStatusUI("Not marked yet", "", Color.parseColor("#9E9E9E"))
+                updateStatusUI("Not marked yet", "", Color.parseColor("#71717A"))
             }
     }
 
@@ -279,11 +348,11 @@ class StudentDashboardFragment : Fragment() {
                         val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
                         val timeString = timeFormat.format(Date(markedTime))
                         android.util.Log.d("StudentDashboard", "✓ Current class '$subject' matches saved marked status")
-                        updateStatusUI("Present - $subject", "Marked at $timeString", Color.parseColor("#4CAF50"))
+                        updateStatusUI("Present - $subject", "Marked at $timeString", Color.parseColor("#22C55E"))
                     } else {
 
                         android.util.Log.d("StudentDashboard", "Current class '$subject' - not marked yet")
-                        updateStatusUI("Not marked yet", "Scan QR for $subject", Color.parseColor("#9E9E9E"))
+                        updateStatusUI("Not marked yet", "Scan QR for $subject", Color.parseColor("#71717A"))
                     }
                 } else {
 
@@ -308,15 +377,15 @@ class StudentDashboardFragment : Fragment() {
                             minute,
                             if (hour < 12) "AM" else "PM"
                         )
-                        updateStatusUI("Next class: ${nextClass.second}", "at $timeStr", Color.parseColor("#2196F3"))
+                        updateStatusUI("Next class: ${nextClass.second}", "at $timeStr", Color.parseColor("#3B82F6"))
                     } else {
-                        updateStatusUI("Not marked yet", "No class right now", Color.parseColor("#9E9E9E"))
+                        updateStatusUI("No more classes today", "", Color.parseColor("#71717A"))
                     }
                 }
             }
             .addOnFailureListener { e ->
                 android.util.Log.e("StudentDashboard", "Error loading schedules with lowercase: ${e.message}", e)
-                updateStatusUI("Not marked yet", "", Color.parseColor("#9E9E9E"))
+                updateStatusUI("Not marked yet", "", Color.parseColor("#71717A"))
             }
     }
 
@@ -344,7 +413,7 @@ class StudentDashboardFragment : Fragment() {
             .addSnapshotListener { snapshot, e ->
                 if (e != null) {
                     android.util.Log.e("StudentDashboard", "Error loading attendance: ${e.message}", e)
-                    updateStatusUI("Not marked yet", "Scan QR to mark attendance", Color.parseColor("#9E9E9E"))
+                    updateStatusUI("Not marked yet", "Scan QR to mark attendance", Color.parseColor("#71717A"))
                     return@addSnapshotListener
                 }
 
@@ -363,18 +432,18 @@ class StudentDashboardFragment : Fragment() {
                     val timeString = timestamp?.toDate()?.let { timeFormat.format(it) } ?: ""
 
                     when (status) {
-                        "PRESENT" -> updateStatusUI("Present - $subject", timeString, Color.parseColor("#4CAF50"))
-                        "LATE" -> updateStatusUI("Late - $subject", timeString, Color.parseColor("#FF9800"))
-                        "EXCUSED" -> updateStatusUI("Excused - $subject", timeString, Color.parseColor("#2196F3"))
-                        "CUTTING" -> updateStatusUI("Cutting - $subject", timeString, Color.parseColor("#F44336"))
-                        else -> updateStatusUI("Marked - $subject", timeString, Color.parseColor("#4CAF50"))
+                        "PRESENT" -> updateStatusUI("Present - $subject", timeString, Color.parseColor("#22C55E"))
+                        "LATE" -> updateStatusUI("Late - $subject", timeString, Color.parseColor("#F59E0B"))
+                        "EXCUSED" -> updateStatusUI("Excused - $subject", timeString, Color.parseColor("#3B82F6"))
+                        "CUTTING" -> updateStatusUI("Cutting - $subject", timeString, Color.parseColor("#EF4444"))
+                        else -> updateStatusUI("Marked - $subject", timeString, Color.parseColor("#22C55E"))
                     }
                 } else {
 
                     android.util.Log.d("StudentDashboard", "✗✗✗ NO ATTENDANCE FOUND ✗✗✗")
                     android.util.Log.d("StudentDashboard", "Subject being queried: $subject")
                     android.util.Log.d("StudentDashboard", "ScheduleId being queried: $scheduleId")
-                    updateStatusUI("Not marked yet", "Scan QR for $subject", Color.parseColor("#9E9E9E"))
+                    updateStatusUI("Not marked yet", "Scan QR for $subject", Color.parseColor("#71717A"))
                 }
             }
     }
@@ -408,18 +477,26 @@ class StudentDashboardFragment : Fragment() {
             .addSnapshotListener { snapshot, _ ->
                 if (snapshot != null && snapshot.exists()) {
                     studentName = snapshot.getString("name") ?: "Student"
-                    val welcomeText = "Welcome, $studentName!"
-                    textWelcomeStudent.text = welcomeText
+                    textWelcomeStudent.text = getGreeting()
                     val studentSection = snapshot.getString("section") ?: "Section"
                     val profilePicUrl = snapshot.getString("profilePicUrl")
 
                     textName.text = studentName
-                    textCourse.text = studentSection
+                    textCourse.text = studentSection.uppercase()
 
                     val profileManager = ProfilePictureManager.getInstance()
                     profileManager.loadProfilePicture(requireContext(), imageProfilePic, textInitials, studentName, "ST")
                 }
             }
+    }
+    
+    private fun getGreeting(): String {
+        val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+        return when {
+            hour < 12 -> "Good Morning"
+            hour < 17 -> "Good Afternoon"
+            else -> "Good Evening"
+        }
     }
 
     private fun setupClickListeners() {
