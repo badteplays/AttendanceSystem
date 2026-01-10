@@ -1,82 +1,89 @@
-# AttendanceSystem Flutter App
+# AttendanceSystem - Flutter App
 
-Cross-platform attendance tracking app for Android and iOS.
+Cross-platform attendance tracking app built with Flutter for Android and iOS.
 
-## Quick Start
+## 🚀 Quick Start
 
-### 1. Install Flutter
-Download from: https://docs.flutter.dev/get-started/install
+### Prerequisites
+- Flutter SDK 3.10.0+
+- Firebase project with Auth & Firestore enabled
 
-### 2. Configure Firebase
-Copy your Firebase config files:
-- `google-services.json` → `android/app/`
-- `GoogleService-Info.plist` → `ios/Runner/`
+### Setup
 
-Update `lib/firebase_options.dart` with your Firebase project settings.
+1. **Install dependencies:**
+   ```bash
+   flutter pub get
+   ```
 
-### 3. Install Dependencies
-```bash
-flutter pub get
+2. **Configure Firebase:**
+   
+   **Android:**
+   - Copy `google-services.json` to `android/app/`
+   
+   **iOS:**
+   - Copy `GoogleService-Info.plist` to `ios/Runner/`
+
+3. **Update Firebase Options:**
+   - Run `flutterfire configure` OR
+   - Manually update `lib/firebase_options.dart` with your config
+
+4. **Run the app:**
+   ```bash
+   flutter run
+   ```
+
+## 📱 Features
+
+### Student
+- Scan QR codes to mark attendance
+- View schedule and attendance history
+- Monthly statistics dashboard
+- Beautiful animated UI
+
+### Teacher
+- Generate time-limited QR codes
+- Live attendance monitoring
+- Manual student addition
+- Analytics dashboard
+
+## 🎨 Design
+
+- Dark theme with gradient accents
+- Space Grotesk typography
+- Animated counters and transitions
+- Glass morphism cards
+
+## 📁 Structure
+
+```
+lib/
+├── core/
+│   ├── models/        # Attendance, Schedule, QRCodeData, User
+│   ├── services/      # AuthService, FirestoreService
+│   ├── theme/         # AppColors, AppTheme
+│   └── widgets/       # GradientCard, AnimatedCounter
+├── features/
+│   ├── auth/          # Login, Signup, RoleSelection
+│   ├── student/       # Dashboard, Schedule, History, Options
+│   ├── teacher/       # Dashboard, Schedules, Analytics, Options
+│   └── qr/            # Scanner, Display
+└── main.dart
 ```
 
-### 4. Run the App
-```bash
-flutter run
-```
+## 🔧 Generate App Icons
 
-## Build Release
-
-### Android APK
-```bash
-flutter build apk --release
-```
-Output: `build/app/outputs/flutter-apk/app-release.apk`
-
-### iOS (macOS only)
-```bash
-flutter build ios --release
-```
-
-## Generate App Icon
-
-1. Open `generate_icon.html` in a browser
-2. Download the 1024x1024 icon as `app_icon.png`
-3. Place in `assets/icon/`
-4. Run:
 ```bash
 dart run flutter_launcher_icons
 ```
 
-## Project Structure
+## 📋 Firestore Collections
 
-```
-lib/
-├── main.dart                    # App entry point
-├── firebase_options.dart        # Firebase config
-├── core/
-│   ├── models/                  # Data models
-│   ├── services/                # Auth & Firestore
-│   ├── theme/                   # Colors & theme
-│   └── widgets/                 # Reusable widgets
-└── features/
-    ├── auth/                    # Login, Signup
-    ├── student/                 # Student screens
-    ├── teacher/                 # Teacher screens
-    └── qr/                      # QR Scanner & Display
-```
+- `users` - User profiles
+- `schedules` - Class schedules
+- `attendance` - Attendance records
+- `attendance_sessions` - QR sessions
+- `archived_attendance` - Historical data
 
-## Dependencies
+## 🔑 Environment
 
-- firebase_core, firebase_auth, cloud_firestore
-- provider (state management)
-- qr_flutter (QR generation)
-- mobile_scanner (QR scanning)
-- google_fonts (typography)
-- intl (date formatting)
-
-## Requirements
-
-- Flutter 3.10+
-- Dart 3.0+
-- Android SDK 24+ (Android 7.0)
-- iOS 12.0+
+Update `lib/firebase_options.dart` with your Firebase config before running.

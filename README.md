@@ -1,17 +1,18 @@
-# AttendanceSystem - Cross-Platform QR Code Attendance Management
+# AttendanceSystem - QR Code Based Attendance Management
 
-A modern **cross-platform** application for Android and iOS, designed to streamline attendance tracking for educational institutions using QR code technology. Built with Flutter for seamless experience across all devices.
+A modern **cross-platform** attendance tracking application for educational institutions using QR code technology. Available for both **Android** and **iOS** with a beautiful, unified experience.
 
 ## 📱 Overview
 
 **AttendanceSystem** is a comprehensive attendance management solution that leverages QR code technology to enable quick and contactless attendance marking. The app provides separate interfaces for teachers and students, with real-time synchronization through Firebase.
 
-### 🎯 Available Platforms
+### 🆕 Now Available in Flutter!
 
-| Platform | Status | Technology |
-|----------|--------|------------|
-| Android | ✅ Available | Flutter / Native Kotlin |
-| iOS | ✅ Available | Flutter |
+The app has been completely rebuilt in **Flutter** for cross-platform support:
+- ✅ **Android** - Native performance
+- ✅ **iOS** - Full iPhone/iPad support
+- ✅ **Same Firebase backend** - All data syncs across platforms
+- ✅ **Modern UI** - Beautiful gradient design with animations
 
 ## ✨ Key Features
 
@@ -24,70 +25,67 @@ A modern **cross-platform** application for Android and iOS, designed to streaml
   - Automatic timer display showing remaining time to scan
 
 - **Dashboard**
-  - Animated statistics with live counters
+  - Current class status display with animated statistics
   - Quick access to QR scanner with gradient FAB
-  - Today's attendance status display
-  - Monthly attendance breakdown (Present/Absent/Late)
+  - Monthly attendance breakdown (Present, Absent, Late)
+  - Real-time attendance status updates
 
 - **Class Schedule Management**
-  - Beautiful timeline view with day selector
+  - View complete weekly schedule with timeline view
   - See all enrolled classes by section
-  - Active class highlighting
+  - Color-coded active class indicators
   - Display class details (subject, room, time)
 
 - **Attendance History**
-  - Animated list with staggered animations
+  - View complete attendance records with animations
   - Status-colored cards (green/amber/red)
-  - Filter by date and subject
+  - See attendance status (Present, Excused, Late, Absent)
   - Track attendance percentage
 
-- **Profile & Settings**
-  - Gradient profile card
-  - Theme customization
-  - Notification preferences
-  - Sign out functionality
+- **Profile Management**
+  - Beautiful gradient profile cards
+  - View section and enrollment details
+  - Manage notification preferences
+  - Sign out with confirmation
 
 ### 👨‍🏫 For Teachers
 
 - **QR Code Generation**
-  - Generate unique QR codes with animated glow effect
+  - Generate unique QR codes with glowing animations
   - Configurable expiration (5-60 minutes)
-  - Live countdown timer with progress indicator
-  - One-tap regeneration
+  - Live countdown timer display
+  - Regenerate codes instantly
 
 - **Real-Time Attendance Dashboard**
   - Live attendance updates as students scan
-  - Animated student list with avatars
+  - See student names, sections, and scan times
   - Current class information display
-  - Total attendance count with "LIVE" indicator
+  - "LIVE" indicator with pulsing animation
 
 - **Manual Attendance Management**
-  - Beautiful modal dialog for adding students
+  - Manually add students who forgot to scan
+  - Beautiful dialog with gradient buttons
   - Search and select students by section
-  - Mark attendance status
 
 - **Schedule Management**
-  - Visual timeline for all classes
-  - Color-coded by subject
-  - "Today" indicator badge
-  - Add new classes (coming soon)
+  - Create and manage class schedules
+  - View schedules grouped by day
+  - Color-coded schedule cards
+  - "TODAY" indicator badge
 
 - **Analytics & Reporting**
   - Animated percentage counters
   - Monthly attendance overview card
-  - Status breakdown with gradient icons
-  - Total records tracking
+  - Breakdown by status (Present, Late, Absent, Excused)
+  - Beautiful gradient stat cards
 
-## 🎨 UI/UX Design
+## 🎨 Design Features
 
-The app features a **stunning modern dark theme** with:
-
-- **Gradient Color Scheme**: Indigo (#6366F1) → Violet (#8B5CF6) → Pink (#EC4899)
-- **Glass Morphism Cards**: Subtle borders with depth
-- **Smooth Animations**: Staggered list animations, counter animations, pulse effects
-- **Custom Bottom Navigation**: Expanding items with gradient backgrounds
-- **Typography**: Space Grotesk font family
-- **Status Colors**: Green (Present), Amber (Late), Red (Absent)
+- **Modern Dark Theme** - Deep blacks with layered surfaces
+- **Gradient Accents** - Indigo → Violet → Pink color scheme
+- **Glass Morphism** - Subtle bordered containers
+- **Micro-animations** - Counters, transitions, and pulses
+- **Space Grotesk Font** - Clean, modern typography
 
 ## 🔧 Technologies Used
 
@@ -99,199 +97,138 @@ The app features a **stunning modern dark theme** with:
   - Firebase Authentication
   - Cloud Firestore
   - Firebase Messaging
-- **QR Code**: qr_flutter, mobile_scanner
-- **UI**: Material Design 3, Google Fonts
-- **Local Storage**: SharedPreferences
+- **QR Code**: qr_flutter & mobile_scanner
+- **UI**: Custom widgets with gradients
 
-### Android Native App (Legacy)
+### Android App (Legacy)
 - **Language**: Kotlin
 - **Architecture**: MVVM with Fragments
 - **QR Code**: ZXing library
 - **Background Tasks**: WorkManager
+- **UI Components**: Material Design 3
 
 ## 📋 Prerequisites
 
-### For Flutter App (Recommended)
+### For Flutter App
 
-1. **Flutter SDK**
-   - Version: 3.10.0 or later
+1. **Flutter SDK** (3.10.0 or later)
    - Download: [Flutter Official Website](https://docs.flutter.dev/get-started/install)
 
-2. **IDE**
-   - VS Code with Flutter extension, OR
+2. **IDE** (Choose one)
    - Android Studio with Flutter plugin
+   - VS Code with Flutter extension
 
-3. **Platform Tools**
-   - **Android**: Android SDK 24+ (Android 7.0)
-   - **iOS**: Xcode 14+ (macOS only)
+3. **For iOS Development** (Mac only)
+   - Xcode 14.0 or later
+   - CocoaPods
 
-### Firebase Setup
+4. **Firebase Project**
+   - Firebase Authentication enabled
+   - Cloud Firestore database
 
-1. Create a Firebase project at [Firebase Console](https://console.firebase.google.com/)
-2. Enable **Email/Password Authentication**
-3. Enable **Cloud Firestore**
-4. Download configuration files:
-   - Android: `google-services.json` → `flutter_app/android/app/`
-   - iOS: `GoogleService-Info.plist` → `flutter_app/ios/Runner/`
+### For Android App (Legacy)
+
+- Android Studio Hedgehog (2023.1.1) or later
+- JDK 17 or later
+- Android SDK 24-35
 
 ## 🚀 Installation
 
-### Step 1: Clone the Repository
+### Flutter App Setup
 
 ```bash
+# Clone the repository
 git clone https://github.com/badteplays/AttendanceSystem.git
-cd AttendanceSystem
+cd AttendanceSystem/flutter_app
+
+# Install dependencies
+flutter pub get
+
+# Copy Firebase config
+# Android: Copy google-services.json to android/app/
+# iOS: Copy GoogleService-Info.plist to ios/Runner/
+
+# Run the app
+flutter run
 ```
 
-### Step 2: Flutter App Setup
+### Configure Firebase
+
+1. Go to [Firebase Console](https://console.firebase.google.com/)
+2. Create or select your project
+3. Add Android app with package: `com.example.attendance_system`
+4. Add iOS app with bundle ID: `com.example.attendanceSystem`
+5. Download config files and place in appropriate directories
+6. Enable Authentication (Email/Password)
+7. Create Firestore Database
+
+### Generate App Icons
 
 ```bash
 cd flutter_app
 flutter pub get
+dart run flutter_launcher_icons
 ```
 
-### Step 3: Configure Firebase
+## 📊 Database Structure
 
-1. Copy your `google-services.json` to `flutter_app/android/app/`
-2. Copy your `GoogleService-Info.plist` to `flutter_app/ios/Runner/`
-3. Update `flutter_app/lib/firebase_options.dart` with your config
-
-### Step 4: Run the App
-
-```bash
-# For Android
-flutter run
-
-# For iOS (macOS only)
-flutter run -d ios
-
-# Build release APK
-flutter build apk --release
-
-# Build iOS app
-flutter build ios --release
-```
-
-## 📁 Project Structure
-
-```
-AttendanceSystem/
-├── app/                          # Android Native App (Kotlin)
-│   └── src/main/
-│       ├── java/                 # Kotlin source files
-│       └── res/                  # Android resources
-│
-├── flutter_app/                  # Flutter Cross-Platform App
-│   ├── lib/
-│   │   ├── core/
-│   │   │   ├── models/          # Data models
-│   │   │   ├── services/        # Firebase services
-│   │   │   ├── theme/           # App theme & colors
-│   │   │   └── widgets/         # Reusable widgets
-│   │   └── features/
-│   │       ├── auth/            # Login, Signup, Role Selection
-│   │       ├── student/         # Student screens
-│   │       ├── teacher/         # Teacher screens
-│   │       └── qr/              # QR Scanner & Display
-│   ├── android/                 # Android configuration
-│   ├── ios/                     # iOS configuration
-│   └── assets/                  # Images, icons
-│
-└── server/                      # Python backend (optional)
-```
-
-## 📊 Database Structure (Firestore)
-
-```
-├── users/
-│   └── {userId}
-│       ├── name: string
-│       ├── email: string
-│       ├── isTeacher: boolean
-│       ├── isStudent: boolean
-│       ├── section: string (students)
-│       └── department: string (teachers)
-│
-├── schedules/
-│   └── {scheduleId}
-│       ├── subject: string
-│       ├── section: string
-│       ├── teacherId: string
-│       ├── startTime: string
-│       ├── endTime: string
-│       ├── day: string
-│       └── room: string
-│
-├── attendance/
-│   └── {attendanceId}
-│       ├── userId: string
-│       ├── studentName: string
-│       ├── sessionId: string
-│       ├── teacherId: string
-│       ├── scheduleId: string
-│       ├── subject: string
-│       ├── section: string
-│       ├── timestamp: timestamp
-│       └── status: string
-│
-├── attendance_sessions/
-│   └── {sessionId}
-│       ├── teacherId: string
-│       ├── scheduleId: string
-│       ├── createdAt: number
-│       └── expiresAt: number
-│
-└── archived_attendance/
-    └── {attendanceId}
-        └── ... (same as attendance)
-```
+### Collections:
+- `users` - User profiles (students and teachers)
+- `schedules` - Class schedules with time and section info
+- `attendance` - Active attendance records
+- `archived_attendance` - Historical attendance data
+- `attendance_sessions` - QR code session management
 
 ## 🔐 User Roles
 
 ### Student
 - Mark attendance by scanning QR codes
 - View personal schedule and attendance history
-- Track monthly attendance statistics
+- Track attendance statistics
 - Receive class reminders
 
 ### Teacher
-- Generate time-limited QR codes
+- Generate QR codes for attendance
 - Monitor real-time attendance
 - Manage class schedules
-- Add attendance manually
+- Add/remove attendance manually
 - View analytics and reports
 
-## 📋 Permissions Required
+## 📱 App Structure
 
-### Android
-- **Camera**: QR code scanning
-- **Notifications**: Class reminders
-- **Vibration**: Haptic feedback
+```
+flutter_app/
+├── lib/
+│   ├── core/
+│   │   ├── models/          # Data models
+│   │   ├── services/        # Firebase services
+│   │   ├── theme/           # Colors & theme
+│   │   └── widgets/         # Reusable widgets
+│   ├── features/
+│   │   ├── auth/            # Login, Signup, Role selection
+│   │   ├── student/         # Student screens
+│   │   ├── teacher/         # Teacher screens
+│   │   └── qr/              # QR Scanner & Display
+│   └── main.dart
+├── assets/
+│   ├── icon/                # App icons
+│   └── images/              # Image assets
+└── pubspec.yaml
+```
 
-### iOS
-- **Camera**: QR code scanning
-- **Notifications**: Class reminders
+## 🐛 Known Issues
 
-## 🎯 App Icon
+- Teacher recent attendance recycler optimization in progress
+- Student status auto-update after class ends being improved
 
-The app features a custom-designed icon with:
-- Gradient background (Indigo → Violet → Pink)
-- White checkmark circle (attendance confirmation)
-- QR code pattern element
-- Modern floating decorative elements
+## 🔗 Repository
 
-Generate icons using: `flutter_app/generate_icon.html`
-
-## 🔗 Links
-
-- **Repository**: [GitHub](https://github.com/badteplays/AttendanceSystem)
-- **Flutter Docs**: [flutter.dev](https://flutter.dev)
-- **Firebase Console**: [console.firebase.google.com](https://console.firebase.google.com)
+[GitHub Repository](https://github.com/badteplays/AttendanceSystem)
 
 ---
 
-**Version**: 2.0 (Flutter Cross-Platform)  
+**Version**: 2.0 (Flutter)  
 **Last Updated**: January 2026  
 **Platforms**: Android, iOS  
-**Min Android SDK**: 24 (Android 7.0)  
-**Min iOS Version**: 12.0
+**Min Android SDK**: 21 (Android 5.0)  
+**Min iOS**: 12.0
