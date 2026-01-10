@@ -1,54 +1,113 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Attendance App Icon Generator</title>
+    <title>Marks Up - App Icon Generator</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0A0A0F;
+            background: linear-gradient(135deg, #0A0A0F 0%, #1a1a2e 100%);
             color: white;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 40px;
+            padding: 40px 20px;
         }
-        h1 { color: #6366F1; margin-bottom: 10px; }
-        p { color: #94A3B8; margin-bottom: 30px; }
-        .icon-container { margin: 20px; }
-        canvas { border-radius: 24px; box-shadow: 0 20px 60px rgba(99, 102, 241, 0.3); }
+        h1 { 
+            background: linear-gradient(135deg, #FFD93D, #FF6B6B, #C44CFF);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 48px;
+            margin-bottom: 5px;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        @keyframes glow {
+            from { filter: drop-shadow(0 0 10px rgba(255,107,107,0.5)); }
+            to { filter: drop-shadow(0 0 20px rgba(196,76,255,0.8)); }
+        }
+        .subtitle { color: #94A3B8; margin-bottom: 40px; font-size: 18px; }
+        .icon-container { margin: 30px; position: relative; }
+        canvas { 
+            border-radius: 24%; 
+            box-shadow: 0 25px 80px rgba(255, 107, 107, 0.4),
+                        0 10px 30px rgba(196, 76, 255, 0.3);
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            margin: 30px 0;
+        }
         button {
-            background: linear-gradient(135deg, #6366F1, #EC4899);
+            background: linear-gradient(135deg, #FF6B6B, #C44CFF);
             color: white;
             border: none;
-            padding: 16px 32px;
-            font-size: 16px;
+            padding: 14px 28px;
+            font-size: 15px;
             font-weight: 600;
             border-radius: 12px;
             cursor: pointer;
-            margin: 10px;
-            transition: transform 0.2s;
+            transition: all 0.3s;
+            box-shadow: 0 4px 20px rgba(255, 107, 107, 0.3);
         }
-        button:hover { transform: scale(1.05); }
-        .sizes { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin-top: 30px; }
+        button:hover { 
+            transform: translateY(-3px) scale(1.02); 
+            box-shadow: 0 8px 30px rgba(196, 76, 255, 0.5);
+        }
+        button.secondary {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .sizes { 
+            display: flex; 
+            gap: 20px; 
+            flex-wrap: wrap; 
+            justify-content: center; 
+            margin-top: 40px;
+            padding: 30px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
         .size-item { text-align: center; }
-        .size-item canvas { margin-bottom: 10px; }
-        .size-label { color: #94A3B8; font-size: 14px; }
+        .size-item canvas { 
+            margin-bottom: 8px; 
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            animation: none;
+        }
+        .size-label { color: #64748B; font-size: 12px; }
+        .badge {
+            display: inline-block;
+            padding: 6px 14px;
+            background: linear-gradient(135deg, #FFD93D, #FF6B6B);
+            color: #000;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-left: 10px;
+        }
     </style>
 </head>
 <body>
-    <h1>🎯 Attendance App Icon</h1>
-    <p>Click buttons below to download your app icon in various sizes</p>
+    <h1>🚀 Marks Up</h1>
+    <p class="subtitle">Attendance App Icon Generator <span class="badge">✨ LIVELY</span></p>
     
     <div class="icon-container">
-        <canvas id="mainIcon" width="1024" height="1024"></canvas>
+        <canvas id="mainIcon" width="512" height="512"></canvas>
     </div>
     
-    <div>
-        <button onclick="downloadIcon(1024)">Download 1024x1024 (App Store)</button>
-        <button onclick="downloadIcon(512)">Download 512x512</button>
-        <button onclick="downloadIcon(192)">Download 192x192 (Android)</button>
-        <button onclick="downloadIcon(180)">Download 180x180 (iOS)</button>
-        <button onclick="downloadAllSizes()">Download All Sizes</button>
+    <div class="buttons">
+        <button onclick="downloadIcon(1024)">📱 1024x1024 (App Store)</button>
+        <button onclick="downloadIcon(512)">📦 512x512 (Play Store)</button>
+        <button onclick="downloadIcon(192)">🤖 192x192 (Android)</button>
+        <button onclick="downloadIcon(180)">🍎 180x180 (iOS)</button>
+        <button class="secondary" onclick="downloadAllSizes()">⬇️ Download All Sizes</button>
     </div>
     
     <div class="sizes" id="previews"></div>
@@ -57,123 +116,156 @@
         function drawIcon(ctx, size) {
             const s = size / 512;
             
-            // Background gradient
+            // Vibrant background gradient (coral → magenta → purple)
             const bgGrad = ctx.createLinearGradient(0, 0, size, size);
-            bgGrad.addColorStop(0, '#6366F1');
-            bgGrad.addColorStop(0.5, '#8B5CF6');
-            bgGrad.addColorStop(1, '#EC4899');
+            bgGrad.addColorStop(0, '#FF6B6B');
+            bgGrad.addColorStop(0.4, '#FF8E53');
+            bgGrad.addColorStop(0.7, '#C44CFF');
+            bgGrad.addColorStop(1, '#6366F1');
             
             // Draw rounded rectangle background
             ctx.beginPath();
-            const radius = 115 * s;
+            const radius = 110 * s;
             ctx.roundRect(0, 0, size, size, radius);
             ctx.fillStyle = bgGrad;
             ctx.fill();
             
-            // QR pattern (bottom left)
-            ctx.fillStyle = 'rgba(255,255,255,0.15)';
-            const qrX = 70 * s, qrY = 280 * s;
-            ctx.beginPath();
-            ctx.roundRect(qrX, qrY, 45*s, 45*s, 8*s);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.roundRect(qrX + 55*s, qrY, 45*s, 45*s, 8*s);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.roundRect(qrX, qrY + 55*s, 45*s, 45*s, 8*s);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.roundRect(qrX + 55*s, qrY + 55*s, 20*s, 20*s, 4*s);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.roundRect(qrX + 80*s, qrY + 55*s, 20*s, 20*s, 4*s);
-            ctx.fill();
-            ctx.beginPath();
-            ctx.roundRect(qrX + 55*s, qrY + 80*s, 20*s, 20*s, 4*s);
-            ctx.fill();
+            // Add energy burst effect behind
+            const burstGrad = ctx.createRadialGradient(
+                256*s, 220*s, 0,
+                256*s, 220*s, 200*s
+            );
+            burstGrad.addColorStop(0, 'rgba(255,255,255,0.25)');
+            burstGrad.addColorStop(0.5, 'rgba(255,255,255,0.08)');
+            burstGrad.addColorStop(1, 'rgba(255,255,255,0)');
+            ctx.fillStyle = burstGrad;
+            ctx.fillRect(0, 0, size, size);
             
-            // Main checkmark circle (outer glow)
-            ctx.beginPath();
-            ctx.arc(300*s, 220*s, 130*s, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(255,255,255,0.2)';
-            ctx.fill();
+            // Sparkles / Stars
+            const drawStar = (x, y, r, rot = 0) => {
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(rot);
+                ctx.fillStyle = 'rgba(255,255,255,0.9)';
+                ctx.beginPath();
+                for (let i = 0; i < 4; i++) {
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(r * 0.3, 0);
+                    ctx.lineTo(0, r);
+                    ctx.lineTo(-r * 0.3, 0);
+                    ctx.lineTo(0, -r);
+                    ctx.rotate(Math.PI / 2);
+                }
+                ctx.fill();
+                ctx.restore();
+            };
             
-            // Main checkmark circle (inner white)
-            ctx.beginPath();
-            ctx.arc(300*s, 220*s, 105*s, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(255,255,255,0.95)';
-            ctx.fill();
+            drawStar(420*s, 90*s, 25*s, 0.2);
+            drawStar(85*s, 130*s, 18*s, 0.5);
+            drawStar(450*s, 380*s, 15*s, 0.8);
+            drawStar(70*s, 400*s, 20*s, 0.3);
             
-            // Checkmark
-            const checkGrad = ctx.createLinearGradient(245*s, 170*s, 360*s, 260*s);
-            checkGrad.addColorStop(0, '#6366F1');
-            checkGrad.addColorStop(1, '#EC4899');
-            ctx.strokeStyle = checkGrad;
-            ctx.lineWidth = 28 * s;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            ctx.beginPath();
-            ctx.moveTo(245*s, 220*s);
-            ctx.lineTo(280*s, 260*s);
-            ctx.lineTo(360*s, 170*s);
-            ctx.stroke();
-            
-            // Fingerprint lines
-            ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-            ctx.lineWidth = 4 * s;
-            ctx.lineCap = 'round';
-            
-            const fpX = 360 * s, fpY = 320 * s;
-            ctx.beginPath();
-            ctx.moveTo(fpX, fpY);
-            ctx.quadraticCurveTo(fpX + 30*s, fpY + 30*s, fpX, fpY + 60*s);
-            ctx.stroke();
-            
-            ctx.beginPath();
-            ctx.moveTo(fpX + 20*s, fpY - 10*s);
-            ctx.quadraticCurveTo(fpX + 55*s, fpY + 35*s, fpX + 20*s, fpY + 80*s);
-            ctx.stroke();
-            
-            ctx.beginPath();
-            ctx.moveTo(fpX + 40*s, fpY - 15*s);
-            ctx.quadraticCurveTo(fpX + 80*s, fpY + 40*s, fpX + 40*s, fpY + 95*s);
-            ctx.stroke();
-            
-            // Decorative dots
+            // Small floating circles
             ctx.fillStyle = 'rgba(255,255,255,0.3)';
             ctx.beginPath();
-            ctx.arc(120*s, 120*s, 12*s, 0, Math.PI * 2);
+            ctx.arc(390*s, 450*s, 12*s, 0, Math.PI * 2);
             ctx.fill();
             
-            ctx.fillStyle = 'rgba(255,255,255,0.2)';
+            ctx.fillStyle = 'rgba(255,217,61,0.5)';
             ctx.beginPath();
-            ctx.arc(160*s, 150*s, 8*s, 0, Math.PI * 2);
+            ctx.arc(140*s, 80*s, 15*s, 0, Math.PI * 2);
             ctx.fill();
             
-            ctx.fillStyle = 'rgba(255,255,255,0.25)';
+            // Main checkmark with motion trail effect
+            ctx.save();
+            
+            // Motion trail (ghost checkmarks)
+            for (let i = 3; i > 0; i--) {
+                ctx.strokeStyle = `rgba(255,255,255,${0.1 * i})`;
+                ctx.lineWidth = (50 - i * 5) * s;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                
+                const offset = i * 8 * s;
+                ctx.beginPath();
+                ctx.moveTo(120*s + offset, 300*s + offset);
+                ctx.lineTo(210*s + offset, 380*s + offset);
+                ctx.lineTo(400*s + offset, 150*s + offset);
+                ctx.stroke();
+            }
+            
+            // Main bold checkmark
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 55 * s;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.shadowColor = 'rgba(255,255,255,0.5)';
+            ctx.shadowBlur = 20 * s;
+            
             ctx.beginPath();
-            ctx.arc(420*s, 420*s, 15*s, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.moveTo(120*s, 280*s);
+            ctx.lineTo(200*s, 370*s);
+            ctx.lineTo(390*s, 140*s);
+            ctx.stroke();
             
-            ctx.fillStyle = 'rgba(255,255,255,0.15)';
+            ctx.restore();
+            
+            // Up arrow with energy
+            const arrowGrad = ctx.createLinearGradient(420*s, 320*s, 420*s, 200*s);
+            arrowGrad.addColorStop(0, '#FFD93D');
+            arrowGrad.addColorStop(1, '#00FF88');
+            
+            ctx.strokeStyle = arrowGrad;
+            ctx.lineWidth = 22 * s;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.shadowColor = 'rgba(0,255,136,0.6)';
+            ctx.shadowBlur = 15 * s;
+            
+            // Arrow shaft
             ctx.beginPath();
-            ctx.arc(380*s, 450*s, 10*s, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.moveTo(420*s, 310*s);
+            ctx.lineTo(420*s, 210*s);
+            ctx.stroke();
             
-            // Text
-            ctx.fillStyle = 'rgba(255,255,255,0.9)';
-            ctx.font = `bold ${60*s}px -apple-system, BlinkMacSystemFont, sans-serif`;
+            // Arrow head
+            ctx.beginPath();
+            ctx.moveTo(380*s, 250*s);
+            ctx.lineTo(420*s, 200*s);
+            ctx.lineTo(460*s, 250*s);
+            ctx.stroke();
+            
+            // Speed lines around arrow
+            ctx.strokeStyle = 'rgba(0,255,136,0.4)';
+            ctx.lineWidth = 4 * s;
+            ctx.shadowBlur = 0;
+            
+            ctx.beginPath();
+            ctx.moveTo(370*s, 280*s);
+            ctx.lineTo(350*s, 300*s);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(470*s, 280*s);
+            ctx.lineTo(490*s, 300*s);
+            ctx.stroke();
+            
+            // "MU" text badge at bottom
+            ctx.shadowColor = 'rgba(0,0,0,0.3)';
+            ctx.shadowBlur = 10 * s;
+            ctx.fillStyle = 'rgba(255,255,255,0.95)';
+            ctx.font = `bold ${52*s}px -apple-system, BlinkMacSystemFont, sans-serif`;
             ctx.textAlign = 'center';
-            ctx.fillText('ATTEND', 256*s, 445*s);
+            ctx.fillText('MARKS UP', 256*s, 475*s);
         }
         
         // Draw main icon
         const mainCanvas = document.getElementById('mainIcon');
         const mainCtx = mainCanvas.getContext('2d');
-        drawIcon(mainCtx, 1024);
+        drawIcon(mainCtx, 512);
         
         // Generate previews
-        const sizes = [512, 192, 180, 144, 96, 72, 48];
+        const sizes = [256, 192, 144, 96, 72, 48];
         const previewsDiv = document.getElementById('previews');
         
         sizes.forEach(size => {
@@ -203,7 +295,7 @@
             drawIcon(ctx, size);
             
             const link = document.createElement('a');
-            link.download = `app_icon_${size}x${size}.png`;
+            link.download = `marks_up_icon_${size}x${size}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
         }
@@ -211,7 +303,7 @@
         function downloadAllSizes() {
             const allSizes = [1024, 512, 192, 180, 167, 152, 144, 120, 96, 87, 80, 76, 72, 60, 58, 48, 40, 29, 20];
             allSizes.forEach((size, i) => {
-                setTimeout(() => downloadIcon(size), i * 200);
+                setTimeout(() => downloadIcon(size), i * 150);
             });
         }
     </script>
