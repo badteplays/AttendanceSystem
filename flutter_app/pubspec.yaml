@@ -1,0 +1,48 @@
+name: attendance_system
+description: Cross-platform attendance tracking system with QR code scanning
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: ">=3.10.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.6
+  firebase_core: ^2.24.2
+  firebase_auth: ^4.16.0
+  cloud_firestore: ^4.14.0
+  firebase_messaging: ^14.7.10
+  google_fonts: ^6.1.0
+  provider: ^6.1.1
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^3.5.5
+  geolocator: ^10.1.0
+  shared_preferences: ^2.2.2
+  intl: ^0.19.0
+  flutter_local_notifications: ^16.3.0
+  workmanager: ^0.5.2
+  uuid: ^4.2.2
+  vibration: ^1.8.4
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+  flutter_launcher_icons: ^0.13.1
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/app_icon.png"
+  adaptive_icon_background: "#6366F1"
+  adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icon/

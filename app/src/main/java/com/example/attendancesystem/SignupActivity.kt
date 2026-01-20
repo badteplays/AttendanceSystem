@@ -74,10 +74,13 @@ class SignupActivity : AppCompatActivity() {
                 Toast.makeText(this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
+<<<<<<< HEAD
             if (password != confirmPassword) {
                 Toast.makeText(this, "Passwords do not match", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
+=======
+>>>>>>> origin/master
             if (selectedRole == "student" && !SecurityUtils.isValidSection(section)) {
                 Toast.makeText(this, "Please enter a valid section (e.g., BSIT-3A)", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener

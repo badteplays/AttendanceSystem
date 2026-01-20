@@ -16,20 +16,29 @@ import android.widget.TextView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.attendancesystem.notifications.LocalNotificationManager
+<<<<<<< HEAD
 import com.example.attendancesystem.utils.ProfilePictureManager
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+=======
+>>>>>>> origin/master
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class StudentMainActivity : AppCompatActivity() {
 
+<<<<<<< HEAD
     private var drawerLayout: DrawerLayout? = null
     private var navigationView: NavigationView? = null
     private var notificationManager: LocalNotificationManager? = null
     private var headerListener: ListenerRegistration? = null
+=======
+    private lateinit var drawerLayout: DrawerLayout
+    private lateinit var navigationView: NavigationView
+    private lateinit var notificationManager: LocalNotificationManager
+>>>>>>> origin/master
 
     companion object {
         private const val PERMISSION_REQUEST_CODE = 101
@@ -39,8 +48,13 @@ class StudentMainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_student_main)
 
+<<<<<<< HEAD
         try {
         notificationManager = LocalNotificationManager.getInstance(this)
+=======
+        notificationManager = LocalNotificationManager.getInstance(this)
+        
+>>>>>>> origin/master
         setupDrawerNavigation()
         requestNecessaryPermissions()
         bindNavHeader()
@@ -59,6 +73,10 @@ class StudentMainActivity : AppCompatActivity() {
             loadFragment(fragmentToLoad)
         }
         
+<<<<<<< HEAD
+=======
+        // Schedule notifications when student opens the app
+>>>>>>> origin/master
         scheduleClassNotifications()
     }
 
@@ -208,6 +226,7 @@ class StudentMainActivity : AppCompatActivity() {
             }
         }
     }
+<<<<<<< HEAD
 
     override fun onDestroy() {
         headerListener?.remove()
@@ -223,6 +242,20 @@ class StudentMainActivity : AppCompatActivity() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 mgr.scheduleAllClassNotifications()
+=======
+    
+    private fun scheduleClassNotifications() {
+        val prefs = getSharedPreferences("student_prefs", Context.MODE_PRIVATE)
+        if (!prefs.getBoolean("notifications_enabled", true)) {
+            android.util.Log.d("StudentMainActivity", "Notifications disabled, skipping schedule")
+            return
+        }
+        
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                notificationManager.scheduleAllClassNotifications()
+                android.util.Log.d("StudentMainActivity", "Class notifications scheduled")
+>>>>>>> origin/master
             } catch (e: Exception) {
                 android.util.Log.e("StudentMainActivity", "Error scheduling notifications: ${e.message}", e)
             }

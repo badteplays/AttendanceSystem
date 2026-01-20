@@ -29,6 +29,7 @@ import android.graphics.Color
 
 class StudentDashboardFragment : Fragment() {
 
+<<<<<<< HEAD
     private var swipeRefreshLayout: SwipeRefreshLayout? = null
     private var textWelcomeStudent: TextView? = null
     private var textName: TextView? = null
@@ -44,6 +45,25 @@ class StudentDashboardFragment : Fragment() {
     private var textPresentCount: TextView? = null
     private var textAbsentCount: TextView? = null
     private var textLateCount: TextView? = null
+=======
+    private lateinit var swipeRefreshLayout: SwipeRefreshLayout
+    private lateinit var textWelcomeStudent: TextView
+    private lateinit var textName: TextView
+    private lateinit var textCourse: TextView
+    private lateinit var imageProfilePic: ImageView
+    private lateinit var textInitials: TextView
+    private lateinit var buttonScanQR: View
+    private lateinit var buttonViewHistory: View
+    private lateinit var fabScanQR: FloatingActionButton
+    private lateinit var textTodayStatus: TextView
+    private lateinit var textStatusTime: TextView
+    private lateinit var statusIndicator: View
+    
+    // Stats counters
+    private lateinit var textPresentCount: TextView
+    private lateinit var textAbsentCount: TextView
+    private lateinit var textLateCount: TextView
+>>>>>>> origin/master
     
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
@@ -60,6 +80,7 @@ class StudentDashboardFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+<<<<<<< HEAD
         try {
             initializeViews(view)
             loadUserData()
@@ -88,6 +109,39 @@ class StudentDashboardFragment : Fragment() {
         textPresentCount = view.findViewById(R.id.textPresentCount)
         textAbsentCount = view.findViewById(R.id.textAbsentCount)
         textLateCount = view.findViewById(R.id.textLateCount)
+=======
+
+        initializeViews(view)
+        loadUserData()
+        loadTodayStatus()
+        loadAttendanceStats()
+        setupClickListeners()
+        setupSwipeRefresh()
+    }
+
+    private fun initializeViews(view: View) {
+        try {
+            swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout)
+            textWelcomeStudent = view.findViewById(R.id.textWelcomeStudent)
+            textName = view.findViewById(R.id.textName)
+            textCourse = view.findViewById(R.id.textCourse)
+            imageProfilePic = view.findViewById(R.id.imageProfilePic)
+            textInitials = view.findViewById(R.id.textInitials)
+            buttonScanQR = view.findViewById(R.id.buttonScanQR)
+            buttonViewHistory = view.findViewById(R.id.buttonViewHistory)
+            fabScanQR = view.findViewById(R.id.fabScanQR)
+            textTodayStatus = view.findViewById(R.id.textTodayStatus)
+            textStatusTime = view.findViewById(R.id.textStatusTime)
+            statusIndicator = view.findViewById(R.id.statusIndicator)
+            
+            // Initialize stat counters
+            textPresentCount = view.findViewById(R.id.textPresentCount)
+            textAbsentCount = view.findViewById(R.id.textAbsentCount)
+            textLateCount = view.findViewById(R.id.textLateCount)
+        } catch (e: Exception) {
+            android.util.Log.e("StudentDashboard", "Error initializing views", e)
+        }
+>>>>>>> origin/master
     }
 
     private fun setupSwipeRefresh() {
@@ -95,7 +149,11 @@ class StudentDashboardFragment : Fragment() {
             loadUserData()
             loadTodayStatus()
             loadAttendanceStats()
+<<<<<<< HEAD
             swipeRefreshLayout?.isRefreshing = false
+=======
+            swipeRefreshLayout.isRefreshing = false
+>>>>>>> origin/master
         }
     }
     
@@ -138,6 +196,7 @@ class StudentDashboardFragment : Fragment() {
                 
                 android.util.Log.d("StudentDashboard", "Stats - Present: $presentCount, Absent: $absentCount, Late: $lateCount")
                 
+<<<<<<< HEAD
                 textPresentCount?.text = presentCount.toString()
                 textAbsentCount?.text = absentCount.toString()
                 textLateCount?.text = lateCount.toString()
@@ -147,6 +206,19 @@ class StudentDashboardFragment : Fragment() {
                 textPresentCount?.text = "0"
                 textAbsentCount?.text = "0"
                 textLateCount?.text = "0"
+=======
+                // Update UI
+                textPresentCount.text = presentCount.toString()
+                textAbsentCount.text = absentCount.toString()
+                textLateCount.text = lateCount.toString()
+            }
+            .addOnFailureListener { e ->
+                android.util.Log.e("StudentDashboard", "Error loading stats: ${e.message}", e)
+                // Set defaults on error
+                textPresentCount.text = "0"
+                textAbsentCount.text = "0"
+                textLateCount.text = "0"
+>>>>>>> origin/master
             }
     }
 
@@ -169,6 +241,11 @@ class StudentDashboardFragment : Fragment() {
 
             android.util.Log.d("StudentDashboard", "✓✓✓ Just marked attendance! Showing immediately ✓✓✓")
             updateStatusUI("Present - $justMarkedSubject", "Marked at $timeString", Color.parseColor("#22C55E"))
+<<<<<<< HEAD
+=======
+            
+            // Reload stats after marking
+>>>>>>> origin/master
             loadAttendanceStats()
 
             arguments?.clear()
@@ -434,6 +511,10 @@ class StudentDashboardFragment : Fragment() {
                         "PRESENT" -> updateStatusUI("Present - $subject", timeString, Color.parseColor("#22C55E"))
                         "LATE" -> updateStatusUI("Late - $subject", timeString, Color.parseColor("#F59E0B"))
                         "EXCUSED" -> updateStatusUI("Excused - $subject", timeString, Color.parseColor("#3B82F6"))
+<<<<<<< HEAD
+=======
+                        "CUTTING" -> updateStatusUI("Cutting - $subject", timeString, Color.parseColor("#EF4444"))
+>>>>>>> origin/master
                         else -> updateStatusUI("Marked - $subject", timeString, Color.parseColor("#22C55E"))
                     }
                     prefs.edit().apply {
@@ -447,6 +528,7 @@ class StudentDashboardFragment : Fragment() {
                     android.util.Log.d("StudentDashboard", "✗✗✗ NO ATTENDANCE FOUND ✗✗✗")
                     android.util.Log.d("StudentDashboard", "Subject being queried: $subject")
                     android.util.Log.d("StudentDashboard", "ScheduleId being queried: $scheduleId")
+<<<<<<< HEAD
                     val markedSubject = prefs.getString("markedSubject", null)
                     val markedTime = prefs.getLong("markedTime", 0L)
                     val isRecentMarked = markedSubject == subject &&
@@ -459,6 +541,9 @@ class StudentDashboardFragment : Fragment() {
                     } else {
                         updateStatusUI("Not marked yet", "Scan QR for $subject", Color.parseColor("#71717A"))
                     }
+=======
+                    updateStatusUI("Not marked yet", "Scan QR for $subject", Color.parseColor("#71717A"))
+>>>>>>> origin/master
                 }
             }
     }
@@ -497,11 +582,20 @@ class StudentDashboardFragment : Fragment() {
                 if (!isAdded) return@addSnapshotListener
                 if (snapshot != null && snapshot.exists()) {
                     studentName = snapshot.getString("name") ?: "Student"
+<<<<<<< HEAD
                     textWelcomeStudent?.text = getGreeting()
+=======
+                    textWelcomeStudent.text = getGreeting()
+>>>>>>> origin/master
                     val studentSection = snapshot.getString("section") ?: "Section"
 
+<<<<<<< HEAD
                     textName?.text = studentName
                     textCourse?.text = studentSection.uppercase()
+=======
+                    textName.text = studentName
+                    textCourse.text = studentSection.uppercase()
+>>>>>>> origin/master
 
                     val img = imageProfilePic
                     val ini = textInitials
