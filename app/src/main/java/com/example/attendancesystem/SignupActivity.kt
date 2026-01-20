@@ -56,8 +56,9 @@ class SignupActivity : AppCompatActivity() {
             val email = binding.editEmail.text.toString().trim()
             val name = binding.editName.text.toString().trim()
             val section = binding.editSection.text.toString().trim()
-            val department = findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.editDepartment).text.toString().trim()
+            val department = binding.editDepartment.text.toString().trim()
             val password = binding.editPassword.text.toString().trim()
+            val confirmPassword = binding.editConfirmPassword.text.toString().trim()
             val selectedRole = if (findViewById<android.widget.RadioButton>(R.id.teacherRadio).isChecked) "teacher" else "student"
 
             // Input validation with security checks
@@ -73,6 +74,13 @@ class SignupActivity : AppCompatActivity() {
                 Toast.makeText(this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
+<<<<<<< HEAD
+            if (password != confirmPassword) {
+                Toast.makeText(this, "Passwords do not match", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+=======
+>>>>>>> origin/master
             if (selectedRole == "student" && !SecurityUtils.isValidSection(section)) {
                 Toast.makeText(this, "Please enter a valid section (e.g., BSIT-3A)", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
@@ -92,6 +100,13 @@ class SignupActivity : AppCompatActivity() {
             
             auth.createUserWithEmailAndPassword(sanitizedEmail, password)
                 .addOnSuccessListener { result ->
+                    val createdUser = result.user
+                    if (createdUser == null) {
+                        binding.btnSignup.isEnabled = true
+                        binding.btnSignup.text = "Sign Up"
+                        Toast.makeText(this, "Signup failed. Please try again.", Toast.LENGTH_LONG).show()
+                        return@addOnSuccessListener
+                    }
                     val user = hashMapOf(
                         "email" to sanitizedEmail,
                         "name" to sanitizedName,
@@ -106,7 +121,7 @@ class SignupActivity : AppCompatActivity() {
                         user["department"] = SecurityUtils.sanitizeString(department)
                     }
                     db.collection("users")
-                        .document(result.user!!.uid)
+                        .document(createdUser.uid)
                         .set(user)
                         .addOnSuccessListener {
                             Toast.makeText(this, "Account created successfully!", Toast.LENGTH_SHORT).show()
@@ -115,18 +130,25 @@ class SignupActivity : AppCompatActivity() {
                                 scheduleStudentReminders()
                             }
                             
-                            if (selectedRole == "teacher") {
-                                startActivity(Intent(this, TeacherMainActivity::class.java))
+                            getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
+                                .edit()
+                                .putBoolean("explicit_logout", false)
+                                .apply()
+                            
+                            val intent = if (selectedRole == "teacher") {
+                                Intent(this, TeacherMainActivity::class.java)
                             } else {
-                                startActivity(Intent(this, StudentMainActivity::class.java))
+                                Intent(this, StudentMainActivity::class.java)
                             }
+                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                            startActivity(intent)
                             finish()
                         }
                         .addOnFailureListener { e ->
                             binding.btnSignup.isEnabled = true
                             binding.btnSignup.text = "Sign Up"
                             Toast.makeText(this, "Failed to save user info: ${e.message}", Toast.LENGTH_LONG).show()
-                            result.user?.delete()
+                            createdUser.delete()
                         }
                 }
                 .addOnFailureListener { e ->

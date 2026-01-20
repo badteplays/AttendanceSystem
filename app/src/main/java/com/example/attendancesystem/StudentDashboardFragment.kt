@@ -14,7 +14,7 @@ import android.widget.TextView
 import android.widget.ImageView
 import android.widget.Button
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
@@ -29,6 +29,23 @@ import android.graphics.Color
 
 class StudentDashboardFragment : Fragment() {
 
+<<<<<<< HEAD
+    private var swipeRefreshLayout: SwipeRefreshLayout? = null
+    private var textWelcomeStudent: TextView? = null
+    private var textName: TextView? = null
+    private var textCourse: TextView? = null
+    private var imageProfilePic: ImageView? = null
+    private var textInitials: TextView? = null
+    private var buttonScanQR: View? = null
+    private var buttonViewHistory: View? = null
+    private var fabScanQR: ExtendedFloatingActionButton? = null
+    private var textTodayStatus: TextView? = null
+    private var textStatusTime: TextView? = null
+    private var statusIndicator: View? = null
+    private var textPresentCount: TextView? = null
+    private var textAbsentCount: TextView? = null
+    private var textLateCount: TextView? = null
+=======
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     private lateinit var textWelcomeStudent: TextView
     private lateinit var textName: TextView
@@ -46,10 +63,10 @@ class StudentDashboardFragment : Fragment() {
     private lateinit var textPresentCount: TextView
     private lateinit var textAbsentCount: TextView
     private lateinit var textLateCount: TextView
+>>>>>>> origin/master
     
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
-    private var userId: String = ""
     private var studentName: String = ""
     private var attendanceListener: ListenerRegistration? = null
 
@@ -63,6 +80,36 @@ class StudentDashboardFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+<<<<<<< HEAD
+        try {
+            initializeViews(view)
+            loadUserData()
+            loadTodayStatus()
+            loadAttendanceStats()
+            setupClickListeners()
+            setupSwipeRefresh()
+        } catch (e: Exception) {
+            android.util.Log.e("StudentDashboard", "Error in onViewCreated: ${e.message}", e)
+        }
+    }
+
+    private fun initializeViews(view: View) {
+        swipeRefreshLayout = view.findViewById(R.id.swipeRefreshLayout)
+        textWelcomeStudent = view.findViewById(R.id.textWelcomeStudent)
+        textName = view.findViewById(R.id.textName)
+        textCourse = view.findViewById(R.id.textCourse)
+        imageProfilePic = view.findViewById(R.id.imageProfilePic)
+        textInitials = view.findViewById(R.id.textInitials)
+        buttonScanQR = view.findViewById(R.id.buttonScanQR)
+        buttonViewHistory = view.findViewById(R.id.buttonViewHistory)
+        fabScanQR = view.findViewById(R.id.fabScanQR)
+        textTodayStatus = view.findViewById(R.id.textTodayStatus)
+        textStatusTime = view.findViewById(R.id.textStatusTime)
+        statusIndicator = view.findViewById(R.id.statusIndicator)
+        textPresentCount = view.findViewById(R.id.textPresentCount)
+        textAbsentCount = view.findViewById(R.id.textAbsentCount)
+        textLateCount = view.findViewById(R.id.textLateCount)
+=======
 
         initializeViews(view)
         loadUserData()
@@ -94,14 +141,19 @@ class StudentDashboardFragment : Fragment() {
         } catch (e: Exception) {
             android.util.Log.e("StudentDashboard", "Error initializing views", e)
         }
+>>>>>>> origin/master
     }
 
     private fun setupSwipeRefresh() {
-        swipeRefreshLayout.setOnRefreshListener {
+        swipeRefreshLayout?.setOnRefreshListener {
             loadUserData()
             loadTodayStatus()
             loadAttendanceStats()
+<<<<<<< HEAD
+            swipeRefreshLayout?.isRefreshing = false
+=======
             swipeRefreshLayout.isRefreshing = false
+>>>>>>> origin/master
         }
     }
     
@@ -144,6 +196,17 @@ class StudentDashboardFragment : Fragment() {
                 
                 android.util.Log.d("StudentDashboard", "Stats - Present: $presentCount, Absent: $absentCount, Late: $lateCount")
                 
+<<<<<<< HEAD
+                textPresentCount?.text = presentCount.toString()
+                textAbsentCount?.text = absentCount.toString()
+                textLateCount?.text = lateCount.toString()
+            }
+            .addOnFailureListener { e ->
+                android.util.Log.e("StudentDashboard", "Error loading stats: ${e.message}", e)
+                textPresentCount?.text = "0"
+                textAbsentCount?.text = "0"
+                textLateCount?.text = "0"
+=======
                 // Update UI
                 textPresentCount.text = presentCount.toString()
                 textAbsentCount.text = absentCount.toString()
@@ -155,6 +218,7 @@ class StudentDashboardFragment : Fragment() {
                 textPresentCount.text = "0"
                 textAbsentCount.text = "0"
                 textLateCount.text = "0"
+>>>>>>> origin/master
             }
     }
 
@@ -166,7 +230,6 @@ class StudentDashboardFragment : Fragment() {
         val justMarkedTime = arguments?.getLong("justMarkedTime", 0L) ?: 0L
 
         if (justMarkedSubject != null && justMarkedTime > 0) {
-
             prefs.edit().apply {
                 putString("markedSubject", justMarkedSubject)
                 putLong("markedTime", justMarkedTime)
@@ -178,12 +241,14 @@ class StudentDashboardFragment : Fragment() {
 
             android.util.Log.d("StudentDashboard", "✓✓✓ Just marked attendance! Showing immediately ✓✓✓")
             updateStatusUI("Present - $justMarkedSubject", "Marked at $timeString", Color.parseColor("#22C55E"))
+<<<<<<< HEAD
+=======
             
             // Reload stats after marking
+>>>>>>> origin/master
             loadAttendanceStats()
 
             arguments?.clear()
-            return
         }
 
         android.util.Log.d("StudentDashboard", "Checking for current class")
@@ -264,10 +329,13 @@ class StudentDashboardFragment : Fragment() {
                         android.util.Log.d("StudentDashboard", "Current class '$subject' - not marked yet")
                         updateStatusUI("Not marked yet", "Scan QR for $subject", Color.parseColor("#71717A"))
                     }
+                    checkAttendanceForCurrentClass(userId, scheduleId, subject, prefs)
                 } else {
 
                     prefs.edit().clear().apply()
                     android.util.Log.d("StudentDashboard", "No current class - clearing saved status")
+                    attendanceListener?.remove()
+                    attendanceListener = null
 
                     val nextClass = schedules.mapNotNull { schedule ->
                         val startTime = schedule.getString("startTime") ?: return@mapNotNull null
@@ -354,10 +422,13 @@ class StudentDashboardFragment : Fragment() {
                         android.util.Log.d("StudentDashboard", "Current class '$subject' - not marked yet")
                         updateStatusUI("Not marked yet", "Scan QR for $subject", Color.parseColor("#71717A"))
                     }
+                    checkAttendanceForCurrentClass(userId, scheduleId, subject, prefs)
                 } else {
 
                     prefs.edit().clear().apply()
                     android.util.Log.d("StudentDashboard", "No current class")
+                    attendanceListener?.remove()
+                    attendanceListener = null
 
                     val nextClass = schedules
                         .mapNotNull { schedule ->
@@ -389,7 +460,12 @@ class StudentDashboardFragment : Fragment() {
             }
     }
 
-    private fun checkAttendanceForCurrentClass(userId: String, scheduleId: String, subject: String) {
+    private fun checkAttendanceForCurrentClass(
+        userId: String,
+        scheduleId: String,
+        subject: String,
+        prefs: android.content.SharedPreferences
+    ) {
 
         val calendar = Calendar.getInstance()
         calendar.set(Calendar.HOUR_OF_DAY, 0)
@@ -435,15 +511,39 @@ class StudentDashboardFragment : Fragment() {
                         "PRESENT" -> updateStatusUI("Present - $subject", timeString, Color.parseColor("#22C55E"))
                         "LATE" -> updateStatusUI("Late - $subject", timeString, Color.parseColor("#F59E0B"))
                         "EXCUSED" -> updateStatusUI("Excused - $subject", timeString, Color.parseColor("#3B82F6"))
+<<<<<<< HEAD
+=======
                         "CUTTING" -> updateStatusUI("Cutting - $subject", timeString, Color.parseColor("#EF4444"))
+>>>>>>> origin/master
                         else -> updateStatusUI("Marked - $subject", timeString, Color.parseColor("#22C55E"))
                     }
+                    prefs.edit().apply {
+                        putString("markedSubject", subject)
+                        putLong("markedTime", timestamp?.toDate()?.time ?: System.currentTimeMillis())
+                        apply()
+                    }
+                    loadAttendanceStats()
                 } else {
 
                     android.util.Log.d("StudentDashboard", "✗✗✗ NO ATTENDANCE FOUND ✗✗✗")
                     android.util.Log.d("StudentDashboard", "Subject being queried: $subject")
                     android.util.Log.d("StudentDashboard", "ScheduleId being queried: $scheduleId")
+<<<<<<< HEAD
+                    val markedSubject = prefs.getString("markedSubject", null)
+                    val markedTime = prefs.getLong("markedTime", 0L)
+                    val isRecentMarked = markedSubject == subject &&
+                        markedTime > 0 &&
+                        System.currentTimeMillis() - markedTime <= 2 * 60 * 1000
+                    if (isRecentMarked) {
+                        val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
+                        val timeString = timeFormat.format(Date(markedTime))
+                        updateStatusUI("Present - $subject", "Marked at $timeString", Color.parseColor("#22C55E"))
+                    } else {
+                        updateStatusUI("Not marked yet", "Scan QR for $subject", Color.parseColor("#71717A"))
+                    }
+=======
                     updateStatusUI("Not marked yet", "Scan QR for $subject", Color.parseColor("#71717A"))
+>>>>>>> origin/master
                 }
             }
     }
@@ -460,32 +560,48 @@ class StudentDashboardFragment : Fragment() {
     }
 
     private fun updateStatusUI(statusText: String, timeText: String, color: Int) {
-        textTodayStatus.text = statusText
-        textStatusTime.text = timeText
-        statusIndicator.setBackgroundColor(color)
+        textTodayStatus?.text = statusText
+        textStatusTime?.text = timeText
+        statusIndicator?.setBackgroundColor(color)
     }
 
     private fun loadUserData() {
         val currentUser = auth.currentUser
         if (currentUser == null) {
-            startActivity(Intent(requireContext(), LoginActivity::class.java))
-            requireActivity().finish()
+            try {
+                startActivity(Intent(requireContext(), LoginActivity::class.java))
+                requireActivity().finish()
+            } catch (e: Exception) {
+                android.util.Log.e("StudentDashboard", "Error redirecting to login: ${e.message}")
+            }
             return
         }
 
         db.collection("users").document(currentUser.uid)
             .addSnapshotListener { snapshot, _ ->
+                if (!isAdded) return@addSnapshotListener
                 if (snapshot != null && snapshot.exists()) {
                     studentName = snapshot.getString("name") ?: "Student"
+<<<<<<< HEAD
+                    textWelcomeStudent?.text = getGreeting()
+=======
                     textWelcomeStudent.text = getGreeting()
+>>>>>>> origin/master
                     val studentSection = snapshot.getString("section") ?: "Section"
-                    val profilePicUrl = snapshot.getString("profilePicUrl")
 
+<<<<<<< HEAD
+                    textName?.text = studentName
+                    textCourse?.text = studentSection.uppercase()
+=======
                     textName.text = studentName
                     textCourse.text = studentSection.uppercase()
+>>>>>>> origin/master
 
-                    val profileManager = ProfilePictureManager.getInstance()
-                    profileManager.loadProfilePicture(requireContext(), imageProfilePic, textInitials, studentName, "ST")
+                    val img = imageProfilePic
+                    val ini = textInitials
+                    if (img != null && ini != null) {
+                        ProfilePictureManager.getInstance().loadProfilePicture(requireContext(), img, ini, studentName, "ST")
+                    }
                 }
             }
     }
@@ -500,32 +616,19 @@ class StudentDashboardFragment : Fragment() {
     }
 
     private fun setupClickListeners() {
-
-        buttonScanQR.setOnClickListener {
-            try {
-
-                switchToFragment(QRScannerFragment())
-            } catch (e: Exception) {
-                Toast.makeText(requireContext(), "Error opening scanner: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
+        buttonScanQR?.setOnClickListener {
+            try { switchToFragment(QRScannerFragment()) }
+            catch (e: Exception) { android.util.Log.e("StudentDashboard", "Error: ${e.message}") }
         }
 
-        buttonViewHistory.setOnClickListener {
-            try {
-
-                switchToFragment(StudentAttendanceHistoryFragment())
-            } catch (e: Exception) {
-                Toast.makeText(requireContext(), "Error opening history: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
+        buttonViewHistory?.setOnClickListener {
+            try { switchToFragment(StudentAttendanceHistoryFragment()) }
+            catch (e: Exception) { android.util.Log.e("StudentDashboard", "Error: ${e.message}") }
         }
 
-        fabScanQR.setOnClickListener {
-            try {
-
-                switchToFragment(QRScannerFragment())
-            } catch (e: Exception) {
-                Toast.makeText(requireContext(), "Error opening scanner: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
+        fabScanQR?.setOnClickListener {
+            try { switchToFragment(QRScannerFragment()) }
+            catch (e: Exception) { android.util.Log.e("StudentDashboard", "Error: ${e.message}") }
         }
     }
 

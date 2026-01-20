@@ -92,24 +92,36 @@ class LocalNotificationManager(private val context: Context) {
         try {
             val db = FirebaseFirestore.getInstance()
             val userDoc = db.collection("users").document(user.uid).get().await()
-            val section = userDoc.getString("section")?.uppercase() ?: run {
+            val sectionRaw = userDoc.getString("section") ?: run {
                 Log.d(TAG, "No section found for user")
                 return
             }
+            val sectionUpper = sectionRaw.uppercase()
+            val sectionLower = sectionRaw.lowercase()
 
             // Cancel all existing alarms first
             cancelAllAlarms()
 
             // Get all schedules for this section
-            val schedules = db.collection("schedules")
-                .whereEqualTo("section", section)
+            val schedulesUpper = db.collection("schedules")
+                .whereEqualTo("section", sectionUpper)
                 .get()
                 .await()
+            val schedulesLower = if (sectionLower != sectionUpper) {
+                db.collection("schedules")
+                    .whereEqualTo("section", sectionLower)
+                    .get()
+                    .await()
+            } else {
+                schedulesUpper
+            }
+            val schedules = (schedulesUpper.documents + schedulesLower.documents)
+                .distinctBy { it.id }
 
-            Log.d(TAG, "Found ${schedules.size()} schedules for section $section")
+            Log.d(TAG, "Found ${schedules.size} schedules for section $sectionRaw")
 
             var scheduledCount = 0
-            for (doc in schedules.documents) {
+            for (doc in schedules) {
                 val day = doc.getString("day") ?: continue
                 val startTime = doc.getString("startTime") ?: continue
                 val subject = doc.getString("subject") ?: "Class"

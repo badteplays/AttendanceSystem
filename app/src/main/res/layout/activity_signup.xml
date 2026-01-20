@@ -2,6 +2,7 @@
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/scrollView"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background"
@@ -11,9 +12,11 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="24dp">
+        android:padding="24dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:focusableInTouchMode="true">
 
-        <!-- Back Button -->
         <ImageView
             android:id="@+id/btnBack"
             android:layout_width="40dp"
@@ -21,12 +24,12 @@
             android:padding="8dp"
             android:src="@drawable/ic_arrow_back"
             android:background="@drawable/icon_container"
+            android:contentDescription="Go back"
             app:tint="@color/text_secondary"
             android:clickable="true"
             android:focusable="true"
             android:layout_marginBottom="24dp" />
 
-        <!-- Title -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -44,8 +47,8 @@
             android:textColor="@color/text_secondary"
             android:layout_marginBottom="32dp" />
 
-        <!-- Full Name -->
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/textInputName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="14dp"
@@ -53,19 +56,25 @@
             app:boxBackgroundColor="@color/surface_variant"
             app:startIconDrawable="@drawable/ic_person"
             app:startIconTint="@color/text_hint"
+            app:errorEnabled="true"
+            app:helperText="Enter your full name"
+            app:helperTextTextColor="@color/text_hint"
             android:hint="Full Name">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/editName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textPersonName"
+                android:inputType="textPersonName|textCapWords"
+                android:imeOptions="actionNext"
+                android:maxLines="1"
                 android:textSize="16sp"
-                android:textColor="@color/text_primary" />
+                android:textColor="@color/text_primary"
+                android:autofillHints="name" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Email -->
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/textInputEmail"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="14dp"
@@ -73,6 +82,7 @@
             app:boxBackgroundColor="@color/surface_variant"
             app:startIconDrawable="@drawable/ic_email"
             app:startIconTint="@color/text_hint"
+            app:errorEnabled="true"
             android:hint="Email">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -80,11 +90,13 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textEmailAddress"
+                android:imeOptions="actionNext"
+                android:maxLines="1"
                 android:textSize="16sp"
-                android:textColor="@color/text_primary" />
+                android:textColor="@color/text_primary"
+                android:autofillHints="emailAddress" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Section -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/textInputSection"
             android:layout_width="match_parent"
@@ -94,18 +106,22 @@
             app:boxBackgroundColor="@color/surface_variant"
             app:startIconDrawable="@drawable/ic_class"
             app:startIconTint="@color/text_hint"
-            android:hint="Section (e.g., BSIT-3A)">
+            app:errorEnabled="true"
+            app:helperText="Example: BSIT-3A, BSCS-2B"
+            app:helperTextTextColor="@color/text_hint"
+            android:hint="Section">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/editSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textCapCharacters"
+                android:imeOptions="actionNext"
+                android:maxLines="1"
                 android:textSize="16sp"
                 android:textColor="@color/text_primary" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Department (hidden for students) -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/textInputDepartment"
             android:layout_width="match_parent"
@@ -116,19 +132,24 @@
             app:boxBackgroundColor="@color/surface_variant"
             app:startIconDrawable="@drawable/ic_work"
             app:startIconTint="@color/text_hint"
+            app:errorEnabled="true"
+            app:helperText="Example: Computer Science, Mathematics"
+            app:helperTextTextColor="@color/text_hint"
             android:hint="Department">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/editDepartment"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="text"
+                android:inputType="textCapWords"
+                android:imeOptions="actionNext"
+                android:maxLines="1"
                 android:textSize="16sp"
                 android:textColor="@color/text_primary" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Password -->
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/textInputPassword"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="14dp"
@@ -138,6 +159,9 @@
             app:passwordToggleTint="@color/text_hint"
             app:startIconDrawable="@drawable/ic_lock"
             app:startIconTint="@color/text_hint"
+            app:errorEnabled="true"
+            app:helperText="Minimum 6 characters"
+            app:helperTextTextColor="@color/text_hint"
             android:hint="Password">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -145,12 +169,15 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textPassword"
+                android:imeOptions="actionNext"
+                android:maxLines="1"
                 android:textSize="16sp"
-                android:textColor="@color/text_primary" />
+                android:textColor="@color/text_primary"
+                android:autofillHints="password" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Confirm Password -->
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/textInputConfirmPassword"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="20dp"
@@ -160,6 +187,7 @@
             app:passwordToggleTint="@color/text_hint"
             app:startIconDrawable="@drawable/ic_lock"
             app:startIconTint="@color/text_hint"
+            app:errorEnabled="true"
             android:hint="Confirm Password">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -167,11 +195,13 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textPassword"
+                android:imeOptions="actionDone"
+                android:maxLines="1"
                 android:textSize="16sp"
-                android:textColor="@color/text_primary" />
+                android:textColor="@color/text_primary"
+                android:autofillHints="password" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Role Selection -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -181,6 +211,7 @@
             android:layout_marginBottom="10dp" />
 
         <RadioGroup
+            android:id="@+id/radioGroup1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -209,7 +240,6 @@
 
         </RadioGroup>
 
-        <!-- Signup Button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSignup"
             android:layout_width="match_parent"
@@ -218,16 +248,18 @@
             android:textSize="16sp"
             android:textStyle="bold"
             android:textAllCaps="false"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
             app:cornerRadius="12dp"
             app:backgroundTint="@color/primary"
             android:layout_marginBottom="20dp" />
 
-        <!-- Login Link -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:layout_marginBottom="24dp">
 
             <TextView
                 android:layout_width="wrap_content"

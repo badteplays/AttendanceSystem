@@ -5,24 +5,40 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import com.google.android.material.navigation.NavigationView
-import android.widget.ImageView
 import android.content.Context
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
+import android.view.View
 import android.widget.Toast
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.attendancesystem.notifications.LocalNotificationManager
+<<<<<<< HEAD
+import com.example.attendancesystem.utils.ProfilePictureManager
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
+=======
+>>>>>>> origin/master
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class StudentMainActivity : AppCompatActivity() {
 
+<<<<<<< HEAD
+    private var drawerLayout: DrawerLayout? = null
+    private var navigationView: NavigationView? = null
+    private var notificationManager: LocalNotificationManager? = null
+    private var headerListener: ListenerRegistration? = null
+=======
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var navigationView: NavigationView
     private lateinit var notificationManager: LocalNotificationManager
+>>>>>>> origin/master
 
     companion object {
         private const val PERMISSION_REQUEST_CODE = 101
@@ -32,10 +48,19 @@ class StudentMainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_student_main)
 
+<<<<<<< HEAD
+        try {
+        notificationManager = LocalNotificationManager.getInstance(this)
+=======
         notificationManager = LocalNotificationManager.getInstance(this)
         
+>>>>>>> origin/master
         setupDrawerNavigation()
         requestNecessaryPermissions()
+        bindNavHeader()
+        } catch (e: Exception) {
+            android.util.Log.e("StudentMainActivity", "Error in onCreate: ${e.message}", e)
+        }
 
         if (savedInstanceState == null) {
             val fragmentToLoad = when (intent.getStringExtra("fragment")) {
@@ -48,55 +73,66 @@ class StudentMainActivity : AppCompatActivity() {
             loadFragment(fragmentToLoad)
         }
         
+<<<<<<< HEAD
+=======
         // Schedule notifications when student opens the app
+>>>>>>> origin/master
         scheduleClassNotifications()
     }
 
     private fun setupDrawerNavigation() {
         drawerLayout = findViewById(R.id.drawerLayout)
-        navigationView = findViewById<NavigationView>(R.id.navigationView)
-        val drawerHandle = findViewById<ImageView>(R.id.drawerHandle)
+        navigationView = findViewById(R.id.navigationView)
+        val drawerHandle = findViewById<View>(R.id.drawerHandle)
 
-        drawerHandle.setOnClickListener {
-            if (drawerLayout.isDrawerOpen(navigationView)) {
-                drawerLayout.closeDrawer(navigationView)
+        drawerHandle?.setOnClickListener {
+            val nav = navigationView ?: return@setOnClickListener
+            val drawer = drawerLayout ?: return@setOnClickListener
+            if (drawer.isDrawerOpen(nav)) {
+                drawer.closeDrawer(nav)
             } else {
-                drawerLayout.openDrawer(navigationView)
+                drawer.openDrawer(nav)
             }
         }
 
-        navigationView.setNavigationItemSelectedListener { menuItem ->
+        navigationView?.setNavigationItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
-                R.id.drawer_home -> {
-                    loadFragment(StudentDashboardFragment())
-                    true
-                }
-                R.id.drawer_scan -> {
-                    loadFragment(QRScannerFragment())
-                    true
-                }
-                R.id.drawer_schedule -> {
-                    android.util.Log.d("StudentMainActivity", "Loading schedule fragment")
-                    loadFragment(StudentScheduleFragment())
-                    true
-                }
-                R.id.drawer_routines -> {
-                    loadFragment(StudentRoutinesFragment())
-                    true
-                }
-                R.id.drawer_history -> {
-                    loadFragment(StudentAttendanceHistoryFragment())
-                    true
-                }
-                R.id.drawer_profile -> {
-                    loadFragment(StudentOptionsFragment())
-                    true
-                }
+                R.id.drawer_home -> { loadFragment(StudentDashboardFragment()); true }
+                R.id.drawer_scan -> { loadFragment(QRScannerFragment()); true }
+                R.id.drawer_schedule -> { loadFragment(StudentScheduleFragment()); true }
+                R.id.drawer_routines -> { loadFragment(StudentRoutinesFragment()); true }
+                R.id.drawer_history -> { loadFragment(StudentAttendanceHistoryFragment()); true }
+                R.id.drawer_profile -> { loadFragment(StudentOptionsFragment()); true }
                 else -> false
-            }.also {
-                if (it) drawerLayout.closeDrawer(navigationView)
-            }
+            }.also { if (it) drawerLayout?.closeDrawer(navigationView!!) }
         }
+    }
+
+    private fun bindNavHeader() {
+        val nav = navigationView ?: return
+        val headerView = nav.getHeaderView(0) ?: return
+        val title = headerView.findViewById<TextView>(R.id.navHeaderTitle) ?: return
+        val subtitle = headerView.findViewById<TextView>(R.id.navHeaderSubtitle) ?: return
+        val profilePic = headerView.findViewById<ImageView>(R.id.navHeaderProfilePic)
+        val initials = headerView.findViewById<TextView>(R.id.navHeaderInitials)
+
+        val user = FirebaseAuth.getInstance().currentUser ?: return
+        subtitle.text = user.email ?: ""
+
+        headerListener?.remove()
+        headerListener = FirebaseFirestore.getInstance()
+            .collection("users")
+            .document(user.uid)
+            .addSnapshotListener { snapshot, _ ->
+                if (snapshot == null || !snapshot.exists()) return@addSnapshotListener
+                val name = snapshot.getString("name") ?: "Student"
+                val section = snapshot.getString("section") ?: ""
+                title.text = name
+                subtitle.text = if (section.isNotBlank()) "Section ${section.uppercase()}" else (user.email ?: "")
+                if (profilePic != null && initials != null) {
+                    ProfilePictureManager.getInstance().loadProfilePicture(this, profilePic, initials, name, "ST")
+                }
+            }
     }
 
     private fun loadFragment(fragment: Fragment) {
@@ -106,7 +142,6 @@ class StudentMainActivity : AppCompatActivity() {
                 .commit()
         } catch (e: Exception) {
             android.util.Log.e("StudentMainActivity", "Error loading fragment: ${e.message}", e)
-
             if (fragment !is StudentDashboardFragment) {
                 loadFragment(StudentDashboardFragment())
             }
@@ -114,14 +149,15 @@ class StudentMainActivity : AppCompatActivity() {
     }
 
     fun navigateToDashboard() {
-        navigationView.setCheckedItem(R.id.drawer_home)
+        navigationView?.setCheckedItem(R.id.drawer_home)
         loadFragment(StudentDashboardFragment())
     }
 
     override fun onBackPressed() {
-        val navigationView = findViewById<NavigationView>(R.id.navigationView)
-        if (drawerLayout.isDrawerOpen(navigationView)) {
-            drawerLayout.closeDrawer(navigationView)
+        val nav = navigationView
+        val drawer = drawerLayout
+        if (nav != null && drawer != null && drawer.isDrawerOpen(nav)) {
+            drawer.closeDrawer(nav)
         } else {
             super.onBackPressed()
         }
@@ -190,6 +226,23 @@ class StudentMainActivity : AppCompatActivity() {
             }
         }
     }
+<<<<<<< HEAD
+
+    override fun onDestroy() {
+        headerListener?.remove()
+        headerListener = null
+        super.onDestroy()
+    }
+    
+    private fun scheduleClassNotifications() {
+        val prefs = getSharedPreferences("student_prefs", Context.MODE_PRIVATE)
+        if (!prefs.getBoolean("notifications_enabled", true)) return
+        
+        val mgr = notificationManager ?: return
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                mgr.scheduleAllClassNotifications()
+=======
     
     private fun scheduleClassNotifications() {
         val prefs = getSharedPreferences("student_prefs", Context.MODE_PRIVATE)
@@ -202,6 +255,7 @@ class StudentMainActivity : AppCompatActivity() {
             try {
                 notificationManager.scheduleAllClassNotifications()
                 android.util.Log.d("StudentMainActivity", "Class notifications scheduled")
+>>>>>>> origin/master
             } catch (e: Exception) {
                 android.util.Log.e("StudentMainActivity", "Error scheduling notifications: ${e.message}", e)
             }

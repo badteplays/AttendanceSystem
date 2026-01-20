@@ -2,24 +2,27 @@
 <ScrollView 
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/scrollView"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background"
-    android:fillViewport="true">
+    android:fillViewport="true"
+    android:isScrollContainer="false">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="24dp">
+        android:padding="24dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:focusableInTouchMode="true">
 
-        <!-- Top Spacer -->
         <View
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1" />
 
-        <!-- Logo -->
         <FrameLayout
             android:layout_width="72dp"
             android:layout_height="72dp"
@@ -36,10 +39,10 @@
                 android:layout_height="36dp"
                 android:layout_gravity="center"
                 android:src="@drawable/ic_qr_code"
+                android:contentDescription="App Logo"
                 app:tint="@color/white" />
         </FrameLayout>
 
-        <!-- Title -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -59,7 +62,6 @@
             android:gravity="center"
             android:layout_marginBottom="40dp" />
 
-        <!-- Email Input -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/textInputEmail"
             android:layout_width="match_parent"
@@ -69,6 +71,7 @@
             app:boxBackgroundColor="@color/surface_variant"
             app:startIconDrawable="@drawable/ic_email"
             app:startIconTint="@color/text_hint"
+            app:errorEnabled="true"
             android:hint="Email">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -76,11 +79,13 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textEmailAddress"
+                android:imeOptions="actionNext"
+                android:maxLines="1"
                 android:textSize="16sp"
-                android:textColor="@color/text_primary" />
+                android:textColor="@color/text_primary"
+                android:autofillHints="emailAddress" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Hidden Name Input -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/textInputName"
             android:layout_width="match_parent"
@@ -97,13 +102,16 @@
                 android:id="@+id/editName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textPersonName"
+                android:inputType="textPersonName|textCapWords"
+                android:imeOptions="actionNext"
+                android:maxLines="1"
                 android:textSize="16sp"
-                android:textColor="@color/text_primary" />
+                android:textColor="@color/text_primary"
+                android:autofillHints="name" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Password Input -->
         <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/textInputPassword"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="24dp"
@@ -113,6 +121,8 @@
             app:passwordToggleTint="@color/text_hint"
             app:startIconDrawable="@drawable/ic_lock"
             app:startIconTint="@color/text_hint"
+            app:errorEnabled="true"
+            app:counterEnabled="false"
             android:hint="Password">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -120,11 +130,13 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textPassword"
+                android:imeOptions="actionDone"
+                android:maxLines="1"
                 android:textSize="16sp"
-                android:textColor="@color/text_primary" />
+                android:textColor="@color/text_primary"
+                android:autofillHints="password" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Role Selection -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -134,6 +146,7 @@
             android:layout_marginBottom="12dp" />
 
         <RadioGroup
+            android:id="@+id/roleRadioGroup"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -162,7 +175,6 @@
 
         </RadioGroup>
 
-        <!-- Login Button -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnLogin"
             android:layout_width="match_parent"
@@ -171,11 +183,12 @@
             android:textSize="16sp"
             android:textStyle="bold"
             android:textAllCaps="false"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
             app:cornerRadius="12dp"
             app:backgroundTint="@color/primary"
             android:layout_marginBottom="24dp" />
 
-        <!-- Sign Up Link -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -203,7 +216,6 @@
 
         </LinearLayout>
 
-        <!-- Bottom Spacer -->
         <View
             android:layout_width="match_parent"
             android:layout_height="0dp"

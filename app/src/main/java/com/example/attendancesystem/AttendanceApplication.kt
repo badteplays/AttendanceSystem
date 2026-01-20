@@ -60,4 +60,8 @@ class AttendanceApplication : Application() {
     }
 }
 
+<<<<<<< HEAD
+
+=======
 }
+>>>>>>> origin/master

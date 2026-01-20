@@ -85,8 +85,10 @@
         <item name="android:textColor">@color/on_primary</item>
         <item name="backgroundTint">@color/primary</item>
         <item name="cornerRadius">16dp</item>
-        <item name="android:paddingTop">16dp</item>
-        <item name="android:paddingBottom">16dp</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="android:paddingTop">0dp</item>
+        <item name="android:paddingBottom">0dp</item>
         <item name="android:paddingStart">28dp</item>
         <item name="android:paddingEnd">28dp</item>
         <item name="android:textSize">15sp</item>
@@ -188,8 +190,7 @@
         <item name="boxCornerRadiusTopEnd">16dp</item>
         <item name="boxCornerRadiusBottomStart">16dp</item>
         <item name="boxCornerRadiusBottomEnd">16dp</item>
-        <item name="boxStrokeColor">@color/input_stroke_focused</item>
-        <item name="boxStrokeColorStateList">@color/input_stroke_selector</item>
+        <item name="boxStrokeColor">@color/input_stroke_selector</item>
         <item name="hintTextColor">@color/primary</item>
         <item name="boxStrokeWidth">1dp</item>
         <item name="boxStrokeWidthFocused">2dp</item>
@@ -341,5 +342,11 @@
         <item name="android:textSize">12sp</item>
         <item name="android:textStyle">bold</item>
         <item name="chipStrokeWidth">1dp</item>
+    </style>
+    
+    <style name="NavDrawerTextAppearance" parent="TextAppearance.MaterialComponents.Body1">
+        <item name="android:textSize">14sp</item>
+        <item name="android:fontWeight" tools:targetApi="o">500</item>
+        <item name="android:letterSpacing">0.02</item>
     </style>
 </resources>

@@ -25,33 +25,43 @@
             android:layout_width="300dp"
             android:layout_height="match_parent"
             android:layout_gravity="end"
-            android:background="@color/surface"
+            android:background="@drawable/nav_drawer_background"
+            android:elevation="8dp"
+            app:itemIconSize="22dp"
+            app:itemIconPadding="16dp"
+            app:itemHorizontalPadding="20dp"
+            app:itemVerticalPadding="12dp"
+            app:itemShapeInsetStart="12dp"
+            app:itemShapeInsetEnd="12dp"
+            app:itemShapeInsetTop="4dp"
+            app:itemShapeInsetBottom="4dp"
             app:itemIconTint="@color/nav_drawer_item_color"
             app:itemTextColor="@color/nav_drawer_item_color"
             app:itemBackground="@drawable/nav_item_background"
+            app:itemTextAppearance="@style/NavDrawerTextAppearance"
             app:headerLayout="@layout/nav_header_student"
             app:menu="@menu/menu_student_drawer" />
 
     </androidx.drawerlayout.widget.DrawerLayout>
 
-    <!-- Floating Menu Button - Premium Style -->
     <FrameLayout
         android:id="@+id/drawerHandle"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:layout_margin="16dp"
-        android:background="@drawable/card_glass_border"
+        android:background="@drawable/nav_handle_button"
         android:clickable="true"
         android:focusable="true"
+        android:elevation="4dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
         <ImageView
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
             android:layout_gravity="center"
             android:src="@drawable/ic_menu_drawer"
-            app:tint="@color/text_secondary"
+            app:tint="@color/text_primary"
             android:contentDescription="Open navigation" />
 
     </FrameLayout>

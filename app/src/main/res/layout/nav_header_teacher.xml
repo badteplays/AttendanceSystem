@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="@drawable/nav_header_gradient"
+    android:background="@drawable/nav_header_gradient_teacher"
     android:paddingHorizontal="24dp"
     android:paddingTop="40dp"
     android:paddingBottom="24dp">
@@ -17,13 +17,13 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@drawable/nav_avatar_ring" />
+            android:background="@drawable/nav_avatar_ring_teacher" />
 
         <View
             android:layout_width="60dp"
             android:layout_height="60dp"
             android:layout_gravity="center"
-            android:background="@drawable/nav_avatar_inner" />
+            android:background="@drawable/nav_avatar_inner_teacher" />
 
         <ImageView
             android:id="@+id/navHeaderProfilePic"
@@ -41,7 +41,7 @@
             android:layout_height="48dp"
             android:layout_gravity="center"
             android:gravity="center"
-            android:text="ST"
+            android:text="TC"
             android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="@color/white" />
@@ -60,7 +60,7 @@
         android:id="@+id/navHeaderTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Student Portal"
+        android:text="Teacher Portal"
         android:textSize="22sp"
         android:textStyle="bold"
         android:textColor="@color/white"
@@ -80,6 +80,6 @@
         android:layout_width="48dp"
         android:layout_height="3dp"
         android:layout_marginTop="16dp"
-        android:background="@drawable/nav_accent_bar" />
+        android:background="@drawable/nav_accent_bar_teacher" />
 
 </LinearLayout>

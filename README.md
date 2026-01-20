@@ -181,11 +181,21 @@ dart run flutter_launcher_icons
 
 ## 🔐 User Roles
 
+<<<<<<< HEAD
+- **Real-time Updates**: Live attendance synchronization using Firestore listeners
+- **Material Design**: Modern and intuitive user interface
+- **Dark Mode**: System-wide theme support
+- **Security**: Session-based QR codes with expiration and duplicate prevention
+- **Scalability**: Designed to handle multiple classes and sections simultaneously
+- **Performance**: Optimized queries and efficient data handling
+- **Cross-Platform**: Web PWA available for iOS users to scan QR codes
+=======
 ### Student
 - Mark attendance by scanning QR codes
 - View personal schedule and attendance history
 - Track attendance statistics
 - Receive class reminders
+>>>>>>> origin/master
 
 ### Teacher
 - Generate QR codes for attendance

@@ -55,7 +55,13 @@ class StudentReminderWorker(
         return try {
             val db = FirebaseFirestore.getInstance()
             val userDoc = db.collection("users").document(studentId).get().await()
+<<<<<<< HEAD
+            val sectionRaw = userDoc.getString("section") ?: return null
+            val sectionUpper = sectionRaw.uppercase()
+            val sectionLower = sectionRaw.lowercase()
+=======
             val section = userDoc.getString("section")?.uppercase() ?: return null
+>>>>>>> origin/master
 
             val day = Calendar.getInstance().getDisplayName(
                 Calendar.DAY_OF_WEEK,
@@ -63,15 +69,32 @@ class StudentReminderWorker(
                 Locale.getDefault()
             ) ?: return null
 
+<<<<<<< HEAD
+            val schedulesUpper = db.collection("schedules")
+=======
             val schedules = db.collection("schedules")
+>>>>>>> origin/master
                 .whereEqualTo("day", day)
-                .whereEqualTo("section", section)
+                .whereEqualTo("section", sectionUpper)
                 .get().await()
+<<<<<<< HEAD
+            val schedulesLower = if (sectionLower != sectionUpper) {
+                db.collection("schedules")
+                    .whereEqualTo("day", day)
+                    .whereEqualTo("section", sectionLower)
+                    .get().await()
+            } else {
+                schedulesUpper
+            }
+            val schedules = (schedulesUpper.documents + schedulesLower.documents)
+                .distinctBy { it.id }
+=======
+>>>>>>> origin/master
 
             val now = Calendar.getInstance()
             val currentTimeInMinutes = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
 
-            for (doc in schedules.documents) {
+            for (doc in schedules) {
                 val startTime = doc.getString("startTime") ?: continue
                 val subject = doc.getString("subject") ?: "Class"
                 
