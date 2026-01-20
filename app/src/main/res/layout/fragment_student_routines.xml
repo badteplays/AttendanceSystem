@@ -62,7 +62,7 @@
             android:layout_width="80dp"
             android:layout_height="80dp"
             android:src="@drawable/ic_schedule"
-            android:tint="@color/text_secondary"
+            app:tint="@color/text_secondary"
             android:alpha="0.5" />
 
         <TextView

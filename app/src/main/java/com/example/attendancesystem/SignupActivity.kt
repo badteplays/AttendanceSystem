@@ -14,6 +14,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.ExistingPeriodicWorkPolicy
 import java.util.concurrent.TimeUnit
 import android.content.Context
+import com.example.attendancesystem.security.SecurityUtils
 
 class SignupActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySignupBinding
@@ -55,43 +56,69 @@ class SignupActivity : AppCompatActivity() {
             val email = binding.editEmail.text.toString().trim()
             val name = binding.editName.text.toString().trim()
             val section = binding.editSection.text.toString().trim()
-            val department = findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.editDepartment).text.toString().trim()
+            val department = binding.editDepartment.text.toString().trim()
             val password = binding.editPassword.text.toString().trim()
+            val confirmPassword = binding.editConfirmPassword.text.toString().trim()
             val selectedRole = if (findViewById<android.widget.RadioButton>(R.id.teacherRadio).isChecked) "teacher" else "student"
 
-            if (email.isEmpty() || name.isEmpty() || password.isEmpty()) {
-                Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show()
+            // Input validation with security checks
+            if (!SecurityUtils.isValidEmail(email)) {
+                Toast.makeText(this, "Please enter a valid email address", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            if (selectedRole == "student" && section.isEmpty()) {
-                Toast.makeText(this, "Please enter your section", Toast.LENGTH_SHORT).show()
+            if (!SecurityUtils.isValidName(name)) {
+                Toast.makeText(this, "Please enter a valid name (letters only)", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            if (!SecurityUtils.isValidPassword(password)) {
+                Toast.makeText(this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            if (password != confirmPassword) {
+                Toast.makeText(this, "Passwords do not match", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            if (selectedRole == "student" && !SecurityUtils.isValidSection(section)) {
+                Toast.makeText(this, "Please enter a valid section (e.g., BSIT-3A)", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             if (selectedRole == "teacher" && department.isEmpty()) {
                 Toast.makeText(this, "Please enter your department/role", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
+            
+            // Sanitize inputs
+            val sanitizedEmail = SecurityUtils.sanitizeEmail(email)
+            val sanitizedName = SecurityUtils.sanitizeString(name)
+            val sanitizedSection = SecurityUtils.sanitizeSection(section)
 
             binding.btnSignup.isEnabled = false
             binding.btnSignup.text = "Creating Account..."
             
-            auth.createUserWithEmailAndPassword(email, password)
+            auth.createUserWithEmailAndPassword(sanitizedEmail, password)
                 .addOnSuccessListener { result ->
+                    val createdUser = result.user
+                    if (createdUser == null) {
+                        binding.btnSignup.isEnabled = true
+                        binding.btnSignup.text = "Sign Up"
+                        Toast.makeText(this, "Signup failed. Please try again.", Toast.LENGTH_LONG).show()
+                        return@addOnSuccessListener
+                    }
                     val user = hashMapOf(
-                        "email" to email,
-                        "name" to name,
+                        "email" to sanitizedEmail,
+                        "name" to sanitizedName,
                         "role" to selectedRole,
                         "isTeacher" to (selectedRole == "teacher"),
                         "isStudent" to (selectedRole == "student"),
                         "createdAt" to System.currentTimeMillis()
                     )
                     if (selectedRole == "student") {
-                        user["section"] = section.uppercase()
+                        user["section"] = sanitizedSection
                     } else if (selectedRole == "teacher") {
-                        user["department"] = department
+                        user["department"] = SecurityUtils.sanitizeString(department)
                     }
                     db.collection("users")
-                        .document(result.user!!.uid)
+                        .document(createdUser.uid)
                         .set(user)
                         .addOnSuccessListener {
                             Toast.makeText(this, "Account created successfully!", Toast.LENGTH_SHORT).show()
@@ -100,18 +127,25 @@ class SignupActivity : AppCompatActivity() {
                                 scheduleStudentReminders()
                             }
                             
-                            if (selectedRole == "teacher") {
-                                startActivity(Intent(this, TeacherMainActivity::class.java))
+                            getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
+                                .edit()
+                                .putBoolean("explicit_logout", false)
+                                .apply()
+                            
+                            val intent = if (selectedRole == "teacher") {
+                                Intent(this, TeacherMainActivity::class.java)
                             } else {
-                                startActivity(Intent(this, StudentMainActivity::class.java))
+                                Intent(this, StudentMainActivity::class.java)
                             }
+                            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                            startActivity(intent)
                             finish()
                         }
                         .addOnFailureListener { e ->
                             binding.btnSignup.isEnabled = true
                             binding.btnSignup.text = "Sign Up"
                             Toast.makeText(this, "Failed to save user info: ${e.message}", Toast.LENGTH_LONG).show()
-                            result.user?.delete()
+                            createdUser.delete()
                         }
                 }
                 .addOnFailureListener { e ->

@@ -38,8 +38,8 @@ class TeacherDashboardFragment : Fragment() {
     private lateinit var textName: TextView
     private lateinit var textDepartment: TextView
     private lateinit var textQrExpiry: TextView
-    private lateinit var buttonShowQr: Button
-    private lateinit var buttonRenewQr: Button
+    private lateinit var buttonShowQr: View
+    private lateinit var buttonRenewQr: View
     private lateinit var buttonRefreshAttendance: Button
     private lateinit var buttonManualAdd: Button
     private lateinit var buttonAnalytics: Button

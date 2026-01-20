@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/noNetworkContainer"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="32dp">
+
+    <ImageView
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:src="@drawable/ic_wifi_off"
+        app:tint="@color/text_hint"
+        android:layout_marginBottom="16dp"
+        android:contentDescription="No network" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="No Internet Connection"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="@color/text_primary"
+        android:gravity="center"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Please check your connection and try again"
+        android:textSize="14sp"
+        android:textColor="@color/text_secondary"
+        android:gravity="center"
+        android:layout_marginBottom="20dp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnRetry"
+        android:layout_width="wrap_content"
+        android:layout_height="44dp"
+        android:text="Retry"
+        android:textSize="14sp"
+        android:textAllCaps="false"
+        app:cornerRadius="10dp"
+        app:backgroundTint="@color/primary" />
+
+</LinearLayout>

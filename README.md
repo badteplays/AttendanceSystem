@@ -351,12 +351,12 @@ The app automatically requests the following permissions:
 ## 🎨 Features Highlights
 
 - **Real-time Updates**: Live attendance synchronization using Firestore listeners
-- **Offline Support**: Basic functionality works offline with automatic sync
 - **Material Design**: Modern and intuitive user interface
 - **Dark Mode**: System-wide theme support
 - **Security**: Session-based QR codes with expiration and duplicate prevention
 - **Scalability**: Designed to handle multiple classes and sections simultaneously
 - **Performance**: Optimized queries and efficient data handling
+- **Cross-Platform**: Web PWA available for iOS users to scan QR codes
 
 ## 🐛 Bug Fixes & Improvements
 

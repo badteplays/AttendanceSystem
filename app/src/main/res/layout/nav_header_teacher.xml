@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/nav_header_gradient_teacher"
+    android:paddingHorizontal="24dp"
+    android:paddingTop="40dp"
+    android:paddingBottom="24dp">
+
+    <FrameLayout
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:layout_marginBottom="16dp">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/nav_avatar_ring_teacher" />
+
+        <View
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_gravity="center"
+            android:background="@drawable/nav_avatar_inner_teacher" />
+
+        <ImageView
+            android:id="@+id/navHeaderProfilePic"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
+            android:scaleType="centerCrop"
+            android:visibility="gone"
+            android:src="@drawable/ic_person"
+            app:tint="@color/white" />
+
+        <TextView
+            android:id="@+id/navHeaderInitials"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:text="TC"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/white" />
+
+        <View
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_gravity="bottom|end"
+            android:layout_marginEnd="2dp"
+            android:layout_marginBottom="2dp"
+            android:background="@drawable/nav_status_online" />
+
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/navHeaderTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Teacher Portal"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:textColor="@color/white"
+        android:letterSpacing="0.02"
+        android:layout_marginBottom="4dp" />
+
+    <TextView
+        android:id="@+id/navHeaderSubtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Attendance System"
+        android:textSize="13sp"
+        android:textColor="#B0FFFFFF"
+        android:letterSpacing="0.04" />
+
+    <View
+        android:layout_width="48dp"
+        android:layout_height="3dp"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/nav_accent_bar_teacher" />
+
+</LinearLayout>

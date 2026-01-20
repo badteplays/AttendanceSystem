@@ -21,6 +21,7 @@ import com.google.firebase.auth.FirebaseAuth
 
 class TeacherOptionsFragment : Fragment() {
     private val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
+    private var currentName: String = "Teacher"
 
     private val imagePickerLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -34,12 +35,14 @@ class TeacherOptionsFragment : Fragment() {
                     if (success) {
                         Toast.makeText(requireContext(), "Profile picture updated", Toast.LENGTH_SHORT).show()
 
-                        view?.findViewById<TextView>(R.id.textUserName)?.let { _ ->
+                        val imageView = view?.findViewById<ImageView>(R.id.imageProfilePic)
+                        val initialsView = view?.findViewById<TextView>(R.id.textInitials)
+                        if (imageView != null && initialsView != null) {
                             profileManager.loadProfilePicture(
                                 requireContext(),
-                                view?.findViewById(R.id.imageProfilePic) ?: return@let,
-                                view?.findViewById(R.id.textInitials) ?: return@let,
-                                auth.currentUser?.displayName ?: "Teacher",
+                                imageView,
+                                initialsView,
+                                currentName,
                                 "TC"
                             )
                         }
@@ -93,10 +96,10 @@ class TeacherOptionsFragment : Fragment() {
         }
 
         view.findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.fabChangePhoto)?.setOnClickListener {
-            val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-            intent.type = "image/*"
-            imagePickerLauncher.launch(intent)
+            openImagePicker()
         }
+        view.findViewById<ImageView>(R.id.imageProfilePic)?.setOnClickListener { openImagePicker() }
+        view.findViewById<TextView>(R.id.textInitials)?.setOnClickListener { openImagePicker() }
 
         val themeManager = ThemeManager.getInstance(requireContext())
         view.findViewById<TextView>(R.id.textCurrentTheme)?.text = themeManager.getThemeName(themeManager.getCurrentTheme())
@@ -114,14 +117,20 @@ class TeacherOptionsFragment : Fragment() {
                 .collection("users")
                 .document(currentUser.uid)
                 .addSnapshotListener { snapshot, _ ->
-                    val name = snapshot?.getString("name") ?: (currentUser.displayName ?: "Teacher")
-                    textName?.text = name
+                    currentName = snapshot?.getString("name") ?: (currentUser.displayName ?: "Teacher")
+                    textName?.text = currentName
                     try {
                         val profileManager = com.example.attendancesystem.utils.ProfilePictureManager.getInstance()
-                        profileManager.loadProfilePicture(requireContext(), imageProfile ?: return@addSnapshotListener, textInitials ?: return@addSnapshotListener, name, "TC")
+                        profileManager.loadProfilePicture(requireContext(), imageProfile ?: return@addSnapshotListener, textInitials ?: return@addSnapshotListener, currentName, "TC")
                     } catch (_: Exception) { }
                 }
         }
+    }
+
+    private fun openImagePicker() {
+        val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+        intent.type = "image/*"
+        imagePickerLauncher.launch(intent)
     }
 
     private fun showThemePicker() {

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Avatar circle with glow effect -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Outer glow -->
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="#2000D4FF" />
+        </shape>
+    </item>
+    <!-- Main circle -->
+    <item android:top="3dp" android:bottom="3dp" android:left="3dp" android:right="3dp">
+        <shape android:shape="oval">
+            <gradient
+                android:type="linear"
+                android:angle="135"
+                android:startColor="#00D4FF"
+                android:endColor="#A855F7" />
+        </shape>
+    </item>
+</layer-list>
+
+

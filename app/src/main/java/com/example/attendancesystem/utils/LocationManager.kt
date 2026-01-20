@@ -1,6 +1,7 @@
 package com.example.attendancesystem.utils
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
@@ -56,6 +57,7 @@ class LocationManager(private val context: Context) {
                locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
     }
 
+    @SuppressLint("MissingPermission")
     suspend fun getCurrentLocation(): LocationData {
         return suspendCancellableCoroutine { continuation ->
             if (!hasLocationPermission()) {
@@ -90,6 +92,7 @@ class LocationManager(private val context: Context) {
         }
     }
 
+    @SuppressLint("MissingPermission")
     private fun requestFreshLocation(continuation: kotlinx.coroutines.CancellableContinuation<LocationData>) {
         val locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {

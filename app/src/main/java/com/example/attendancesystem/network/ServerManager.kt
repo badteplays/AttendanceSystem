@@ -15,7 +15,6 @@ import com.google.firebase.Timestamp
 class ServerManager private constructor(private val context: Context) {
     private val db = FirebaseFirestore.getInstance()
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-    private val networkManager = NetworkManager(context)
 
     companion object {
         @Volatile
