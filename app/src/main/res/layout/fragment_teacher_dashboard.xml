@@ -9,7 +9,7 @@
     <ScrollView
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:padding="16dp"
+        android:clipToPadding="false"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -18,70 +18,79 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:padding="20dp">
 
-            <!-- Profile Card -->
-            <com.google.android.material.card.MaterialCardView
+            <!-- Header Row -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="4dp"
-                app:cardBackgroundColor="@color/card_background">
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="24dp">
+
+                <FrameLayout
+                    android:layout_width="52dp"
+                    android:layout_height="52dp">
+
+                    <ImageView
+                        android:id="@+id/imageProfilePic"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerCrop"
+                        android:visibility="gone" />
+
+                    <TextView
+                        android:id="@+id/textInitials"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/circle_avatar_clean"
+                        android:gravity="center"
+                        android:text="TC"
+                        android:textColor="@color/white"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                </FrameLayout>
 
                 <LinearLayout
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="24dp"
-                    android:gravity="center_horizontal">
+                    android:layout_weight="1"
+                    android:layout_marginStart="14dp"
+                    android:orientation="vertical">
 
-                    <FrameLayout
-                        android:layout_width="80dp"
-                        android:layout_height="80dp"
-                        android:layout_marginBottom="16dp">
-
-                        <ImageView
-                            android:id="@+id/imageProfilePic"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:scaleType="centerCrop"
-                            android:visibility="gone" />
-
-                        <TextView
-                            android:id="@+id/textInitials"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:background="@drawable/circle_bg"
-                            android:gravity="center"
-                            android:text="TC"
-                            android:textColor="@color/white"
-                            android:textSize="24sp"
-                            android:textStyle="bold" />
-
-                    </FrameLayout>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Welcome back"
+                        android:textSize="13sp"
+                        android:textColor="@color/text_secondary" />
 
                     <TextView
                         android:id="@+id/textName"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Teacher Name"
-                        android:textSize="20sp"
+                        android:textSize="18sp"
                         android:textStyle="bold"
-                        android:textColor="@color/text_primary"
-                        android:layout_marginBottom="8dp" />
-
-                    <TextView
-                        android:id="@+id/textDepartment"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Department"
-                        android:textSize="14sp"
-                        android:textColor="@color/text_secondary" />
+                        android:textColor="@color/text_primary" />
 
                 </LinearLayout>
 
-            </com.google.android.material.card.MaterialCardView>
+                <TextView
+                    android:id="@+id/textDepartment"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Dept"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/secondary"
+                    android:background="@drawable/chip_secondary"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp" />
+
+            </LinearLayout>
 
             <!-- QR Code Card -->
             <com.google.android.material.card.MaterialCardView
@@ -89,7 +98,9 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="4dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="@color/card_border"
                 app:cardBackgroundColor="@color/card_background">
 
                 <LinearLayout
@@ -101,43 +112,85 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="QR Code Status"
-                        android:textSize="16sp"
+                        android:text="QR Code"
+                        android:textSize="15sp"
                         android:textStyle="bold"
                         android:textColor="@color/text_primary"
-                        android:layout_marginBottom="12dp" />
+                        android:layout_marginBottom="4dp" />
 
                     <TextView
                         android:id="@+id/textQrExpiry"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="No active QR code"
-                        android:textSize="14sp"
+                        android:textSize="13sp"
                         android:textColor="@color/text_secondary"
-                        android:layout_marginBottom="12dp" />
+                        android:layout_marginBottom="16dp" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
 
-                        <Button
+                        <LinearLayout
                             android:id="@+id/buttonShowQr"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:layout_marginEnd="8dp"
-                            android:text="Show QR"
-                            android:textAllCaps="false" />
+                            android:layout_marginEnd="6dp"
+                            android:orientation="horizontal"
+                            android:gravity="center"
+                            android:background="@drawable/button_primary_clean"
+                            android:padding="14dp"
+                            android:clickable="true"
+                            android:focusable="true">
 
-                        <Button
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:src="@drawable/ic_qr_code"
+                                app:tint="@color/white"
+                                android:layout_marginEnd="8dp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Show QR"
+                                android:textColor="@color/white"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+
+                        </LinearLayout>
+
+                        <LinearLayout
                             android:id="@+id/buttonRenewQr"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:layout_marginStart="8dp"
-                            android:text="Renew QR"
-                            android:textAllCaps="false" />
+                            android:layout_marginStart="6dp"
+                            android:orientation="horizontal"
+                            android:gravity="center"
+                            android:background="@drawable/button_secondary_clean"
+                            android:padding="14dp"
+                            android:clickable="true"
+                            android:focusable="true">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:src="@drawable/ic_refresh"
+                                app:tint="@color/text_primary"
+                                android:layout_marginEnd="8dp" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Renew"
+                                android:textColor="@color/text_primary"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+
+                        </LinearLayout>
 
                     </LinearLayout>
 
@@ -145,12 +198,15 @@
 
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Recent Attendance Card -->
+            <!-- Attendance Card -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="100dp"
                 app:cardCornerRadius="16dp"
-                app:cardElevation="4dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="1dp"
+                app:strokeColor="@color/card_border"
                 app:cardBackgroundColor="@color/card_background">
 
                 <LinearLayout
@@ -170,8 +226,8 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Recent Attendance"
-                            android:textSize="16sp"
+                            android:text="Live Attendance"
+                            android:textSize="15sp"
                             android:textStyle="bold"
                             android:textColor="@color/text_primary" />
 
@@ -180,59 +236,101 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="0 students"
-                            android:textSize="14sp"
-                            android:textColor="@color/text_secondary" />
+                            android:textSize="12sp"
+                            android:textColor="@color/success"
+                            android:background="@drawable/status_chip_present"
+                            android:paddingHorizontal="10dp"
+                            android:paddingVertical="4dp" />
 
                     </LinearLayout>
 
+                    <!-- Action Buttons -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:layout_marginBottom="12dp">
 
-                        <Button
+                        <com.google.android.material.button.MaterialButton
                             android:id="@+id/buttonRefreshAttendance"
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="44dp"
                             android:layout_weight="1"
                             android:layout_marginEnd="4dp"
                             android:text="Refresh"
                             android:textAllCaps="false"
-                            style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+                            android:textSize="12sp"
+                            android:textColor="@color/text_secondary"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            app:cornerRadius="10dp"
+                            app:strokeColor="@color/outline"
+                            app:strokeWidth="1dp"
+                            app:backgroundTint="@color/surface_variant"
+                            app:icon="@drawable/ic_refresh"
+                            app:iconSize="16dp"
+                            app:iconTint="@color/text_secondary"
+                            app:iconPadding="4dp" />
 
-                        <Button
+                        <com.google.android.material.button.MaterialButton
                             android:id="@+id/buttonManualAdd"
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="44dp"
                             android:layout_weight="1"
-                            android:layout_marginStart="4dp"
-                            android:layout_marginEnd="4dp"
-                            android:text="Manual Add"
+                            android:layout_marginHorizontal="4dp"
+                            android:text="Manual"
                             android:textAllCaps="false"
-                            style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+                            android:textSize="12sp"
+                            android:textColor="@color/text_secondary"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            app:cornerRadius="10dp"
+                            app:strokeColor="@color/outline"
+                            app:strokeWidth="1dp"
+                            app:backgroundTint="@color/surface_variant"
+                            app:icon="@drawable/ic_add"
+                            app:iconSize="16dp"
+                            app:iconTint="@color/text_secondary"
+                            app:iconPadding="4dp" />
 
-                        <Button
+                        <com.google.android.material.button.MaterialButton
                             android:id="@+id/buttonAnalytics"
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="44dp"
                             android:layout_weight="1"
                             android:layout_marginStart="4dp"
-                            android:text="Analytics"
+                            android:text="Stats"
                             android:textAllCaps="false"
-                            style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+                            android:textSize="12sp"
+                            android:textColor="@color/text_secondary"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            app:cornerRadius="10dp"
+                            app:strokeColor="@color/outline"
+                            app:strokeWidth="1dp"
+                            app:backgroundTint="@color/surface_variant"
+                            app:icon="@drawable/ic_analytics"
+                            app:iconSize="16dp"
+                            app:iconTint="@color/text_secondary"
+                            app:iconPadding="4dp" />
 
                     </LinearLayout>
 
-                    <Button
+                    <!-- End Class -->
+                    <com.google.android.material.button.MaterialButton
                         android:id="@+id/buttonEndClass"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="48dp"
                         android:text="End Class"
                         android:textAllCaps="false"
+                        android:textStyle="bold"
+                        android:textColor="@color/white"
                         android:layout_marginBottom="12dp"
-                        app:backgroundTint="@color/error" />
+                        app:cornerRadius="10dp"
+                        app:backgroundTint="@color/error"
+                        app:icon="@drawable/ic_stop"
+                        app:iconGravity="textStart"
+                        app:iconTint="@color/white"
+                        app:iconPadding="8dp" />
 
+                    <!-- Attendance List -->
                     <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/attendanceRecyclerView"
                         android:layout_width="match_parent"

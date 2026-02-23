@@ -1,3 +1,52 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Dark theme overrides - inherits from light theme but overrides colors -->
+    <!-- Dark theme overrides -->
+    <style name="Base.Theme.AttendanceSystem" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Primary brand color - Luminous Indigo -->
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryVariant">@color/primary_dark</item>
+        <item name="colorOnPrimary">@color/on_primary</item>
+        
+        <!-- Secondary brand color - Glowing Cyan -->
+        <item name="colorSecondary">@color/secondary</item>
+        <item name="colorSecondaryVariant">@color/secondary_dark</item>
+        <item name="colorOnSecondary">@color/on_secondary</item>
+        
+        <!-- Tertiary -->
+        <item name="colorTertiary">@color/tertiary</item>
+        <item name="colorOnTertiary">@color/on_tertiary</item>
+        
+        <!-- Background colors -->
+        <item name="android:colorBackground">@color/background</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnBackground">@color/on_background</item>
+        <item name="colorOnSurface">@color/on_surface</item>
+        <item name="colorSurfaceVariant">@color/surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/on_surface_variant</item>
+        
+        <!-- Error color -->
+        <item name="colorError">@color/error</item>
+        <item name="colorOnError">@color/on_error</item>
+        
+        <!-- Outline -->
+        <item name="colorOutline">@color/outline</item>
+        
+        <!-- Status bar - Dark theme -->
+        <item name="android:statusBarColor">@color/background</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:navigationBarColor">@color/bottom_nav_background</item>
+        
+        <!-- Button styles -->
+        <item name="materialButtonStyle">@style/Widget.App.Button</item>
+        <item name="materialButtonOutlinedStyle">@style/Widget.App.Button.Outlined</item>
+        <item name="borderlessButtonStyle">@style/Widget.App.Button.Text</item>
+        
+        <!-- Card styles -->
+        <item name="materialCardViewStyle">@style/Widget.App.CardView</item>
+        
+        <!-- Text Input styles -->
+        <item name="textInputStyle">@style/Widget.App.TextInputLayout</item>
+        
+        <!-- Bottom Navigation -->
+        <item name="bottomNavigationStyle">@style/Widget.App.BottomNavigation</item>
+    </style>
 </resources>

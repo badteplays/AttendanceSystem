@@ -1,45 +1,110 @@
-// Firestore Security Rules
+// Firestore Security Rules - Enhanced Security Version
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helpers
+    // ═══════════════════════════════════════════════════════════════
+    // HELPER FUNCTIONS
+    // ═══════════════════════════════════════════════════════════════
+    
     function isAuthenticated() {
       return request.auth != null;
     }
+    
     function isTeacher() {
       return isAuthenticated() &&
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isTeacher == true;
     }
+    
     function isStudent() {
       return isAuthenticated() &&
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isStudent == true;
     }
-
-    // Students collection (if you keep it)
-    match /students/{studentId} {
-      allow read: if isStudent() && request.auth.uid == studentId;
-      allow write: if isTeacher();
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Rate limiting helper - check last write timestamp
+    function isNotRateLimited(lastWriteField) {
+      return !exists(/databases/$(database)/documents/rate_limits/$(request.auth.uid)) ||
+             get(/databases/$(database)/documents/rate_limits/$(request.auth.uid)).data[lastWriteField] == null ||
+             request.time > get(/databases/$(database)/documents/rate_limits/$(request.auth.uid)).data[lastWriteField] + duration.value(1, 's');
+    }
+    
+    // Validate string length
+    function isValidString(field, minLen, maxLen) {
+      return field is string && field.size() >= minLen && field.size() <= maxLen;
+    }
+    
+    // Validate email format (basic)
+    function isValidEmail(email) {
+      return email is string && email.matches('.*@.*\\..*') && email.size() <= 254;
     }
 
-    // Attendance sessions
+    // ═══════════════════════════════════════════════════════════════
+    // USERS COLLECTION
+    // ═══════════════════════════════════════════════════════════════
+    
+    match /users/{userId} {
+      // Read: users can read their own profile; teachers can read any (for student lists)
+      allow read: if isOwner(userId) || isTeacher();
+      
+      // Create: only during signup, validate required fields
+      allow create: if isOwner(userId) &&
+                    request.resource.data.keys().hasAll(['email', 'name', 'role']) &&
+                    isValidEmail(request.resource.data.email) &&
+                    isValidString(request.resource.data.name, 1, 100) &&
+                    request.resource.data.role in ['student', 'teacher'];
+      
+      // Update: only own profile, cannot change role
+      allow update: if isOwner(userId) &&
+                    (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'isTeacher', 'isStudent']));
+      
+      // Delete: disabled for security
+      allow delete: if false;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // ATTENDANCE SESSIONS (QR Code Sessions)
+    // ═══════════════════════════════════════════════════════════════
+    
     match /attendance_sessions/{sessionId} {
-      allow write: if isTeacher();
+      // Only teachers can create sessions
+      allow create: if isTeacher() &&
+                    request.resource.data.teacherId == request.auth.uid &&
+                    request.resource.data.keys().hasAll(['teacherId', 'scheduleId', 'createdAt', 'expiresAt']) &&
+                    request.resource.data.expiresAt > request.time.toMillis();
+      
+      // Teachers can update their own sessions (renew, deactivate)
+      allow update: if isTeacher() && resource.data.teacherId == request.auth.uid;
+      
+      // All authenticated users can read (students need to validate QR)
       allow read: if isAuthenticated();
+      
+      // Teachers can delete their own sessions
+      allow delete: if isTeacher() && resource.data.teacherId == request.auth.uid;
     }
 
-    // Schedules
+    // ═══════════════════════════════════════════════════════════════
+    // SCHEDULES
+    // ═══════════════════════════════════════════════════════════════
+    
     match /schedules/{scheduleId} {
-      // Teachers create only their own
-      allow create: if isTeacher() && request.resource.data.teacherId == request.auth.uid;
+      // Teachers create only their own schedules with validation
+      allow create: if isTeacher() && 
+                    request.resource.data.teacherId == request.auth.uid &&
+                    request.resource.data.keys().hasAll(['teacherId', 'subject', 'section', 'day', 'startTime', 'endTime']) &&
+                    isValidString(request.resource.data.subject, 1, 100) &&
+                    isValidString(request.resource.data.section, 1, 20);
 
       // Teachers can read/update/delete their own schedules
       allow read, update, delete: if isTeacher() && resource.data.teacherId == request.auth.uid;
 
-      // Students can read schedules for their section
+      // Students can read schedules (to see their classes)
       allow read: if isStudent();
 
-      // Attendance subcollection under a schedule (if used)
+      // Attendance subcollection under a schedule
       match /attendance/{attendanceId} {
         allow create: if isTeacher();
         allow read: if (isTeacher() && resource.data.teacherId == request.auth.uid)
@@ -48,62 +113,40 @@ service cloud.firestore {
       }
     }
 
-    // Users — allow teachers to read (to list students), users can read/write their own
-    match /users/{userId} {
-      // Read: a user can read self; any teacher can read any user (needed for Manual Add student list)
-      allow read: if isAuthenticated() && (request.auth.uid == userId || isTeacher());
-
-      // Write: keep self-only (tight) — adjust if teachers should update limited fields
-      allow write: if isAuthenticated() && request.auth.uid == userId;
-    }
-
-    // Attendance (flat collection)
+    // ═══════════════════════════════════════════════════════════════
+    // ATTENDANCE RECORDS
+    // ═══════════════════════════════════════════════════════════════
+    
     match /attendance/{attendanceId} {
       // Teachers can create manual attendance
-      allow create: if isTeacher()
-        // OR student scan flow (OR combines with the rule above)
+      allow create: if isTeacher() && request.resource.data.teacherId == request.auth.uid
+        // Students can create via QR scan with strict validation
         || (isStudent()
+          && request.resource.data.studentId == request.auth.uid
           && request.resource.data.userId == request.auth.uid
+          // Session must exist and be active
           && exists(/databases/$(database)/documents/attendance_sessions/$(request.resource.data.sessionId))
-          && get(/databases/$(database)/documents/attendance_sessions/$(request.resource.data.sessionId)).data.expiresAt
-                > request.time.toMillis()
-          && !exists(/databases/$(database)/documents/attendance/$(attendanceId)));
+          // Session must not be expired
+          && get(/databases/$(database)/documents/attendance_sessions/$(request.resource.data.sessionId)).data.expiresAt > request.time.toMillis()
+          // Session must be active
+          && get(/databases/$(database)/documents/attendance_sessions/$(request.resource.data.sessionId)).data.active == true
+          // Required fields
+          && request.resource.data.keys().hasAll(['studentId', 'userId', 'sessionId', 'timestamp', 'status'])
+          // Valid status
+          && request.resource.data.status in ['Present', 'Late', 'Excused']);
 
-      // Read own; teachers can read their classes’ attendance
-      allow read: if (isStudent() && resource.data.userId == request.auth.uid)
+      // Read own; teachers can read their classes' attendance
+      allow read: if (isStudent() && resource.data.studentId == request.auth.uid)
                   || (isTeacher() && (
                         resource.data.teacherId == request.auth.uid ||
-                        // Fallback: allow if teacher owns the linked schedule
                         (resource.data.scheduleId != null &&
                          get(/databases/$(database)/documents/schedules/$(resource.data.scheduleId)).data.teacherId == request.auth.uid)
                   ));
 
-      allow update: if false;
-      allow delete: if isTeacher() && (
-        resource.data.teacherId == request.auth.uid ||
-        (resource.data.scheduleId != null &&
-         get(/databases/$(database)/documents/schedules/$(resource.data.scheduleId)).data.teacherId == request.auth.uid)
-      );
-    }
-
-    // Archived Attendance (for historical analytics preservation)
-    match /archived_attendance/{attendanceId} {
-      // Teachers can create (archive) attendance records
-      allow create: if isTeacher() && request.resource.data.teacherId == request.auth.uid;
-
-      // Read permissions: students can read their own, teachers can read their classes
-      allow read: if (isStudent() && resource.data.userId == request.auth.uid)
-                  || (isTeacher() && (
-                        resource.data.teacherId == request.auth.uid ||
-                        // Fallback: allow if teacher owns the linked schedule
-                        (resource.data.scheduleId != null &&
-                         get(/databases/$(database)/documents/schedules/$(resource.data.scheduleId)).data.teacherId == request.auth.uid)
-                  ));
-
-      // No updates to archived data
+      // No updates allowed (immutable attendance records)
       allow update: if false;
       
-      // Teachers can delete archived records if needed
+      // Only teachers can delete
       allow delete: if isTeacher() && (
         resource.data.teacherId == request.auth.uid ||
         (resource.data.scheduleId != null &&
@@ -111,14 +154,58 @@ service cloud.firestore {
       );
     }
 
-    // Routines collection (student personal routines)
+    // ═══════════════════════════════════════════════════════════════
+    // ARCHIVED ATTENDANCE
+    // ═══════════════════════════════════════════════════════════════
+    
+    match /archived_attendance/{attendanceId} {
+      allow create: if isTeacher() && request.resource.data.teacherId == request.auth.uid;
+      
+      allow read: if (isStudent() && resource.data.studentId == request.auth.uid)
+                  || (isTeacher() && (
+                        resource.data.teacherId == request.auth.uid ||
+                        (resource.data.scheduleId != null &&
+                         get(/databases/$(database)/documents/schedules/$(resource.data.scheduleId)).data.teacherId == request.auth.uid)
+                  ));
+
+      // Archived data is immutable
+      allow update: if false;
+      
+      allow delete: if isTeacher() && (
+        resource.data.teacherId == request.auth.uid ||
+        (resource.data.scheduleId != null &&
+         get(/databases/$(database)/documents/schedules/$(resource.data.scheduleId)).data.teacherId == request.auth.uid)
+      );
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // STUDENT ROUTINES
+    // ═══════════════════════════════════════════════════════════════
+    
     match /routines/{routineId} {
-      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
-      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow read: if isOwner(resource.data.userId);
+      allow create: if isOwner(request.resource.data.userId) &&
+                    request.resource.data.keys().hasAll(['userId', 'title', 'day', 'startTime', 'endTime']) &&
+                    isValidString(request.resource.data.title, 1, 100);
+      allow update: if isOwner(resource.data.userId);
+      allow delete: if isOwner(resource.data.userId);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // HEALTH CHECK (for server connection testing)
+    // ═══════════════════════════════════════════════════════════════
+    
+    match /health/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // DENY ALL OTHER ACCESS
+    // ═══════════════════════════════════════════════════════════════
+    
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
-
-

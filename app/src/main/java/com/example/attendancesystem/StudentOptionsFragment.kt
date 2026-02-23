@@ -13,8 +13,12 @@ import android.widget.*
 import androidx.fragment.app.Fragment
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.example.attendancesystem.notifications.LocalNotificationManager
 import com.example.attendancesystem.utils.ProfilePictureManager
 import com.example.attendancesystem.utils.ThemeManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class StudentOptionsFragment : Fragment() {
     private lateinit var textUserName: TextView
@@ -28,6 +32,7 @@ class StudentOptionsFragment : Fragment() {
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
     private lateinit var themeManager: ThemeManager
+    private lateinit var notificationManager: LocalNotificationManager
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -40,6 +45,7 @@ class StudentOptionsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         
+        notificationManager = LocalNotificationManager.getInstance(requireContext())
         initializeViews(view)
         loadUserProfile()
         setupClickListeners(view)
@@ -93,7 +99,7 @@ class StudentOptionsFragment : Fragment() {
                 prefs.edit().putInt("reminder_minutes", minutes).apply()
                 
                 if (prefs.getBoolean("notifications_enabled", true)) {
-                    scheduleStudentReminders()
+                    scheduleClassNotifications()
                 }
             }
             
@@ -142,6 +148,11 @@ class StudentOptionsFragment : Fragment() {
                 Toast.makeText(requireContext(), "Unable to open link", Toast.LENGTH_SHORT).show()
             }
         }
+        
+        // Test notification button
+        view.findViewById<LinearLayout>(R.id.buttonTestNotification)?.setOnClickListener {
+            testNotification()
+        }
 
         view.findViewById<ImageView>(R.id.imageProfilePic).setOnClickListener { openImagePicker() }
         view.findViewById<TextView>(R.id.textInitials).setOnClickListener { openImagePicker() }
@@ -157,10 +168,10 @@ class StudentOptionsFragment : Fragment() {
             reminderTimeLayout.visibility = if (isChecked) View.VISIBLE else View.GONE
             
             if (isChecked) {
-                scheduleStudentReminders()
+                scheduleClassNotifications()
                 Toast.makeText(requireContext(), "Class reminders enabled", Toast.LENGTH_SHORT).show()
             } else {
-                cancelStudentReminders()
+                cancelClassNotifications()
                 Toast.makeText(requireContext(), "Class reminders disabled", Toast.LENGTH_SHORT).show()
             }
         }
@@ -173,6 +184,9 @@ class StudentOptionsFragment : Fragment() {
             .setPositiveButton("Logout") { _, _ ->
                 val prefs = requireContext().getSharedPreferences("auth_prefs", android.content.Context.MODE_PRIVATE)
                 prefs.edit().putBoolean("explicit_logout", true).apply()
+                
+                // Cancel notifications on logout
+                notificationManager.cancelAllAlarms()
                 
                 auth.signOut()
                 val intent = Intent(requireContext(), LoginActivity::class.java)
@@ -212,30 +226,28 @@ class StudentOptionsFragment : Fragment() {
         imagePickerLauncher.launch(intent)
     }
 
-    private fun scheduleStudentReminders() {
-        try {
-            val wm = androidx.work.WorkManager.getInstance(requireContext())
-            
-            val req = androidx.work.PeriodicWorkRequestBuilder<StudentReminderWorker>(
-                15, java.util.concurrent.TimeUnit.MINUTES
-            ).build()
-            
-            wm.enqueueUniquePeriodicWork(
-                "student_reminder_work",
-                androidx.work.ExistingPeriodicWorkPolicy.REPLACE,
-                req
-            )
-            android.util.Log.d("StudentOptions", "Class reminders scheduled (15 min intervals)")
-        } catch (e: Exception) {
-            android.util.Log.e("StudentOptions", "Error scheduling reminders: ${e.message}", e)
+    private fun scheduleClassNotifications() {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                notificationManager.scheduleAllClassNotifications()
+                android.util.Log.d("StudentOptions", "Class notifications scheduled with precise timing")
+            } catch (e: Exception) {
+                android.util.Log.e("StudentOptions", "Error scheduling notifications: ${e.message}", e)
+            }
         }
     }
 
-    private fun cancelStudentReminders() {
+    private fun cancelClassNotifications() {
         try {
-            val wm = androidx.work.WorkManager.getInstance(requireContext())
-            wm.cancelUniqueWork("student_reminder_work")
+            notificationManager.cancelAllAlarms()
+            android.util.Log.d("StudentOptions", "Class notifications cancelled")
         } catch (_: Exception) { }
+    }
+    
+    private fun testNotification() {
+        // Schedule a test notification in 5 seconds
+        notificationManager.scheduleTestNotification(5)
+        Toast.makeText(requireContext(), "Test notification will appear in 5 seconds", Toast.LENGTH_SHORT).show()
     }
 
     private fun showThemePicker() {

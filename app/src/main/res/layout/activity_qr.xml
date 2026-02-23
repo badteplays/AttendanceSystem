@@ -133,7 +133,7 @@
                         android:layout_height="32dp"
                         android:src="@drawable/ic_hours"
                         android:contentDescription="Timer Icon"
-                        android:tint="@color/status_late"
+                        app:tint="@color/status_late"
                         android:layout_marginEnd="16dp" />
 
                     <LinearLayout
@@ -210,7 +210,7 @@
                 android:layout_width="32dp"
                 android:layout_height="48dp"
                 android:src="@drawable/ic_menu_drawer"
-                android:tint="?attr/colorOnBackground"
+                app:tint="?attr/colorOnBackground"
                 android:padding="8dp"
                 android:contentDescription="Open navigation"
                 app:layout_constraintTop_toTopOf="parent"

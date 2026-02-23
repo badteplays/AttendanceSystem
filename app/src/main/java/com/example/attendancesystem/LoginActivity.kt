@@ -2,9 +2,13 @@ package com.example.attendancesystem
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.inputmethod.EditorInfo
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.attendancesystem.databinding.ActivityLoginBinding
+import com.example.attendancesystem.utils.KeyboardUtils
+import com.example.attendancesystem.utils.NetworkUtils
+import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -27,6 +31,8 @@ class LoginActivity : AppCompatActivity() {
 
     companion object {
         private const val PERMISSION_REQUEST_CODE = 100
+        private const val PREF_LAST_ROLE = "last_selected_role"
+        private const val PREF_LAST_EMAIL = "last_email"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,6 +42,9 @@ class LoginActivity : AppCompatActivity() {
 
         auth = Firebase.auth
 
+        restoreLastSelections()
+        setupKeyboardHandling()
+        
         val prefs = getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
         val explicitLogout = prefs.getBoolean("explicit_logout", false)
 
@@ -54,9 +63,8 @@ class LoginActivity : AppCompatActivity() {
                         android.util.Log.e("LoginActivity", "User document not found, signing out")
                         auth.signOut()
                         binding.btnLogin.isEnabled = true
-                        binding.btnLogin.text = "Login"
-                        Toast.makeText(this, "Account not found. Please sign up.", Toast.LENGTH_SHORT).show()
-
+                        binding.btnLogin.text = "Sign In"
+                        showSnackbar("Account not found. Please sign up.")
                         setupClickListeners()
                         return@addOnSuccessListener
                     }
@@ -67,12 +75,10 @@ class LoginActivity : AppCompatActivity() {
                     android.util.Log.d("LoginActivity", "User role - Teacher: $isTeacher, Student: $isStudent")
 
                     if (isTeacher && isStudent) {
-
                         android.util.Log.d("LoginActivity", "User has both roles, showing role selection")
                         startActivity(Intent(this, RoleSelectionActivity::class.java))
                         finish()
                     } else {
-
                         android.util.Log.d("LoginActivity", "Auto-navigating to dashboard")
                         navigateToAppropriateScreen()
                     }
@@ -80,9 +86,8 @@ class LoginActivity : AppCompatActivity() {
                 .addOnFailureListener { e ->
                     android.util.Log.e("LoginActivity", "Error loading user data: ${e.message}", e)
                     binding.btnLogin.isEnabled = true
-                    binding.btnLogin.text = "Login"
-                    Toast.makeText(this, "Error loading user data", Toast.LENGTH_SHORT).show()
-
+                    binding.btnLogin.text = "Sign In"
+                    showSnackbar("Error loading user data")
                     setupClickListeners()
                 }
             return
@@ -90,51 +95,136 @@ class LoginActivity : AppCompatActivity() {
 
         setupClickListeners()
     }
+    
+    private fun restoreLastSelections() {
+        val prefs = getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
+        val lastRole = prefs.getString(PREF_LAST_ROLE, "student")
+        val lastEmail = prefs.getString(PREF_LAST_EMAIL, "")
+        
+        if (lastRole == "teacher") {
+            binding.teacherRadio.isChecked = true
+        } else {
+            binding.studentRadio.isChecked = true
+        }
+        
+        if (!lastEmail.isNullOrEmpty()) {
+            binding.editEmail.setText(lastEmail)
+        }
+    }
+    
+    private fun saveLastSelections(email: String, isTeacher: Boolean) {
+        getSharedPreferences("auth_prefs", Context.MODE_PRIVATE)
+            .edit()
+            .putString(PREF_LAST_ROLE, if (isTeacher) "teacher" else "student")
+            .putString(PREF_LAST_EMAIL, email)
+            .apply()
+    }
+    
+    private fun setupKeyboardHandling() {
+        binding.scrollView.setOnTouchListener { _, _ ->
+            KeyboardUtils.hideKeyboard(this)
+            false
+        }
+        
+        binding.editEmail.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_NEXT) {
+                binding.editPassword.requestFocus()
+                true
+            } else false
+        }
+        
+        binding.editPassword.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                KeyboardUtils.hideKeyboard(this)
+                attemptLogin()
+                true
+            } else false
+        }
+    }
 
     private fun setupClickListeners() {
         binding.btnLogin.setOnClickListener {
-            val email = binding.editEmail.text.toString().trim()
-            val password = binding.editPassword.text.toString().trim()
-            val isTeacher = binding.teacherRadio.isChecked
-
-            if (email.isEmpty() || password.isEmpty()) {
-                Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            showLoading(true)
-
-            auth.signInWithEmailAndPassword(email, password)
-                .addOnSuccessListener { result ->
-                    db.collection("users")
-                        .document(result.user!!.uid)
-                        .get()
-                        .addOnSuccessListener { doc ->
-                            showLoading(false)
-                            val userIsTeacher = doc.getBoolean("isTeacher") ?: false
-                            if (userIsTeacher == isTeacher) {
-
-                                ensureUserProfile(if (isTeacher) "teacher" else "student")
-                                navigateToAppropriateScreen()
-                            } else {
-                                auth.signOut()
-                                showError("Incorrect role selected for this account")
-                            }
-                        }
-                        .addOnFailureListener { e ->
-                            showLoading(false)
-                            showError("Failed to fetch user info: ${e.localizedMessage}")
-                        }
-                }
-                .addOnFailureListener { e ->
-                    showLoading(false)
-                    showError("Login failed: ${e.localizedMessage}")
-                }
+            attemptLogin()
         }
 
         binding.txtSignup.setOnClickListener {
             startActivity(Intent(this, SignupActivity::class.java))
         }
+    }
+    
+    private fun attemptLogin() {
+        KeyboardUtils.hideKeyboard(this)
+        
+        val email = binding.editEmail.text.toString().trim()
+        val password = binding.editPassword.text.toString().trim()
+        val isTeacher = binding.teacherRadio.isChecked
+        
+        binding.textInputEmail.error = null
+        binding.textInputPassword.error = null
+
+        var hasError = false
+        if (email.isEmpty()) {
+            binding.textInputEmail.error = "Email is required"
+            hasError = true
+        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            binding.textInputEmail.error = "Enter a valid email"
+            hasError = true
+        }
+        
+        if (password.isEmpty()) {
+            binding.textInputPassword.error = "Password is required"
+            hasError = true
+        } else if (password.length < 6) {
+            binding.textInputPassword.error = "Password must be at least 6 characters"
+            hasError = true
+        }
+        
+        if (hasError) return
+        
+        if (!NetworkUtils.isNetworkAvailable(this)) {
+            showSnackbar("No internet connection")
+            return
+        }
+
+        showLoading(true)
+        saveLastSelections(email, isTeacher)
+
+        auth.signInWithEmailAndPassword(email, password)
+            .addOnSuccessListener { result ->
+                db.collection("users")
+                    .document(result.user!!.uid)
+                    .get()
+                    .addOnSuccessListener { doc ->
+                        showLoading(false)
+                        val userIsTeacher = doc.getBoolean("isTeacher") ?: false
+                        if (userIsTeacher == isTeacher) {
+                            ensureUserProfile(if (isTeacher) "teacher" else "student")
+                            navigateToAppropriateScreen()
+                        } else {
+                            auth.signOut()
+                            showSnackbar("Incorrect role selected for this account")
+                        }
+                    }
+                    .addOnFailureListener { e ->
+                        showLoading(false)
+                        showSnackbar("Failed to fetch user info: ${e.localizedMessage}")
+                    }
+            }
+            .addOnFailureListener { e ->
+                showLoading(false)
+                val message = when {
+                    e.message?.contains("no user record", ignoreCase = true) == true -> 
+                        "No account found with this email"
+                    e.message?.contains("password is invalid", ignoreCase = true) == true -> 
+                        "Incorrect password"
+                    e.message?.contains("badly formatted", ignoreCase = true) == true -> 
+                        "Invalid email format"
+                    e.message?.contains("network", ignoreCase = true) == true -> 
+                        "Network error. Please try again"
+                    else -> "Login failed: ${e.localizedMessage}"
+                }
+                showSnackbar(message)
+            }
     }
 
     private fun showLoading(show: Boolean) {
@@ -145,15 +235,14 @@ class LoginActivity : AppCompatActivity() {
         binding.teacherRadio.isEnabled = !show
         binding.studentRadio.isEnabled = !show
 
-        if (show) {
-            binding.btnLogin.text = "Logging in..."
-        } else {
-            binding.btnLogin.text = "Login"
-        }
+        binding.btnLogin.text = if (show) "Signing in..." else "Sign In"
     }
-
-    private fun showError(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+    
+    private fun showSnackbar(message: String) {
+        Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG)
+            .setBackgroundTint(getColor(R.color.surface_container_high))
+            .setTextColor(getColor(R.color.text_primary))
+            .show()
     }
 
     private fun ensureUserProfile(role: String) {
@@ -172,7 +261,7 @@ class LoginActivity : AppCompatActivity() {
         val currentUser = auth.currentUser
         if (currentUser == null) {
             auth.signOut()
-            Toast.makeText(this, "Session expired. Please log in again.", Toast.LENGTH_SHORT).show()
+            showSnackbar("Session expired. Please sign in again.")
             return
         }
 
@@ -184,9 +273,8 @@ class LoginActivity : AppCompatActivity() {
             .get()
             .addOnSuccessListener { document ->
                 if (!document.exists()) {
-
                     auth.signOut()
-                    Toast.makeText(this, "Account not found. Please sign up.", Toast.LENGTH_SHORT).show()
+                    showSnackbar("Account not found. Please sign up.")
                     return@addOnSuccessListener
                 }
                 val isTeacher = document.getBoolean("isTeacher") ?: false
@@ -206,7 +294,7 @@ class LoginActivity : AppCompatActivity() {
                 finish()
             }
             .addOnFailureListener {
-                Toast.makeText(this, "Error loading user data", Toast.LENGTH_SHORT).show()
+                showSnackbar("Error loading user data")
             }
     }
 
@@ -216,8 +304,6 @@ class LoginActivity : AppCompatActivity() {
             val notificationsEnabled = prefs.getBoolean("notifications_enabled", true)
 
             if (notificationsEnabled) {
-
-
                 val workRequest = PeriodicWorkRequestBuilder<StudentReminderWorker>(
                     15, TimeUnit.MINUTES
                 ).build()
@@ -227,8 +313,7 @@ class LoginActivity : AppCompatActivity() {
                     ExistingPeriodicWorkPolicy.KEEP,
                     workRequest
                 )
-
-                android.util.Log.d("LoginActivity", "Background class reminders scheduled (runs even when app is closed)")
+                android.util.Log.d("LoginActivity", "Background class reminders scheduled")
             }
         } catch (e: Exception) {
             android.util.Log.e("LoginActivity", "Error scheduling reminders: ${e.message}", e)
@@ -251,7 +336,6 @@ class LoginActivity : AppCompatActivity() {
         }
 
         if (permissionsToRequest.isNotEmpty()) {
-            android.util.Log.d("LoginActivity", "Requesting permissions: ${permissionsToRequest.joinToString()}")
             ActivityCompat.requestPermissions(
                 this,
                 permissionsToRequest.toTypedArray(),
@@ -268,33 +352,22 @@ class LoginActivity : AppCompatActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
         if (requestCode == PERMISSION_REQUEST_CODE) {
-            val deniedPermissions = mutableListOf<String>()
-
-            permissions.forEachIndexed { index, permission ->
-                if (grantResults[index] != PackageManager.PERMISSION_GRANTED) {
-                    deniedPermissions.add(permission)
-                }
+            val deniedPermissions = permissions.filterIndexed { index, _ ->
+                grantResults[index] != PackageManager.PERMISSION_GRANTED
             }
 
             if (deniedPermissions.isNotEmpty()) {
                 val message = when {
-                    deniedPermissions.contains(Manifest.permission.CAMERA) &&
-                    deniedPermissions.contains(Manifest.permission.POST_NOTIFICATIONS) -> {
-                        "Camera and notification permissions are needed for full app functionality"
-                    }
-                    deniedPermissions.contains(Manifest.permission.CAMERA) -> {
-                        "Camera permission is needed to scan QR codes for attendance"
-                    }
-                    deniedPermissions.contains(Manifest.permission.POST_NOTIFICATIONS) -> {
-                        "Notification permission is needed for class reminders"
-                    }
+                    Manifest.permission.CAMERA in deniedPermissions &&
+                    Manifest.permission.POST_NOTIFICATIONS in deniedPermissions -> 
+                        "Camera and notifications needed for full functionality"
+                    Manifest.permission.CAMERA in deniedPermissions -> 
+                        "Camera needed to scan QR codes"
+                    Manifest.permission.POST_NOTIFICATIONS in deniedPermissions -> 
+                        "Notifications needed for class reminders"
                     else -> "Some permissions were denied"
                 }
-                Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-                android.util.Log.w("LoginActivity", "Denied permissions: ${deniedPermissions.joinToString()}")
-            } else {
-                android.util.Log.d("LoginActivity", "All permissions granted")
-                Toast.makeText(this, "Permissions granted successfully", Toast.LENGTH_SHORT).show()
+                showSnackbar(message)
             }
         }
     }

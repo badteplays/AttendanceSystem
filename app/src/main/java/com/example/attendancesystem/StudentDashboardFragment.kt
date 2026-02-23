@@ -35,14 +35,12 @@ class StudentDashboardFragment : Fragment() {
     private lateinit var textStatusTime: TextView
     private lateinit var statusIndicator: View
     
-    // Stats counters
     private lateinit var textPresentCount: TextView
     private lateinit var textAbsentCount: TextView
     private lateinit var textLateCount: TextView
     
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
-    private var userId: String = ""
     private var studentName: String = ""
     private var attendanceListener: ListenerRegistration? = null
 
@@ -56,7 +54,6 @@ class StudentDashboardFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         initializeViews(view)
         loadUserData()
         loadTodayStatus()
@@ -79,8 +76,6 @@ class StudentDashboardFragment : Fragment() {
             textTodayStatus = view.findViewById(R.id.textTodayStatus)
             textStatusTime = view.findViewById(R.id.textStatusTime)
             statusIndicator = view.findViewById(R.id.statusIndicator)
-            
-            // Initialize stat counters
             textPresentCount = view.findViewById(R.id.textPresentCount)
             textAbsentCount = view.findViewById(R.id.textAbsentCount)
             textLateCount = view.findViewById(R.id.textLateCount)
@@ -136,15 +131,12 @@ class StudentDashboardFragment : Fragment() {
                 }
                 
                 android.util.Log.d("StudentDashboard", "Stats - Present: $presentCount, Absent: $absentCount, Late: $lateCount")
-                
-                // Update UI
                 textPresentCount.text = presentCount.toString()
                 textAbsentCount.text = absentCount.toString()
                 textLateCount.text = lateCount.toString()
             }
             .addOnFailureListener { e ->
                 android.util.Log.e("StudentDashboard", "Error loading stats: ${e.message}", e)
-                // Set defaults on error
                 textPresentCount.text = "0"
                 textAbsentCount.text = "0"
                 textLateCount.text = "0"
@@ -364,7 +356,6 @@ class StudentDashboardFragment : Fragment() {
                     }
                     checkAttendanceForCurrentClass(userId, scheduleId, subject, prefs)
                 } else {
-
                     val markedSubject = prefs.getString("markedSubject", null)
                     val markedTime = prefs.getLong("markedTime", 0L)
                     val justScanned = markedTime > 0 && System.currentTimeMillis() - markedTime <= 120_000
@@ -468,6 +459,7 @@ class StudentDashboardFragment : Fragment() {
                         "PRESENT" -> updateStatusUI("Present - $subject", timeString, Color.parseColor("#22C55E"))
                         "LATE" -> updateStatusUI("Late - $subject", timeString, Color.parseColor("#F59E0B"))
                         "EXCUSED" -> updateStatusUI("Excused - $subject", timeString, Color.parseColor("#3B82F6"))
+                        "CUTTING" -> updateStatusUI("Cutting - $subject", timeString, Color.parseColor("#EF4444"))
                         else -> updateStatusUI("Marked - $subject", timeString, Color.parseColor("#22C55E"))
                     }
                     prefs.edit().apply {
@@ -476,27 +468,27 @@ class StudentDashboardFragment : Fragment() {
                         apply()
                     }
                     loadAttendanceStats()
+                } else {
+                    val fromCacheInner = snapshot?.metadata?.isFromCache == true
+                    android.util.Log.d("StudentDashboard", "✗✗✗ NO ATTENDANCE FOUND (fromCache=$fromCacheInner) ✗✗✗")
+                    android.util.Log.d("StudentDashboard", "Subject being queried: $subject")
+                    android.util.Log.d("StudentDashboard", "ScheduleId being queried: $scheduleId")
+                    if (fromCacheInner) return@addSnapshotListener
+                    val markedSubject = prefs.getString("markedSubject", null)
+                    val markedTime = prefs.getLong("markedTime", 0L)
+                    val justScanned = markedTime > 0 && System.currentTimeMillis() - markedTime <= 120_000
+                    val isRecentMarked = markedSubject != null &&
+                        markedTime > 0 &&
+                        (justScanned || markedSubject.equals(subject, ignoreCase = true)) &&
+                        System.currentTimeMillis() - markedTime <= 15 * 60 * 1000
+                    if (isRecentMarked) {
+                        val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
+                        val timeString = timeFormat.format(Date(markedTime))
+                        updateStatusUI("Present - ${markedSubject ?: subject}", "Marked at $timeString", Color.parseColor("#22C55E"))
                     } else {
-                        val fromCacheInner = snapshot?.metadata?.isFromCache == true
-                        android.util.Log.d("StudentDashboard", "✗✗✗ NO ATTENDANCE FOUND (fromCache=$fromCacheInner) ✗✗✗")
-                        android.util.Log.d("StudentDashboard", "Subject being queried: $subject")
-                        android.util.Log.d("StudentDashboard", "ScheduleId being queried: $scheduleId")
-                        if (fromCacheInner) return@addSnapshotListener
-                        val markedSubject = prefs.getString("markedSubject", null)
-                        val markedTime = prefs.getLong("markedTime", 0L)
-                        val justScanned = markedTime > 0 && System.currentTimeMillis() - markedTime <= 120_000
-                        val isRecentMarked = markedSubject != null &&
-                            markedTime > 0 &&
-                            (justScanned || markedSubject.equals(subject, ignoreCase = true)) &&
-                            System.currentTimeMillis() - markedTime <= 15 * 60 * 1000
-                        if (isRecentMarked) {
-                            val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
-                            val timeString = timeFormat.format(Date(markedTime))
-                            updateStatusUI("Present - ${markedSubject ?: subject}", "Marked at $timeString", Color.parseColor("#22C55E"))
-                        } else {
-                            updateStatusUI("Not marked yet", "Scan QR for $subject", Color.parseColor("#71717A"))
-                        }
+                        updateStatusUI("Not marked yet", "Scan QR for $subject", Color.parseColor("#71717A"))
                     }
+                }
                 } else {
                     val fromCacheEmpty = snapshot?.metadata?.isFromCache == true
                     android.util.Log.d("StudentDashboard", "✗✗✗ NO ATTENDANCE FOUND (fromCache=$fromCacheEmpty) ✗✗✗")
@@ -541,24 +533,25 @@ class StudentDashboardFragment : Fragment() {
     private fun loadUserData() {
         val currentUser = auth.currentUser
         if (currentUser == null) {
-            startActivity(Intent(requireContext(), LoginActivity::class.java))
-            requireActivity().finish()
+            try {
+                startActivity(Intent(requireContext(), LoginActivity::class.java))
+                requireActivity().finish()
+            } catch (e: Exception) {
+                android.util.Log.e("StudentDashboard", "Error redirecting to login: ${e.message}")
+            }
             return
         }
 
         db.collection("users").document(currentUser.uid)
             .addSnapshotListener { snapshot, _ ->
+                if (!isAdded) return@addSnapshotListener
                 if (snapshot != null && snapshot.exists()) {
                     studentName = snapshot.getString("name") ?: "Student"
                     textWelcomeStudent.text = getGreeting()
                     val studentSection = snapshot.getString("section") ?: "Section"
-                    val profilePicUrl = snapshot.getString("profilePicUrl")
-
                     textName.text = studentName
                     textCourse.text = studentSection.uppercase()
-
-                    val profileManager = ProfilePictureManager.getInstance()
-                    profileManager.loadProfilePicture(requireContext(), imageProfilePic, textInitials, studentName, "ST")
+                    ProfilePictureManager.getInstance().loadProfilePicture(requireContext(), imageProfilePic, textInitials, studentName, "ST")
                 }
             }
     }
@@ -573,32 +566,17 @@ class StudentDashboardFragment : Fragment() {
     }
 
     private fun setupClickListeners() {
-
         buttonScanQR.setOnClickListener {
-            try {
-
-                switchToFragment(QRScannerFragment())
-            } catch (e: Exception) {
-                Toast.makeText(requireContext(), "Error opening scanner: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
+            try { switchToFragment(QRScannerFragment()) }
+            catch (e: Exception) { Toast.makeText(requireContext(), "Error opening scanner: ${e.message}", Toast.LENGTH_SHORT).show() }
         }
-
         buttonViewHistory.setOnClickListener {
-            try {
-
-                switchToFragment(StudentAttendanceHistoryFragment())
-            } catch (e: Exception) {
-                Toast.makeText(requireContext(), "Error opening history: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
+            try { switchToFragment(StudentAttendanceHistoryFragment()) }
+            catch (e: Exception) { Toast.makeText(requireContext(), "Error opening history: ${e.message}", Toast.LENGTH_SHORT).show() }
         }
-
         fabScanQR.setOnClickListener {
-            try {
-
-                switchToFragment(QRScannerFragment())
-            } catch (e: Exception) {
-                Toast.makeText(requireContext(), "Error opening scanner: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
+            try { switchToFragment(QRScannerFragment()) }
+            catch (e: Exception) { Toast.makeText(requireContext(), "Error opening scanner: ${e.message}", Toast.LENGTH_SHORT).show() }
         }
     }
 

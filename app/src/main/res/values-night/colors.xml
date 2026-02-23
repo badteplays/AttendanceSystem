@@ -1,20 +1,146 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Dark Theme Override Colors -->
-    <color name="background">#121212</color>
-    <color name="surface">#1E1E1E</color>
-    <color name="card_background">#2A2A2A</color>
-    <color name="text_primary">#FFFFFF</color>
-    <color name="text_secondary">#B3B3B3</color>
-    <color name="text_hint">#666666</color>
-    <color name="divider">#333333</color>
-    <color name="on_background">#FFFFFF</color>
-    <color name="on_surface">#FFFFFF</color>
-    <color name="onSurface">#FFFFFF</color>
-    <color name="onSurfaceVariant">#B3B3B3</color>
+    <!-- 
+    ╔══════════════════════════════════════════════════════════════╗
+    ║  ATTENDANCE SYSTEM - PREMIUM DARK THEME                      ║
+    ║  Rich Dark + Luminous Accents | Sleek & Modern               ║
+    ╚══════════════════════════════════════════════════════════════╝
+    -->
     
-    <!-- Navigation colors for dark theme -->
-    <color name="theme_nav_background">#1E1E1E</color>
-    <color name="theme_nav_selected">#90CAF9</color>
-    <color name="theme_nav_unselected">#666666</color>
+    <!-- Primary Colors - Luminous Indigo -->
+    <color name="primary">#818CF8</color>
+    <color name="primary_dark">#6366F1</color>
+    <color name="primary_light">#C7D2FE</color>
+    <color name="primary_container">#312E81</color>
+    <color name="on_primary">#1E1B4B</color>
+    <color name="on_primary_container">#E0E7FF</color>
+    
+    <!-- Secondary Colors - Glowing Cyan -->
+    <color name="secondary">#22D3EE</color>
+    <color name="secondary_dark">#06B6D4</color>
+    <color name="secondary_light">#67E8F9</color>
+    <color name="secondary_container">#164E63</color>
+    <color name="on_secondary">#083344</color>
+    <color name="on_secondary_container">#CFFAFE</color>
+    
+    <!-- Tertiary Colors - Glowing Violet -->
+    <color name="tertiary">#A78BFA</color>
+    <color name="tertiary_dark">#8B5CF6</color>
+    <color name="tertiary_light">#DDD6FE</color>
+    <color name="tertiary_container">#4C1D95</color>
+    <color name="on_tertiary">#2E1065</color>
+    <color name="on_tertiary_container">#EDE9FE</color>
+    
+    <!-- Background & Surface - Rich Dark -->
+    <color name="background">#0F172A</color>
+    <color name="surface">#1E293B</color>
+    <color name="surface_variant">#334155</color>
+    <color name="surface_container">#1E293B</color>
+    <color name="surface_container_high">#334155</color>
+    <color name="on_background">#F1F5F9</color>
+    <color name="on_surface">#F1F5F9</color>
+    <color name="on_surface_variant">#94A3B8</color>
+    
+    <!-- Card & Elevated Surfaces -->
+    <color name="card_background">#1E293B</color>
+    <color name="card_background_elevated">#334155</color>
+    <color name="dialog_background">#1E293B</color>
+    
+    <!-- Text Colors -->
+    <color name="text_primary">#F1F5F9</color>
+    <color name="text_secondary">#94A3B8</color>
+    <color name="text_hint">#64748B</color>
+    <color name="text_disabled">#475569</color>
+    
+    <!-- Divider & Outline -->
+    <color name="divider">#334155</color>
+    <color name="outline">#475569</color>
+    <color name="outline_variant">#334155</color>
+    
+    <!-- Error Colors -->
+    <color name="error">#F87171</color>
+    <color name="error_dark">#EF4444</color>
+    <color name="error_container">#7F1D1D</color>
+    <color name="on_error">#450A0A</color>
+    <color name="on_error_container">#FEE2E2</color>
+    
+    <!-- Attendance Status Colors -->
+    <color name="status_present">#34D399</color>
+    <color name="status_present_container">#064E3B</color>
+    <color name="status_late">#FBBF24</color>
+    <color name="status_late_container">#78350F</color>
+    <color name="status_absent">#F87171</color>
+    <color name="status_absent_container">#7F1D1D</color>
+    <color name="status_excused">#60A5FA</color>
+    <color name="status_excused_container">#1E3A8A</color>
+    <color name="status_cutting">#FB923C</color>
+    <color name="status_cutting_container">#7C2D12</color>
+    
+    <!-- Success & Warning -->
+    <color name="success">#34D399</color>
+    <color name="success_container">#064E3B</color>
+    <color name="on_success">#064E3B</color>
+    <color name="warning">#FBBF24</color>
+    <color name="warning_container">#78350F</color>
+    <color name="on_warning">#78350F</color>
+    
+    <!-- Gradient Colors -->
+    <color name="gradient_start">#6366F1</color>
+    <color name="gradient_middle">#8B5CF6</color>
+    <color name="gradient_end">#22D3EE</color>
+    
+    <!-- Bottom Navigation -->
+    <color name="bottom_nav_background">#1E293B</color>
+    <color name="bottom_nav_selected">#818CF8</color>
+    <color name="bottom_nav_unselected">#64748B</color>
+    <color name="bottom_nav_indicator">#312E81</color>
+    
+    <!-- Interactive States -->
+    <color name="ripple">#33818CF8</color>
+    <color name="ripple_light">#1A818CF8</color>
+    <color name="highlight">#1A818CF8</color>
+    <color name="pressed">#6366F1</color>
+    
+    <!-- Shadows & Overlays -->
+    <color name="shadow">#40000000</color>
+    <color name="shadow_light">#20000000</color>
+    <color name="scrim">#B3000000</color>
+    <color name="overlay">#60000000</color>
+    
+    <!-- QR Code Related -->
+    <color name="qr_active">#34D399</color>
+    <color name="qr_expired">#F87171</color>
+    <color name="qr_background">#FFFFFF</color>
+    
+    <!-- Inverse Colors -->
+    <color name="inverse_surface">#F1F5F9</color>
+    <color name="inverse_on_surface">#1E293B</color>
+    <color name="inverse_primary">#4F46E5</color>
+    
+    <!-- Theme Navigation -->
+    <color name="theme_nav_background">#1E293B</color>
+    <color name="theme_nav_selected">#818CF8</color>
+    <color name="theme_nav_unselected">#64748B</color>
+    
+    <!-- Material 3 Extended Tokens -->
+    <color name="onSurface">@color/on_surface</color>
+    <color name="onSurfaceVariant">@color/on_surface_variant</color>
+    <color name="surfaceVariant">@color/surface_variant</color>
+    <color name="surfaceDim">#0F172A</color>
+    <color name="surfaceBright">#334155</color>
+    <color name="surfaceContainerLowest">#0F172A</color>
+    <color name="surfaceContainerLow">#1E293B</color>
+    <color name="surfaceContainer">@color/surface_container</color>
+    <color name="surfaceContainerHigh">@color/surface_container_high</color>
+    <color name="surfaceContainerHighest">#475569</color>
+    <color name="onPrimary">@color/on_primary</color>
+    <color name="primaryContainer">@color/primary_container</color>
+    <color name="onPrimaryContainer">@color/on_primary_container</color>
+    <color name="onSecondary">@color/on_secondary</color>
+    <color name="secondaryContainer">@color/secondary_container</color>
+    <color name="onSecondaryContainer">@color/on_secondary_container</color>
+    <color name="tertiaryContainer">@color/tertiary_container</color>
+    <color name="onTertiaryContainer">@color/on_tertiary_container</color>
+    <color name="errorContainer">@color/error_container</color>
+    <color name="onErrorContainer">@color/on_error_container</color>
 </resources>

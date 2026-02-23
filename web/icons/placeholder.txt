@@ -1,0 +1,20 @@
+PWA Icons Placeholder
+
+You need to create the following icon files for the PWA to work properly:
+- icon-72.png (72x72)
+- icon-96.png (96x96)
+- icon-128.png (128x128)
+- icon-144.png (144x144)
+- icon-152.png (152x152)
+- icon-192.png (192x192)
+- icon-384.png (384x384)
+- icon-512.png (512x512)
+
+You can use a tool like https://realfavicongenerator.net/ to generate all sizes from a single image.
+
+Recommended: Use a simple icon design with:
+- A clipboard or checkmark symbol
+- The app's accent color (#22d3ee cyan)
+- Dark background (#0f172a)
+
+

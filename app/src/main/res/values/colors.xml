@@ -1,85 +1,175 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Material Design 3 Color Palette -->
-    <color name="primary">#1976D2</color>
-    <color name="primary_dark">#1565C0</color>
-    <color name="primary_light">#BBDEFB</color>
-    <color name="secondary">#03DAC6</color>
-    <color name="secondary_dark">#018786</color>
-    <color name="secondary_light">#E0F2F1</color>
-    <color name="background">#F8F9FA</color>
-    <color name="surface">#FFFFFF</color>
-    <color name="error">#B00020</color>
+    <!-- 
+    ╔══════════════════════════════════════════════════════════════╗
+    ║  ATTENDANCE SYSTEM - CLEAN DARK PALETTE                      ║
+    ║  Minimal & Professional | Smooth & Modern                    ║
+    ╚══════════════════════════════════════════════════════════════╝
+    -->
+
+    <!-- Primary Colors - Soft Blue -->
+    <color name="primary">#3B82F6</color>
+    <color name="primary_dark">#2563EB</color>
+    <color name="primary_light">#60A5FA</color>
+    <color name="primary_container">#1E3A5F</color>
     <color name="on_primary">#FFFFFF</color>
-    <color name="on_secondary">#000000</color>
-    <color name="on_background">#212121</color>
-    <color name="on_surface">#212121</color>
-    <color name="on_error">#FFFFFF</color>
+    <color name="on_primary_container">#DBEAFE</color>
     
-    <!-- Legacy colors for compatibility -->
-    <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="purple_700">#FF3700B3</color>
-    <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_700">#FF018786</color>
+    <!-- Secondary Colors - Soft Violet -->
+    <color name="secondary">#8B5CF6</color>
+    <color name="secondary_dark">#7C3AED</color>
+    <color name="secondary_light">#A78BFA</color>
+    <color name="secondary_container">#2E1065</color>
+    <color name="on_secondary">#FFFFFF</color>
+    <color name="on_secondary_container">#EDE9FE</color>
+    
+    <!-- Tertiary Colors - Soft Teal -->
+    <color name="tertiary">#14B8A6</color>
+    <color name="tertiary_dark">#0D9488</color>
+    <color name="tertiary_light">#2DD4BF</color>
+    <color name="tertiary_container">#134E4A</color>
+    <color name="on_tertiary">#FFFFFF</color>
+    <color name="on_tertiary_container">#CCFBF1</color>
+    
+    <!-- Background & Surface - Clean Dark -->
+    <color name="background">#111116</color>
+    <color name="background_secondary">#16161C</color>
+    <color name="surface">#1A1A21</color>
+    <color name="surface_variant">#22222B</color>
+    <color name="surface_container">#1E1E26</color>
+    <color name="surface_container_high">#252530</color>
+    <color name="surface_elevated">#22222B</color>
+    <color name="on_background">#F4F4F5</color>
+    <color name="on_surface">#E4E4E7</color>
+    <color name="on_surface_variant">#A1A1AA</color>
+    
+    <!-- Card Surfaces -->
+    <color name="card_background">#1A1A21</color>
+    <color name="card_background_elevated">#22222B</color>
+    <color name="card_border">#2E2E38</color>
+    <color name="dialog_background">#1E1E26</color>
+    
+    <!-- Text Colors -->
+    <color name="text_primary">#FAFAFA</color>
+    <color name="text_secondary">#A1A1AA</color>
+    <color name="text_hint">#71717A</color>
+    <color name="text_disabled">#52525B</color>
+    
+    <!-- Divider & Outline -->
+    <color name="divider">#27272A</color>
+    <color name="outline">#3F3F46</color>
+    <color name="outline_variant">#27272A</color>
+    
+    <!-- Error Colors -->
+    <color name="error">#EF4444</color>
+    <color name="error_dark">#DC2626</color>
+    <color name="error_container">#450A0A</color>
+    <color name="on_error">#FFFFFF</color>
+    <color name="on_error_container">#FECACA</color>
+    
+    <!-- Status Colors - Clean -->
+    <color name="status_present">#22C55E</color>
+    <color name="status_present_container">#14532D</color>
+    <color name="status_late">#F59E0B</color>
+    <color name="status_late_container">#78350F</color>
+    <color name="status_absent">#EF4444</color>
+    <color name="status_absent_container">#450A0A</color>
+    <color name="status_excused">#3B82F6</color>
+    <color name="status_excused_container">#1E3A5F</color>
+    <color name="status_cutting">#F97316</color>
+    <color name="status_cutting_container">#7C2D12</color>
+    
+    <!-- Success & Warning -->
+    <color name="success">#22C55E</color>
+    <color name="success_container">#14532D</color>
+    <color name="on_success">#FFFFFF</color>
+    <color name="warning">#F59E0B</color>
+    <color name="warning_container">#78350F</color>
+    <color name="on_warning">#000000</color>
+    
+    <!-- Gradient Colors -->
+    <color name="gradient_start">#3B82F6</color>
+    <color name="gradient_middle">#8B5CF6</color>
+    <color name="gradient_end">#14B8A6</color>
+    
+    <!-- Bottom Navigation -->
+    <color name="bottom_nav_background">#111116</color>
+    <color name="bottom_nav_selected">#3B82F6</color>
+    <color name="bottom_nav_unselected">#71717A</color>
+    <color name="bottom_nav_indicator">#1E3A5F</color>
+    
+    <!-- Interactive States -->
+    <color name="ripple">#203B82F6</color>
+    <color name="ripple_light">#103B82F6</color>
+    <color name="highlight">#103B82F6</color>
+    <color name="pressed">#2563EB</color>
+    
+    <!-- Shadows -->
+    <color name="shadow">#80000000</color>
+    <color name="shadow_light">#40000000</color>
+    <color name="scrim">#CC000000</color>
+    <color name="overlay">#80000000</color>
+    
+    <!-- QR Code -->
+    <color name="qr_active">#22C55E</color>
+    <color name="qr_expired">#EF4444</color>
+    <color name="qr_background">#1A1A21</color>
+    
+    <!-- Input Fields -->
+    <color name="input_background">#1A1A21</color>
+    <color name="input_stroke">#3F3F46</color>
+    <color name="input_stroke_focused">#3B82F6</color>
+    
+    <!-- Legacy/Compat -->
+    <color name="purple_200">#A78BFA</color>
+    <color name="purple_500">#8B5CF6</color>
+    <color name="purple_700">#7C3AED</color>
+    <color name="teal_200">#5EEAD4</color>
+    <color name="teal_700">#0F766E</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="primaryDark">#303F9F</color>
-
-    <!-- Attendance Status Colors -->
-    <color name="status_present">#4CAF50</color>  <!-- Green -->
-    <color name="status_late">#FF9800</color>     <!-- Orange -->
-    <color name="status_absent">#F44336</color>   <!-- Red -->
-    <color name="status_excused">#2196F3</color>  <!-- Blue -->
+    <color name="primaryDark">#2563EB</color>
     
-    <!-- Additional UI Colors - Fixed values for light theme -->
-    <color name="card_background">#FFFFFF</color>
-    <color name="divider">#E0E0E0</color>
-    <color name="text_primary">#212121</color>
-    <color name="text_secondary">#757575</color>
-    <color name="text_hint">#9E9E9E</color>
-    <color name="gradient_start">#1976D2</color>
-    <color name="gradient_end">#42A5F5</color>
-    <color name="shadow">#1A000000</color>
-    <color name="ripple">#1A1976D2</color>
+    <!-- Material 3 Tokens -->
+    <color name="onPrimary">@color/on_primary</color>
+    <color name="primaryContainer">@color/primary_container</color>
+    <color name="onPrimaryContainer">@color/on_primary_container</color>
+    <color name="onSecondary">@color/on_secondary</color>
+    <color name="secondaryContainer">@color/secondary_container</color>
+    <color name="onSecondaryContainer">@color/on_secondary_container</color>
+    <color name="tertiaryContainer">@color/tertiary_container</color>
+    <color name="onTertiaryContainer">@color/on_tertiary_container</color>
+    <color name="errorContainer">@color/error_container</color>
+    <color name="onErrorContainer">@color/on_error_container</color>
+    <color name="surfaceDim">#111116</color>
+    <color name="surfaceBright">#252530</color>
+    <color name="surfaceContainerLowest">#111116</color>
+    <color name="surfaceContainerLow">#16161C</color>
+    <color name="surfaceContainer">@color/surface_container</color>
+    <color name="surfaceContainerHigh">@color/surface_container_high</color>
+    <color name="surfaceContainerHighest">#2E2E38</color>
+    <color name="onSurface">@color/on_surface</color>
+    <color name="onSurfaceVariant">@color/on_surface_variant</color>
+    <color name="surfaceVariant">@color/surface_variant</color>
     
-    <!-- Material Design 3 Extended Colors -->
-    <color name="onPrimary">#FFFFFF</color>
-    <color name="primaryContainer">#E3F2FD</color>
-    <color name="onPrimaryContainer">#0D47A1</color>
-    <color name="onSecondary">#000000</color>
-    <color name="secondaryContainer">#E0F2F1</color>
-    <color name="onSecondaryContainer">#00695C</color>
-    <color name="tertiary">#9C27B0</color>
-    <color name="onTertiary">#FFFFFF</color>
-    <color name="tertiaryContainer">#F3E5F5</color>
-    <color name="onTertiaryContainer">#4A148C</color>
-    <color name="errorContainer">#FFEBEE</color>
-    <color name="onErrorContainer">#B71C1C</color>
-    <color name="outline">#79747E</color>
-    <color name="outlineVariant">#CAC4D0</color>
-    <color name="scrim">#000000</color>
-    <color name="inverseSurface">#2D2D2D</color>
-    <color name="inverseOnSurface">#F5F5F5</color>
-    <color name="inversePrimary">#90CAF9</color>
-    <color name="surfaceDim">#DDD7E0</color>
-    <color name="surfaceBright">#FFFFFF</color>
-    <color name="surfaceContainerLowest">#FFFFFF</color>
-    <color name="surfaceContainerLow">#F7F2FA</color>
-    <color name="surfaceContainer">#F1ECF4</color>
-    <color name="surfaceContainerHigh">#ECE6F0</color>
-    <color name="surfaceContainerHighest">#E6E0E9</color>
-    <color name="onSurface">#1C1B1F</color>
-    <color name="onSurfaceVariant">#757575</color>
-    <color name="surfaceVariant">#E7E0EC</color>
-    <color name="success">#4CAF50</color>
+    <!-- Navigation -->
+    <color name="theme_nav_background">#16161C</color>
+    <color name="theme_nav_selected">#3B82F6</color>
+    <color name="theme_nav_unselected">#71717A</color>
     
-    <!-- Bottom Navigation Colors -->
-    <color name="bottom_nav_selected">#1976D2</color>
-    <color name="bottom_nav_unselected">#9E9E9E</color>
-    
-    <!-- Theme Navigation Colors -->
-    <color name="theme_nav_background">#FFFFFF</color>
-    <color name="theme_nav_selected">#1976D2</color>
-    <color name="theme_nav_unselected">#9E9E9E</color>
+    <!-- Glow placeholders (not used but for compat) -->
+    <color name="glow_primary">#003B82F6</color>
+    <color name="glow_secondary">#008B5CF6</color>
+    <color name="glow_tertiary">#0014B8A6</color>
+    <color name="glow_success">#0022C55E</color>
+    <color name="status_present_glow">#0022C55E</color>
+    <color name="status_late_glow">#00F59E0B</color>
+    <color name="status_absent_glow">#00EF4444</color>
+    <color name="status_excused_glow">#003B82F6</color>
+    <color name="qr_active_glow">#0022C55E</color>
+    <color name="overlay_light">#20000000</color>
+    <color name="inverse_surface">#E4E4E7</color>
+    <color name="inverse_on_surface">#27272A</color>
+    <color name="inverse_primary">#2563EB</color>
+    <color name="text_on_gradient">#FFFFFF</color>
 </resources>
