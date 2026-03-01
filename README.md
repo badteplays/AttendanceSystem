@@ -218,8 +218,10 @@ flutter_app/
 
 ## 🐛 Known Issues
 
-- Teacher recent attendance recycler optimization in progress
-- Student status auto-update after class ends being improved
+Something about the Class system
+not being in fucking IOS
+Notifcation system
+Ugly ass ui
 
 ## 🔗 Repository
 
@@ -227,8 +229,8 @@ flutter_app/
 
 ---
 
-**Version**: 2.0 (Flutter)  
-**Last Updated**: January 2026  
+**Version**: 2.0 (Flutter) TBA 
+**Last Updated**: march 2026  
 **Platforms**: Android, iOS  
 **Min Android SDK**: 21 (Android 5.0)  
 **Min iOS**: 12.0
