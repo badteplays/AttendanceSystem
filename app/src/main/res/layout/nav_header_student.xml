@@ -31,9 +31,7 @@
             android:layout_height="48dp"
             android:layout_gravity="center"
             android:scaleType="centerCrop"
-            android:visibility="gone"
-            android:src="@drawable/ic_person"
-            app:tint="@color/white" />
+            android:visibility="gone" />
 
         <TextView
             android:id="@+id/navHeaderInitials"

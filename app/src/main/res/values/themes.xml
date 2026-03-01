@@ -7,7 +7,7 @@
     -->
     
     <!-- Base application theme - DARK MODE DEFAULT -->
-    <style name="Base.Theme.AttendanceSystem" parent="Theme.MaterialComponents.NoActionBar">
+    <style name="Base.Theme.AttendanceSystem" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Primary brand color - Electric Cyan -->
         <item name="colorPrimary">@color/primary</item>
         <item name="colorPrimaryVariant">@color/primary_dark</item>

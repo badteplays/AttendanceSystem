@@ -140,7 +140,7 @@ class StudentOptionsFragment : Fragment() {
         view.findViewById<LinearLayout>(R.id.buttonLogout).setOnClickListener { confirmLogout() }
 
         view.findViewById<LinearLayout>(R.id.buttonAboutUs)?.setOnClickListener {
-            val url = "https://badteplays.github.io/FPL-WEBSITE/website.html"
+            val url = "https://badteplays.github.io/FPL-WEBSITE/"
             try {
                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
                 startActivity(intent)
@@ -209,6 +209,7 @@ class StudentOptionsFragment : Fragment() {
                     val success = profileManager.saveProfilePicture(requireContext(), uri)
                     if (success) {
                         profileManager.loadProfilePicture(requireContext(), imageProfilePic, textInitials, textUserName.text.toString(), "ST")
+                        (activity as? StudentMainActivity)?.refreshNavHeader()
                         Toast.makeText(requireContext(), "Profile picture updated", Toast.LENGTH_SHORT).show()
                     } else {
                         Toast.makeText(requireContext(), "Failed to save profile picture", Toast.LENGTH_LONG).show()

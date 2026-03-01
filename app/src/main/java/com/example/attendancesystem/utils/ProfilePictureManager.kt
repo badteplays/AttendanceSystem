@@ -64,9 +64,11 @@ class ProfilePictureManager private constructor() {
 
                 initialsTextView.visibility = View.GONE
                 imageView.visibility = View.VISIBLE
+                imageView.imageTintList = null
 
                 Glide.with(context)
                     .load(Uri.parse(localProfilePicUri))
+                    .circleCrop()
                     .placeholder(R.drawable.ic_person)
                     .error(R.drawable.ic_person)
                     .into(imageView)

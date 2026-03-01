@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import com.google.android.material.navigation.NavigationView
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import android.content.Context
 import android.Manifest
 import android.content.pm.PackageManager
@@ -15,30 +16,26 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.example.attendancesystem.notifications.LocalNotificationManager
-<<<<<<< HEAD
 import com.example.attendancesystem.utils.ProfilePictureManager
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
-=======
->>>>>>> origin/master
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class StudentMainActivity : AppCompatActivity() {
 
-<<<<<<< HEAD
     private var drawerLayout: DrawerLayout? = null
     private var navigationView: NavigationView? = null
+    private var bottomNav: BottomNavigationView? = null
     private var notificationManager: LocalNotificationManager? = null
     private var headerListener: ListenerRegistration? = null
-=======
-    private lateinit var drawerLayout: DrawerLayout
-    private lateinit var navigationView: NavigationView
-    private lateinit var notificationManager: LocalNotificationManager
->>>>>>> origin/master
 
     companion object {
         private const val PERMISSION_REQUEST_CODE = 101
@@ -48,23 +45,21 @@ class StudentMainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_student_main)
 
-<<<<<<< HEAD
+        enableImmersiveMode()
+
         try {
-        notificationManager = LocalNotificationManager.getInstance(this)
-=======
-        notificationManager = LocalNotificationManager.getInstance(this)
-        
->>>>>>> origin/master
-        setupDrawerNavigation()
-        requestNecessaryPermissions()
-        bindNavHeader()
+            notificationManager = LocalNotificationManager.getInstance(this)
+            setupBottomNavigation()
+            setupDrawerNavigation()
+            requestNecessaryPermissions()
+            bindNavHeader()
         } catch (e: Exception) {
             android.util.Log.e("StudentMainActivity", "Error in onCreate: ${e.message}", e)
         }
 
         if (savedInstanceState == null) {
             val fragmentToLoad = when (intent.getStringExtra("fragment")) {
-                "schedule" -> StudentScheduleFragment()
+                "schedule" -> { bottomNav?.selectedItemId = R.id.nav_schedule; StudentScheduleFragment() }
                 "routines" -> StudentRoutinesFragment()
                 "history" -> StudentAttendanceHistoryFragment()
                 "profile" -> StudentOptionsFragment()
@@ -72,12 +67,53 @@ class StudentMainActivity : AppCompatActivity() {
             }
             loadFragment(fragmentToLoad)
         }
-        
-<<<<<<< HEAD
-=======
-        // Schedule notifications when student opens the app
->>>>>>> origin/master
+
         scheduleClassNotifications()
+    }
+
+    private fun enableImmersiveMode() {
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        val controller = WindowInsetsControllerCompat(window, window.decorView)
+        controller.hide(WindowInsetsCompat.Type.navigationBars())
+        controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+
+        findViewById<View>(R.id.fragmentContainer)?.let { container ->
+            ViewCompat.setOnApplyWindowInsetsListener(container) { view, insets ->
+                val statusBar = insets.getInsets(WindowInsetsCompat.Type.statusBars())
+                view.setPadding(0, statusBar.top, 0, 0)
+                insets
+            }
+        }
+
+        findViewById<View>(R.id.drawerHandle)?.let { handle ->
+            ViewCompat.setOnApplyWindowInsetsListener(handle) { view, insets ->
+                val statusBar = insets.getInsets(WindowInsetsCompat.Type.statusBars())
+                val lp = view.layoutParams as androidx.constraintlayout.widget.ConstraintLayout.LayoutParams
+                lp.topMargin = statusBar.top + 16
+                view.layoutParams = lp
+                insets
+            }
+        }
+
+        findViewById<BottomNavigationView>(R.id.bottomNav)?.let { nav ->
+            ViewCompat.setOnApplyWindowInsetsListener(nav) { view, insets ->
+                val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+                view.setPadding(0, 0, 0, systemBars.bottom)
+                insets
+            }
+        }
+    }
+
+    private fun setupBottomNavigation() {
+        bottomNav = findViewById(R.id.bottomNav)
+        bottomNav?.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_home -> { loadFragment(StudentDashboardFragment()); true }
+                R.id.nav_scan -> { loadFragment(QRScannerFragment()); true }
+                R.id.nav_schedule -> { loadFragment(StudentScheduleFragment()); true }
+                else -> false
+            }
+        }
     }
 
     private fun setupDrawerNavigation() {
@@ -97,9 +133,6 @@ class StudentMainActivity : AppCompatActivity() {
 
         navigationView?.setNavigationItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
-                R.id.drawer_home -> { loadFragment(StudentDashboardFragment()); true }
-                R.id.drawer_scan -> { loadFragment(QRScannerFragment()); true }
-                R.id.drawer_schedule -> { loadFragment(StudentScheduleFragment()); true }
                 R.id.drawer_routines -> { loadFragment(StudentRoutinesFragment()); true }
                 R.id.drawer_history -> { loadFragment(StudentAttendanceHistoryFragment()); true }
                 R.id.drawer_profile -> { loadFragment(StudentOptionsFragment()); true }
@@ -148,9 +181,12 @@ class StudentMainActivity : AppCompatActivity() {
         }
     }
 
+    fun refreshNavHeader() {
+        bindNavHeader()
+    }
+
     fun navigateToDashboard() {
-        navigationView?.setCheckedItem(R.id.drawer_home)
-        loadFragment(StudentDashboardFragment())
+        bottomNav?.selectedItemId = R.id.nav_home
     }
 
     override fun onBackPressed() {
@@ -179,7 +215,6 @@ class StudentMainActivity : AppCompatActivity() {
         }
 
         if (permissionsToRequest.isNotEmpty()) {
-            android.util.Log.d("StudentMainActivity", "Requesting permissions: ${permissionsToRequest.joinToString()}")
             ActivityCompat.requestPermissions(
                 this,
                 permissionsToRequest.toTypedArray(),
@@ -219,43 +254,26 @@ class StudentMainActivity : AppCompatActivity() {
                     else -> "Some permissions were denied"
                 }
                 Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-                android.util.Log.w("StudentMainActivity", "Denied permissions: ${deniedPermissions.joinToString()}")
             } else {
-                // All permissions granted, reschedule notifications
                 scheduleClassNotifications()
             }
         }
     }
-<<<<<<< HEAD
 
     override fun onDestroy() {
         headerListener?.remove()
         headerListener = null
         super.onDestroy()
     }
-    
+
     private fun scheduleClassNotifications() {
         val prefs = getSharedPreferences("student_prefs", Context.MODE_PRIVATE)
         if (!prefs.getBoolean("notifications_enabled", true)) return
-        
+
         val mgr = notificationManager ?: return
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 mgr.scheduleAllClassNotifications()
-=======
-    
-    private fun scheduleClassNotifications() {
-        val prefs = getSharedPreferences("student_prefs", Context.MODE_PRIVATE)
-        if (!prefs.getBoolean("notifications_enabled", true)) {
-            android.util.Log.d("StudentMainActivity", "Notifications disabled, skipping schedule")
-            return
-        }
-        
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                notificationManager.scheduleAllClassNotifications()
-                android.util.Log.d("StudentMainActivity", "Class notifications scheduled")
->>>>>>> origin/master
             } catch (e: Exception) {
                 android.util.Log.e("StudentMainActivity", "Error scheduling notifications: ${e.message}", e)
             }

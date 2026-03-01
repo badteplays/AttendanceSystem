@@ -46,6 +46,7 @@ class TeacherOptionsFragment : Fragment() {
                                 "TC"
                             )
                         }
+                        (activity as? TeacherMainActivity)?.refreshNavHeader()
                     } else {
                         Toast.makeText(requireContext(), "Failed to save profile picture", Toast.LENGTH_LONG).show()
                     }
@@ -68,7 +69,7 @@ class TeacherOptionsFragment : Fragment() {
         }
 
         view.findViewById<LinearLayout>(R.id.buttonAboutUs)?.setOnClickListener {
-            val url = "https://badteplays.github.io/FPL-WEBSITE/website.html"
+            val url = "https://badteplays.github.io/FPL-WEBSITE/"
             try {
                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
                 startActivity(intent)

@@ -8,17 +8,11 @@
     <item
         android:id="@+id/nav_scan"
         android:icon="@drawable/ic_qr_code"
-        android:title="Scan QR" />
+        android:title="Scan QR"
+        android:checkable="true" />
     <item
         android:id="@+id/nav_schedule"
         android:icon="@drawable/ic_calendar"
-        android:title="Schedule" />
-    <item
-        android:id="@+id/nav_history"
-        android:icon="@drawable/ic_hours"
-        android:title="History" />
-    <item
-        android:id="@+id/nav_profile"
-        android:icon="@drawable/ic_person"
-        android:title="Profile" />
+        android:title="Schedule"
+        android:checkable="true" />
 </menu>

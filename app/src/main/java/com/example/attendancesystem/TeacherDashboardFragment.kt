@@ -387,108 +387,42 @@ class TeacherDashboardFragment : Fragment() {
     }
 
     private fun loadRecentAttendanceFallback() {
-
         val uid = auth.currentUser?.uid ?: return
 
         attendanceListener?.remove()
         listeningScheduleId = null
         listeningSubject = null
 
-        android.util.Log.d(TAG, "Loading fallback with REAL-TIME listener for active/archived attendance")
-
-        val calendar = java.util.Calendar.getInstance()
-        calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
-        calendar.set(java.util.Calendar.MINUTE, 0)
-        calendar.set(java.util.Calendar.SECOND, 0)
-        calendar.set(java.util.Calendar.MILLISECOND, 0)
-        val todayMillis = calendar.timeInMillis
-
         attendanceListener = db.collection("attendance")
             .whereEqualTo("teacherId", uid)
             .addSnapshotListener { activeSnapshot, e ->
                 if (e != null) {
                     android.util.Log.e(TAG, "Attendance fallback listen failed: ${e.message}", e)
-                    Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_SHORT).show()
                     return@addSnapshotListener
                 }
 
-                db.collection("archived_attendance")
-                    .whereEqualTo("teacherId", uid)
-                    .get()
-                    .addOnSuccessListener { archivedSnapshot ->
+                val sortedDocs = (activeSnapshot?.documents ?: emptyList())
+                    .sortedByDescending { it.getTimestamp("timestamp")?.seconds ?: 0 }
+                    .take(RECENT_ATTENDANCE_LIMIT)
 
-                        val archivedFromToday = archivedSnapshot.documents.filter {
-                            val archivedAt = it.getLong("archivedAt") ?: 0L
-                            archivedAt >= todayMillis
-                        }
+                val newAttendanceList = sortedDocs.map { doc ->
+                    TeacherAttendanceItem(
+                        documentId = doc.id,
+                        studentName = doc.getString("studentName") ?: "Unknown Student",
+                        timeTaken = formatTimestamp(doc.getTimestamp("timestamp")),
+                        section = doc.getString("section") ?: "",
+                        status = doc.getString("status") ?: "PRESENT"
+                    )
+                }
 
-                        val allDocs = (activeSnapshot?.documents ?: emptyList()) + archivedFromToday
+                attendanceList.clear()
+                attendanceList.addAll(newAttendanceList)
 
-                        val sortedDocs = allDocs
-                            .sortedByDescending { it.getTimestamp("timestamp")?.seconds ?: 0 }
-                            .take(RECENT_ATTENDANCE_LIMIT)
-
-                        val newAttendanceList = sortedDocs.map { doc ->
-                            TeacherAttendanceItem(
-                                documentId = doc.id,
-                                studentName = doc.getString("studentName") ?: "Unknown Student",
-                                timeTaken = formatTimestamp(doc.getTimestamp("timestamp")),
-                                section = doc.getString("section") ?: "",
-                                status = doc.getString("status") ?: "PRESENT"
-                            )
-                        }
-
-                        val oldSize = attendanceList.size
-                        attendanceList.clear()
-                        attendanceList.addAll(newAttendanceList)
-
-                        attendanceAdapter = TeacherAttendanceAdapter(attendanceList) { item ->
-
-                            if (archivedFromToday.any { it.id == item.documentId }) {
-                                Toast.makeText(requireContext(), "Cannot modify archived attendance", Toast.LENGTH_SHORT).show()
-                            } else {
-                                confirmAndRemoveAttendance(item)
-                            }
-                        }
-                        attendanceRecyclerView.adapter = attendanceAdapter
-
-                        if (newAttendanceList.size > oldSize) {
-                            attendanceRecyclerView.smoothScrollToPosition(0)
-                        }
-
-                        val activeCount = activeSnapshot?.documents?.size ?: 0
-                        val archivedCount = archivedFromToday.size
-                        val label = if (archivedCount > 0) " ($activeCount active, $archivedCount archived)" else ""
-                        textAttendanceCount.text = "Total: ${attendanceList.size}$label"
-
-                        android.util.Log.d(TAG, "Loaded ${attendanceList.size} attendance records ($activeCount active, $archivedCount archived) with REAL-TIME updates")
-                    }
-                    .addOnFailureListener { archiveError ->
-                        android.util.Log.e(TAG, "Error loading archived attendance: ${archiveError.message}", archiveError)
-
-                        val sortedDocs = (activeSnapshot?.documents ?: emptyList())
-                            .sortedByDescending { it.getTimestamp("timestamp")?.seconds ?: 0 }
-                            .take(RECENT_ATTENDANCE_LIMIT)
-
-                        val newAttendanceList = sortedDocs.map { doc ->
-                            TeacherAttendanceItem(
-                                documentId = doc.id,
-                                studentName = doc.getString("studentName") ?: "Unknown Student",
-                                timeTaken = formatTimestamp(doc.getTimestamp("timestamp")),
-                                section = doc.getString("section") ?: "",
-                                status = doc.getString("status") ?: "PRESENT"
-                            )
-                        }
-
-                        attendanceList.clear()
-                        attendanceList.addAll(newAttendanceList)
-
-                        attendanceAdapter = TeacherAttendanceAdapter(attendanceList) { item ->
-                            confirmAndRemoveAttendance(item)
-                        }
-                        attendanceRecyclerView.adapter = attendanceAdapter
-                        textAttendanceCount.text = "Total: ${attendanceList.size}"
-                    }
+                attendanceAdapter = TeacherAttendanceAdapter(attendanceList) { item ->
+                    confirmAndRemoveAttendance(item)
+                }
+                attendanceRecyclerView.adapter = attendanceAdapter
+                textAttendanceCount.text = "Total: ${attendanceList.size}"
             }
     }
 

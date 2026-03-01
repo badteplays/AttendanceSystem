@@ -76,19 +76,16 @@
                         android:textStyle="bold"
                         android:textColor="@color/text_primary" />
 
-                </LinearLayout>
+                    <TextView
+                        android:id="@+id/textDepartment"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Department"
+                        android:textSize="13sp"
+                        android:textColor="@color/secondary"
+                        android:layout_marginTop="2dp" />
 
-                <TextView
-                    android:id="@+id/textDepartment"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Dept"
-                    android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/secondary"
-                    android:background="@drawable/chip_secondary"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="6dp" />
+                </LinearLayout>
 
             </LinearLayout>
 
@@ -202,7 +199,7 @@
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="100dp"
+                android:layout_marginBottom="16dp"
                 app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
                 app:strokeWidth="1dp"
@@ -254,62 +251,68 @@
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/buttonRefreshAttendance"
                             android:layout_width="0dp"
-                            android:layout_height="44dp"
+                            android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:layout_marginEnd="4dp"
+                            android:minWidth="0dp"
+                            android:minHeight="40dp"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:paddingHorizontal="4dp"
                             android:text="Refresh"
                             android:textAllCaps="false"
-                            android:textSize="12sp"
+                            android:textSize="11sp"
                             android:textColor="@color/text_secondary"
+                            android:maxLines="1"
                             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                             app:cornerRadius="10dp"
                             app:strokeColor="@color/outline"
                             app:strokeWidth="1dp"
-                            app:backgroundTint="@color/surface_variant"
-                            app:icon="@drawable/ic_refresh"
-                            app:iconSize="16dp"
-                            app:iconTint="@color/text_secondary"
-                            app:iconPadding="4dp" />
+                            app:backgroundTint="@color/surface_variant" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/buttonManualAdd"
                             android:layout_width="0dp"
-                            android:layout_height="44dp"
+                            android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:layout_marginHorizontal="4dp"
+                            android:minWidth="0dp"
+                            android:minHeight="40dp"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:paddingHorizontal="4dp"
                             android:text="Manual"
                             android:textAllCaps="false"
-                            android:textSize="12sp"
+                            android:textSize="11sp"
                             android:textColor="@color/text_secondary"
+                            android:maxLines="1"
                             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                             app:cornerRadius="10dp"
                             app:strokeColor="@color/outline"
                             app:strokeWidth="1dp"
-                            app:backgroundTint="@color/surface_variant"
-                            app:icon="@drawable/ic_add"
-                            app:iconSize="16dp"
-                            app:iconTint="@color/text_secondary"
-                            app:iconPadding="4dp" />
+                            app:backgroundTint="@color/surface_variant" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/buttonAnalytics"
                             android:layout_width="0dp"
-                            android:layout_height="44dp"
+                            android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:layout_marginStart="4dp"
+                            android:minWidth="0dp"
+                            android:minHeight="40dp"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:paddingHorizontal="4dp"
                             android:text="Stats"
                             android:textAllCaps="false"
-                            android:textSize="12sp"
+                            android:textSize="11sp"
                             android:textColor="@color/text_secondary"
+                            android:maxLines="1"
                             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                             app:cornerRadius="10dp"
                             app:strokeColor="@color/outline"
                             app:strokeWidth="1dp"
-                            app:backgroundTint="@color/surface_variant"
-                            app:icon="@drawable/ic_analytics"
-                            app:iconSize="16dp"
-                            app:iconTint="@color/text_secondary"
-                            app:iconPadding="4dp" />
+                            app:backgroundTint="@color/surface_variant" />
 
                     </LinearLayout>
 

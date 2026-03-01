@@ -6,6 +6,9 @@ import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import com.example.attendancesystem.databinding.ActivityQrBinding
 import com.example.attendancesystem.models.QRCodeData
@@ -31,6 +34,11 @@ class QRActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityQrBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        val insetsController = WindowInsetsControllerCompat(window, window.decorView)
+        insetsController.hide(WindowInsetsCompat.Type.navigationBars())
+        insetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
 
         scheduleId = intent.getStringExtra("scheduleId") ?: throw IllegalArgumentException("Schedule ID required")
         subject = intent.getStringExtra("subject") ?: throw IllegalArgumentException("Subject required")
@@ -66,9 +74,6 @@ class QRActivity : AppCompatActivity() {
             handle?.setOnClickListener { androidx.core.view.GravityCompat.END.let { drawerLayout?.openDrawer(it) } }
             nav?.setNavigationItemSelectedListener { item ->
                 when (item.itemId) {
-                    R.id.drawer_home -> { finish(); true }
-                    R.id.drawer_schedule -> { startActivity(android.content.Intent(this, TeacherMainActivity::class.java).putExtra("open","schedule")); true }
-                    R.id.drawer_analytics -> { startActivity(android.content.Intent(this, TeacherMainActivity::class.java).putExtra("open","analytics")); true }
                     R.id.drawer_settings -> { startActivity(android.content.Intent(this, TeacherMainActivity::class.java).putExtra("open","settings")); true }
                     else -> false
                 }.also { drawerLayout?.closeDrawers() }

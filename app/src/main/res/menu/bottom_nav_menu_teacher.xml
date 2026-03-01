@@ -8,18 +8,11 @@
     <item
         android:id="@+id/nav_schedule"
         android:icon="@drawable/ic_calendar"
-        android:title="Schedules" />
-    <item
-        android:id="@+id/nav_attendance"
-        android:icon="@drawable/ic_checklist"
-        android:title="Attendance" />
+        android:title="Schedules"
+        android:checkable="true" />
     <item
         android:id="@+id/nav_analytics"
         android:icon="@drawable/ic_analytics"
-        android:title="Analytics" />
-    <item
-        android:id="@+id/nav_settings"
-        android:icon="@drawable/ic_person"
-        android:title="Profile" />
-    
+        android:title="Analytics"
+        android:checkable="true" />
 </menu>

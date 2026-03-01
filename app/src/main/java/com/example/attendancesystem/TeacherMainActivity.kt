@@ -5,12 +5,17 @@ import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.google.android.material.navigation.NavigationView
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import androidx.core.view.GravityCompat
 import android.Manifest
 import android.content.pm.PackageManager
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import android.widget.ImageView
 import android.widget.TextView
 import com.example.attendancesystem.utils.ProfilePictureManager
@@ -23,42 +28,99 @@ class TeacherMainActivity : AppCompatActivity() {
     companion object {
         private const val PERMISSION_REQUEST_CODE = 102
     }
+
     private var headerListener: ListenerRegistration? = null
     private var drawerLayout: androidx.drawerlayout.widget.DrawerLayout? = null
     private var navigationView: NavigationView? = null
+    private var bottomNav: BottomNavigationView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_teacher_main)
 
-        try {
-            drawerLayout = findViewById(R.id.drawerLayout)
-            navigationView = findViewById(R.id.navigationView)
-            val handle = findViewById<View>(R.id.drawerHandle)
-        handle?.setOnClickListener { drawerLayout?.openDrawer(GravityCompat.END) }
-        navigationView?.setNavigationItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.drawer_home -> { load(TeacherDashboardFragment()); true }
-                R.id.drawer_schedule -> { load(TeacherSchedulesFragment()); true }
-                R.id.drawer_analytics -> { load(TeacherAnalyticsFragment()); true }
-                R.id.drawer_settings -> { load(TeacherOptionsFragment()); true }
-                else -> false
-            }.also { drawerLayout?.closeDrawers() }
-        }
+        enableImmersiveMode()
 
-        requestCameraPermission()
+        try {
+            setupBottomNavigation()
+            setupDrawerNavigation()
+            requestCameraPermission()
             bindNavHeader()
         } catch (e: Exception) {
             android.util.Log.e("TeacherMainActivity", "Error in onCreate: ${e.message}", e)
         }
 
         if (savedInstanceState == null) {
-            val open = intent?.getStringExtra("open")
-            if (open == "analytics") {
-                load(TeacherAnalyticsFragment())
-            } else {
-                load(TeacherDashboardFragment())
+            when (intent?.getStringExtra("open")) {
+                "analytics" -> {
+                    bottomNav?.selectedItemId = R.id.nav_analytics
+                }
+                "schedule" -> {
+                    bottomNav?.selectedItemId = R.id.nav_schedule
+                }
+                "settings" -> {
+                    load(TeacherOptionsFragment())
+                }
+                else -> load(TeacherDashboardFragment())
             }
+        }
+    }
+
+    private fun enableImmersiveMode() {
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        val controller = WindowInsetsControllerCompat(window, window.decorView)
+        controller.hide(WindowInsetsCompat.Type.navigationBars())
+        controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+
+        findViewById<View>(R.id.fragmentContainer)?.let { container ->
+            ViewCompat.setOnApplyWindowInsetsListener(container) { view, insets ->
+                val statusBar = insets.getInsets(WindowInsetsCompat.Type.statusBars())
+                view.setPadding(0, statusBar.top, 0, 0)
+                insets
+            }
+        }
+
+        findViewById<View>(R.id.drawerHandle)?.let { handle ->
+            ViewCompat.setOnApplyWindowInsetsListener(handle) { view, insets ->
+                val statusBar = insets.getInsets(WindowInsetsCompat.Type.statusBars())
+                val lp = view.layoutParams as androidx.constraintlayout.widget.ConstraintLayout.LayoutParams
+                lp.topMargin = statusBar.top + 16
+                view.layoutParams = lp
+                insets
+            }
+        }
+
+        findViewById<BottomNavigationView>(R.id.bottomNav)?.let { nav ->
+            ViewCompat.setOnApplyWindowInsetsListener(nav) { view, insets ->
+                val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+                view.setPadding(0, 0, 0, systemBars.bottom)
+                insets
+            }
+        }
+    }
+
+    private fun setupBottomNavigation() {
+        bottomNav = findViewById(R.id.bottomNav)
+        bottomNav?.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_home -> { load(TeacherDashboardFragment()); true }
+                R.id.nav_schedule -> { load(TeacherSchedulesFragment()); true }
+                R.id.nav_analytics -> { load(TeacherAnalyticsFragment()); true }
+                else -> false
+            }
+        }
+    }
+
+    private fun setupDrawerNavigation() {
+        drawerLayout = findViewById(R.id.drawerLayout)
+        navigationView = findViewById(R.id.navigationView)
+        val handle = findViewById<View>(R.id.drawerHandle)
+        handle?.setOnClickListener { drawerLayout?.openDrawer(GravityCompat.END) }
+
+        navigationView?.setNavigationItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.drawer_settings -> { load(TeacherOptionsFragment()); true }
+                else -> false
+            }.also { drawerLayout?.closeDrawers() }
         }
     }
 
@@ -89,6 +151,10 @@ class TeacherMainActivity : AppCompatActivity() {
             }
     }
 
+    fun refreshNavHeader() {
+        bindNavHeader()
+    }
+
     private fun load(fragment: Fragment) {
         try {
             supportFragmentManager.beginTransaction()
@@ -96,7 +162,6 @@ class TeacherMainActivity : AppCompatActivity() {
                 .commit()
         } catch (e: Exception) {
             android.util.Log.e("TeacherMainActivity", "Error loading fragment: ${e.message}", e)
-
             if (fragment !is TeacherDashboardFragment) {
                 load(TeacherDashboardFragment())
             }
@@ -104,10 +169,8 @@ class TeacherMainActivity : AppCompatActivity() {
     }
 
     private fun requestCameraPermission() {
-
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
             != PackageManager.PERMISSION_GRANTED) {
-            android.util.Log.d("TeacherMainActivity", "Requesting camera permission")
             ActivityCompat.requestPermissions(
                 this,
                 arrayOf(Manifest.permission.CAMERA),
@@ -130,7 +193,6 @@ class TeacherMainActivity : AppCompatActivity() {
                     "Camera permission is needed to display QR codes for attendance",
                     Toast.LENGTH_LONG
                 ).show()
-                android.util.Log.w("TeacherMainActivity", "Camera permission denied")
             }
         }
     }
@@ -141,5 +203,3 @@ class TeacherMainActivity : AppCompatActivity() {
         super.onDestroy()
     }
 }
-
-
