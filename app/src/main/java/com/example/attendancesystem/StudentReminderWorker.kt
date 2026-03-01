@@ -10,11 +10,6 @@ import kotlinx.coroutines.tasks.await
 import java.util.Calendar
 import java.util.Locale
 
-/**
- * Background worker that runs periodically to check for upcoming classes.
- * This acts as a backup to AlarmManager-based notifications.
- * WorkManager runs every 15 minutes minimum.
- */
 class StudentReminderWorker(
     context: Context,
     params: WorkerParameters
@@ -29,29 +24,35 @@ class StudentReminderWorker(
             val user = auth.currentUser ?: return Result.success()
 
             val reminderMinutes = prefs.getInt("reminder_minutes", 10)
-            
-            // Check for upcoming classes and show notification if within window
+
             val upcomingClass = getUpcomingClass(user.uid, reminderMinutes)
             if (upcomingClass != null) {
-                val (subject, timeUntil) = upcomingClass
-                val notificationManager = LocalNotificationManager.getInstance(applicationContext)
-                notificationManager.showNotification(
-                    title = "📚 Class Reminder",
-                    message = "$subject class starts in ~$timeUntil minutes. Time to head to class!"
-                )
+                val (subject, timeUntil, scheduleId) = upcomingClass
+
+                val notifPrefs = applicationContext.getSharedPreferences("notif_shown", Context.MODE_PRIVATE)
+                val today = Calendar.getInstance().get(Calendar.DAY_OF_YEAR).toString()
+                val key = "${scheduleId}_$today"
+
+                if (!notifPrefs.getBoolean(key, false)) {
+                    val notificationManager = LocalNotificationManager.getInstance(applicationContext)
+                    notificationManager.showNotification(
+                        title = "📚 Class Starting Soon!",
+                        message = "$subject class starts in ~$timeUntil minutes. Time to head to class!"
+                    )
+                    notifPrefs.edit().putBoolean(key, true).apply()
+                }
             }
-            
-            // Also ensure alarms are scheduled (in case they were cleared)
+
             LocalNotificationManager.getInstance(applicationContext).scheduleAllClassNotifications()
-            
+
             Result.success()
         } catch (e: Exception) {
             android.util.Log.e("StudentReminder", "Worker error: ${e.message}", e)
-            Result.failure()
+            Result.retry()
         }
     }
 
-    private suspend fun getUpcomingClass(studentId: String, reminderMinutes: Int): Pair<String, Int>? {
+    private suspend fun getUpcomingClass(studentId: String, reminderMinutes: Int): Triple<String, Int, String>? {
         return try {
             val db = FirebaseFirestore.getInstance()
             val userDoc = db.collection("users").document(studentId).get().await()
@@ -86,18 +87,17 @@ class StudentReminderWorker(
             for (doc in schedules) {
                 val startTime = doc.getString("startTime") ?: continue
                 val subject = doc.getString("subject") ?: "Class"
-                
+
                 try {
                     val timeParts = startTime.split(":")
                     val classHour = timeParts[0].toInt()
                     val classMinute = timeParts[1].toInt()
                     val classTimeInMinutes = classHour * 60 + classMinute
-                    
+
                     val minutesUntilClass = classTimeInMinutes - currentTimeInMinutes
-                    
-                    // Check if class is within reminder window (±5 minute buffer for WorkManager imprecision)
-                    if (minutesUntilClass in (reminderMinutes - 5)..(reminderMinutes + 10)) {
-                        return Pair(subject, minutesUntilClass)
+
+                    if (minutesUntilClass in 1..(reminderMinutes + 15)) {
+                        return Triple(subject, minutesUntilClass, doc.id)
                     }
                 } catch (e: Exception) {
                     continue

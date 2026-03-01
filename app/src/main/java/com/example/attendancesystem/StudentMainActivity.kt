@@ -7,9 +7,13 @@ import androidx.fragment.app.Fragment
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import android.content.Context
+import android.content.Intent
 import android.Manifest
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
+import android.os.PowerManager
+import android.provider.Settings
 import android.view.View
 import android.widget.Toast
 import android.widget.ImageView
@@ -20,6 +24,9 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.example.attendancesystem.notifications.LocalNotificationManager
 import com.example.attendancesystem.utils.ProfilePictureManager
 import com.google.firebase.auth.FirebaseAuth
@@ -28,6 +35,7 @@ import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 
 class StudentMainActivity : AppCompatActivity() {
 
@@ -69,6 +77,36 @@ class StudentMainActivity : AppCompatActivity() {
         }
 
         scheduleClassNotifications()
+        requestBatteryOptimizationExemption()
+        requestExactAlarmPermission()
+    }
+
+    private fun requestBatteryOptimizationExemption() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
+            if (!pm.isIgnoringBatteryOptimizations(packageName)) {
+                try {
+                    val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                        data = Uri.parse("package:$packageName")
+                    }
+                    startActivity(intent)
+                } catch (_: Exception) { }
+            }
+        }
+    }
+
+    private fun requestExactAlarmPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val alarmManager = getSystemService(Context.ALARM_SERVICE) as android.app.AlarmManager
+            if (!alarmManager.canScheduleExactAlarms()) {
+                try {
+                    val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                        data = Uri.parse("package:$packageName")
+                    }
+                    startActivity(intent)
+                } catch (_: Exception) { }
+            }
+        }
     }
 
     private fun enableImmersiveMode() {
@@ -277,6 +315,19 @@ class StudentMainActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 android.util.Log.e("StudentMainActivity", "Error scheduling notifications: ${e.message}", e)
             }
+        }
+
+        try {
+            val workRequest = PeriodicWorkRequestBuilder<StudentReminderWorker>(
+                15, TimeUnit.MINUTES
+            ).build()
+            WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+                "student_reminder_work",
+                ExistingPeriodicWorkPolicy.KEEP,
+                workRequest
+            )
+        } catch (e: Exception) {
+            android.util.Log.e("StudentMainActivity", "Error scheduling worker: ${e.message}", e)
         }
     }
 }

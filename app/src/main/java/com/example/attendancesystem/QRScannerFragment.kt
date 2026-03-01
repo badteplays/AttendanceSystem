@@ -228,8 +228,8 @@ class QRScannerFragment : Fragment() {
                 val studentName = userDoc.getString("name") ?: "Unknown Student"
 
 
-                if (scannedSessions.contains(qrData.sessionId)) {
-                    android.util.Log.d(TAG, "Duplicate scan detected (app session) - Session: ${qrData.sessionId}")
+                if (scannedSessions.contains(qrData.scheduleId)) {
+                    android.util.Log.d(TAG, "Duplicate scan detected (app session) - Schedule: ${qrData.scheduleId}")
                     showToast("You've already marked attendance for this class!")
                     progressBar.visibility = View.GONE
                     isProcessing = false
@@ -237,15 +237,24 @@ class QRScannerFragment : Fragment() {
                     return@launch
                 }
 
-                val existingBySession = db.collection("attendance")
+                val todayStart = java.util.Calendar.getInstance().apply {
+                    set(java.util.Calendar.HOUR_OF_DAY, 0)
+                    set(java.util.Calendar.MINUTE, 0)
+                    set(java.util.Calendar.SECOND, 0)
+                    set(java.util.Calendar.MILLISECOND, 0)
+                }
+                val todayTimestamp = com.google.firebase.Timestamp(todayStart.time)
+
+                val existingBySchedule = db.collection("attendance")
                     .whereEqualTo("userId", currentUser.uid)
-                    .whereEqualTo("sessionId", qrData.sessionId)
+                    .whereEqualTo("scheduleId", qrData.scheduleId)
+                    .whereGreaterThanOrEqualTo("timestamp", todayTimestamp)
                     .get().await()
 
-                if (!existingBySession.isEmpty) {
-                    android.util.Log.d(TAG, "Duplicate scan detected - already scanned this QR session")
-                    scannedSessions.add(qrData.sessionId)
-                    showToast("You've already scanned this QR code!")
+                if (!existingBySchedule.isEmpty) {
+                    android.util.Log.d(TAG, "Duplicate scan detected - already attended this class today")
+                    scannedSessions.add(qrData.scheduleId)
+                    showToast("You've already marked attendance for this class!")
                     progressBar.visibility = View.GONE
                     isProcessing = false
                     stopTimer()
@@ -279,9 +288,9 @@ class QRScannerFragment : Fragment() {
                 val docRef = db.collection("attendance").add(attendanceData).await()
                 android.util.Log.d(TAG, "✓✓✓ ATTENDANCE SAVED! Document ID: ${docRef.id} ✓✓✓")
 
-                scannedSessions.add(qrData.sessionId)
+                scannedSessions.add(qrData.scheduleId)
 
-                android.util.Log.d(TAG, "Attendance marked successfully - Session: ${qrData.sessionId}, Subject: ${qrData.subject}")
+                android.util.Log.d(TAG, "Attendance marked successfully - Schedule: ${qrData.scheduleId}, Subject: ${qrData.subject}")
 
                 progressBar.visibility = View.GONE
                 stopTimer()
