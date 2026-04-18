@@ -28,6 +28,7 @@ import jxl.format.Alignment
 import jxl.format.BorderLineStyle
 import jxl.format.Colour
 import jxl.write.Label
+import jxl.write.Number
 import jxl.write.WritableCellFormat
 import jxl.write.WritableFont
 import jxl.write.WritableWorkbook
