@@ -160,6 +160,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen>
         ],
       ),
       floatingActionButton: _buildFAB(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
     );
   }
 

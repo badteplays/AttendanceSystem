@@ -28,6 +28,8 @@ class QRActivity : AppCompatActivity() {
     private lateinit var scheduleId: String
     private lateinit var subject: String
     private lateinit var section: String
+    private var classStartTime: String = ""
+    private var firstGeneratedAt: Long = 0L
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,6 +45,7 @@ class QRActivity : AppCompatActivity() {
         scheduleId = intent.getStringExtra("scheduleId") ?: throw IllegalArgumentException("Schedule ID required")
         subject = intent.getStringExtra("subject") ?: throw IllegalArgumentException("Subject required")
         section = intent.getStringExtra("section") ?: throw IllegalArgumentException("Section required")
+        classStartTime = intent.getStringExtra("startTime") ?: ""
         val forceNew = intent.getBooleanExtra("forceNew", false)
 
         setupViews()
@@ -57,28 +60,16 @@ class QRActivity : AppCompatActivity() {
     }
 
     private fun setupViews() {
+        binding.btnBack.setOnClickListener { finish() }
+        binding.txtHeaderSub.text = "$subject · $section"
+
         binding.btnRenewQR.setOnClickListener {
-            Log.d("QRActivity", "Renew QR button clicked")
             Toast.makeText(this, "Generating new QR code...", Toast.LENGTH_SHORT).show()
             generateQRCode()
         }
         binding.btnSetExpiration.setOnClickListener {
-            Log.d("QRActivity", "Set Expiration button clicked")
             showExpirationDialog()
         }
-
-        try {
-            val drawerLayout = findViewById<androidx.drawerlayout.widget.DrawerLayout>(R.id.drawerLayout)
-            val handle = findViewById<android.widget.ImageView>(R.id.drawerHandle)
-            val nav = findViewById<com.google.android.material.navigation.NavigationView>(R.id.navigationView)
-            handle?.setOnClickListener { androidx.core.view.GravityCompat.END.let { drawerLayout?.openDrawer(it) } }
-            nav?.setNavigationItemSelectedListener { item ->
-                when (item.itemId) {
-                    R.id.drawer_settings -> { startActivity(android.content.Intent(this, TeacherMainActivity::class.java).putExtra("open","settings")); true }
-                    else -> false
-                }.also { drawerLayout?.closeDrawers() }
-            }
-        } catch (_: Exception) { }
     }
 
 
@@ -102,14 +93,21 @@ class QRActivity : AppCompatActivity() {
                     expirationMinutes = currentExpirationMinutes
                 )
 
+                val now = System.currentTimeMillis()
+                if (firstGeneratedAt == 0L) firstGeneratedAt = now
+
                 val sessionData = hashMapOf(
                     "sessionId" to sessionId,
                     "teacherId" to userId,
                     "scheduleId" to scheduleId,
                     "subject" to subject,
                     "section" to section,
-                    "createdAt" to System.currentTimeMillis(),
-                    "expiresAt" to (System.currentTimeMillis() + currentExpirationMinutes * 60 * 1000L)
+                    "active" to true,
+                    "createdAt" to now,
+                    "firstGeneratedAt" to firstGeneratedAt,
+                    "expiresAt" to (now + currentExpirationMinutes * 60 * 1000L),
+                    "classStartTime" to classStartTime,
+                    "expirationMinutes" to currentExpirationMinutes
                 )
                 com.google.firebase.firestore.FirebaseFirestore.getInstance()
                     .collection("attendance_sessions")
@@ -203,11 +201,15 @@ class QRActivity : AppCompatActivity() {
 
                     generateQRCode()
                 } else {
-
+                    if (activeSession.get("active") != true) {
+                        activeSession.reference.update("active", true).await()
+                    }
                     val sessionId = activeSession.getString("sessionId") ?: ""
                     val expiresAt = activeSession.getLong("expiresAt") ?: 0L
                     val createdAt = activeSession.getLong("createdAt") ?: System.currentTimeMillis()
-                    val expirationMinutes = ((expiresAt - createdAt) / (60 * 1000)).toInt()
+                    firstGeneratedAt = activeSession.getLong("firstGeneratedAt") ?: createdAt
+                    val storedExpMin = activeSession.getLong("expirationMinutes")?.toInt()
+                    val expirationMinutes = storedExpMin ?: ((expiresAt - createdAt) / (60 * 1000)).toInt()
 
                     currentExpirationMinutes = expirationMinutes
 
@@ -310,7 +312,9 @@ class QRActivity : AppCompatActivity() {
                         val createdAt = latestSession.getLong("createdAt") ?: System.currentTimeMillis()
                         val newExpiresAt = createdAt + (newExpirationMinutes * 60 * 1000L)
 
-                        latestSession.reference.update("expiresAt", newExpiresAt).await()
+                        latestSession.reference.update(
+                            mapOf("expiresAt" to newExpiresAt, "expirationMinutes" to newExpirationMinutes)
+                        ).await()
 
                         val qrData = com.example.attendancesystem.models.QRCodeData(
                             teacherId = userId,

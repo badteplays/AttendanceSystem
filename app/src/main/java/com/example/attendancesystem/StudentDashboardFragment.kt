@@ -1,24 +1,23 @@
 package com.example.attendancesystem
 
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
-import androidx.fragment.app.Fragment
-import android.widget.TextView
 import android.widget.ImageView
+import android.widget.TextView
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+import com.example.attendancesystem.utils.ProfilePictureManager
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.progressindicator.CircularProgressIndicator
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.ListenerRegistration
-import com.example.attendancesystem.utils.ProfilePictureManager
 import java.text.SimpleDateFormat
-import java.util.*
-import android.graphics.Color
+import java.util.Calendar
+import java.util.Locale
 
 class StudentDashboardFragment : Fragment() {
 
@@ -28,21 +27,24 @@ class StudentDashboardFragment : Fragment() {
     private lateinit var textCourse: TextView
     private lateinit var imageProfilePic: ImageView
     private lateinit var textInitials: TextView
-    private lateinit var buttonScanQR: View
-    private lateinit var buttonViewHistory: View
-    private lateinit var fabScanQR: ExtendedFloatingActionButton
-    private lateinit var textTodayStatus: TextView
-    private lateinit var textStatusTime: TextView
-    private lateinit var statusIndicator: View
-    
     private lateinit var textPresentCount: TextView
     private lateinit var textAbsentCount: TextView
     private lateinit var textLateCount: TextView
-    
+    private lateinit var textAttendedHours: TextView
+    private lateinit var textAttendancePercent: TextView
+    private lateinit var attendanceRing: CircularProgressIndicator
+    private lateinit var filter7Days: MaterialButton
+    private lateinit var filter4Weeks: MaterialButton
+    private lateinit var filter12Weeks: MaterialButton
+    private lateinit var filterYear: MaterialButton
+
+    private lateinit var barViews: List<View>
+    private lateinit var monthLabels: List<TextView>
+
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
     private var studentName: String = ""
-    private var attendanceListener: ListenerRegistration? = null
+    private var selectedRange = AttendanceRange.YEAR
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -56,10 +58,9 @@ class StudentDashboardFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         initializeViews(view)
         loadUserData()
-        loadTodayStatus()
         loadAttendanceStats()
-        setupClickListeners()
         setupSwipeRefresh()
+        setupRangeButtons()
     }
 
     private fun initializeViews(view: View) {
@@ -70,15 +71,45 @@ class StudentDashboardFragment : Fragment() {
             textCourse = view.findViewById(R.id.textCourse)
             imageProfilePic = view.findViewById(R.id.imageProfilePic)
             textInitials = view.findViewById(R.id.textInitials)
-            buttonScanQR = view.findViewById(R.id.buttonScanQR)
-            buttonViewHistory = view.findViewById(R.id.buttonViewHistory)
-            fabScanQR = view.findViewById(R.id.fabScanQR)
-            textTodayStatus = view.findViewById(R.id.textTodayStatus)
-            textStatusTime = view.findViewById(R.id.textStatusTime)
-            statusIndicator = view.findViewById(R.id.statusIndicator)
             textPresentCount = view.findViewById(R.id.textPresentCount)
             textAbsentCount = view.findViewById(R.id.textAbsentCount)
             textLateCount = view.findViewById(R.id.textLateCount)
+            textAttendedHours = view.findViewById(R.id.textAttendedHours)
+            textAttendancePercent = view.findViewById(R.id.textAttendancePercent)
+            attendanceRing = view.findViewById(R.id.attendanceRing)
+            filter7Days = view.findViewById(R.id.filter7Days)
+            filter4Weeks = view.findViewById(R.id.filter4Weeks)
+            filter12Weeks = view.findViewById(R.id.filter12Weeks)
+            filterYear = view.findViewById(R.id.filterYear)
+
+            barViews = listOf(
+                view.findViewById(R.id.bar0),
+                view.findViewById(R.id.bar1),
+                view.findViewById(R.id.bar2),
+                view.findViewById(R.id.bar3),
+                view.findViewById(R.id.bar4),
+                view.findViewById(R.id.bar5),
+                view.findViewById(R.id.bar6),
+                view.findViewById(R.id.bar7),
+                view.findViewById(R.id.bar8),
+                view.findViewById(R.id.bar9),
+                view.findViewById(R.id.bar10),
+                view.findViewById(R.id.bar11)
+            )
+            monthLabels = listOf(
+                view.findViewById(R.id.month0),
+                view.findViewById(R.id.month1),
+                view.findViewById(R.id.month2),
+                view.findViewById(R.id.month3),
+                view.findViewById(R.id.month4),
+                view.findViewById(R.id.month5),
+                view.findViewById(R.id.month6),
+                view.findViewById(R.id.month7),
+                view.findViewById(R.id.month8),
+                view.findViewById(R.id.month9),
+                view.findViewById(R.id.month10),
+                view.findViewById(R.id.month11)
+            )
         } catch (e: Exception) {
             android.util.Log.e("StudentDashboard", "Error initializing views", e)
         }
@@ -87,447 +118,215 @@ class StudentDashboardFragment : Fragment() {
     private fun setupSwipeRefresh() {
         swipeRefreshLayout.setOnRefreshListener {
             loadUserData()
-            loadTodayStatus()
             loadAttendanceStats()
             swipeRefreshLayout.isRefreshing = false
         }
     }
-    
-    /**
-     * Loads attendance statistics for the current month
-     */
+
+    private fun setupRangeButtons() {
+        filter7Days.setOnClickListener { selectRange(AttendanceRange.DAYS_7) }
+        filter4Weeks.setOnClickListener { selectRange(AttendanceRange.WEEKS_4) }
+        filter12Weeks.setOnClickListener { selectRange(AttendanceRange.WEEKS_12) }
+        filterYear.setOnClickListener { selectRange(AttendanceRange.YEAR) }
+        updateRangeButtonState()
+    }
+
+    private fun selectRange(range: AttendanceRange) {
+        if (selectedRange == range) return
+        selectedRange = range
+        updateRangeButtonState()
+        loadAttendanceStats()
+    }
+
+    private fun updateRangeButtonState() {
+        val selectedBg = ContextCompat.getColor(requireContext(), R.color.primary)
+        val selectedText = ContextCompat.getColor(requireContext(), R.color.on_primary)
+        val defaultText = ContextCompat.getColor(requireContext(), R.color.text_secondary)
+        val transparent = ContextCompat.getColor(requireContext(), android.R.color.transparent)
+
+        val buttons = listOf(
+            filter7Days to AttendanceRange.DAYS_7,
+            filter4Weeks to AttendanceRange.WEEKS_4,
+            filter12Weeks to AttendanceRange.WEEKS_12,
+            filterYear to AttendanceRange.YEAR
+        )
+        for ((button, range) in buttons) {
+            val selected = range == selectedRange
+            button.setBackgroundColor(if (selected) selectedBg else transparent)
+            button.setTextColor(if (selected) selectedText else defaultText)
+        }
+    }
+
     private fun loadAttendanceStats() {
         val currentUser = auth.currentUser ?: return
-        
-        // Get start of current month
+
         val calendar = Calendar.getInstance()
+        when (selectedRange) {
+            AttendanceRange.DAYS_7 -> calendar.add(Calendar.DAY_OF_YEAR, -7)
+            AttendanceRange.WEEKS_4 -> calendar.add(Calendar.DAY_OF_YEAR, -28)
+            AttendanceRange.WEEKS_12 -> calendar.add(Calendar.DAY_OF_YEAR, -84)
+            AttendanceRange.YEAR -> calendar.add(Calendar.DAY_OF_YEAR, -365)
+        }
+        calendar.set(Calendar.HOUR_OF_DAY, 0)
+        calendar.set(Calendar.MINUTE, 0)
+        calendar.set(Calendar.SECOND, 0)
+        calendar.set(Calendar.MILLISECOND, 0)
+        val rangeStart = com.google.firebase.Timestamp(calendar.time)
+
+        val uid = currentUser.uid
+        db.collection("attendance")
+            .whereEqualTo("userId", uid)
+            .get()
+            .addOnSuccessListener { activeSnap ->
+                db.collection("archived_attendance")
+                    .whereEqualTo("userId", uid)
+                    .get()
+                    .addOnSuccessListener { archSnap ->
+                        if (!isAdded) return@addOnSuccessListener
+                        val merged = (activeSnap.documents + archSnap.documents).distinctBy { it.id }
+                        val docsInRange = merged.filter { doc ->
+                            val ts = doc.getTimestamp("timestamp") ?: return@filter false
+                            ts >= rangeStart
+                        }
+                        // #region agent log
+                        AgentDebugLog.log(
+                            "StudentDashboardFragment:loadAttendanceStats",
+                            "merged active+archived",
+                            "H4",
+                            mapOf(
+                                "activeTotal" to activeSnap.documents.size,
+                                "archivedTotal" to archSnap.documents.size,
+                                "docsInRange" to docsInRange.size
+                            )
+                        )
+                        // #endregion
+                        applyAttendanceRangeStats(docsInRange)
+                        loadMonthlyTrendFromMergedDocs(merged)
+                    }
+                    .addOnFailureListener {
+                        if (!isAdded) return@addOnFailureListener
+                        val merged = activeSnap.documents
+                        val docsInRange = merged.filter { doc ->
+                            val ts = doc.getTimestamp("timestamp") ?: return@filter false
+                            ts >= rangeStart
+                        }
+                        applyAttendanceRangeStats(docsInRange)
+                        loadMonthlyTrendFromMergedDocs(merged)
+                    }
+            }
+            .addOnFailureListener { e ->
+                android.util.Log.e("StudentDashboard", "Error loading stats: ${e.message}", e)
+                textPresentCount.text = "0 On Time"
+                textLateCount.text = "0 Lates"
+                textAbsentCount.text = "0 Absences"
+                textAttendedHours.text = "0 Classes Attended"
+                textAttendancePercent.text = "0%"
+                attendanceRing.setProgressCompat(0, true)
+                renderEmptyTrend()
+            }
+    }
+
+    private fun applyAttendanceRangeStats(docsInRange: List<com.google.firebase.firestore.DocumentSnapshot>) {
+        var onTimeCount = 0
+        var absentCount = 0
+        var lateCount = 0
+        var attendedCount = 0
+
+        for (doc in docsInRange) {
+            val status = doc.getString("status")?.trim()?.uppercase() ?: "PRESENT"
+            when (status) {
+                "PRESENT" -> {
+                    onTimeCount++
+                    attendedCount++
+                }
+                "ABSENT" -> absentCount++
+                "LATE" -> {
+                    lateCount++
+                    attendedCount++
+                }
+                "EXCUSED" -> attendedCount++
+                "CUTTING" -> absentCount++
+            }
+        }
+
+        val totalCount = attendedCount + absentCount
+        val percentage = if (totalCount == 0) 0 else ((attendedCount * 100f) / totalCount).toInt()
+
+        textPresentCount.text = "$onTimeCount On Time"
+        textLateCount.text = "$lateCount Lates"
+        textAbsentCount.text = "$absentCount Absences"
+        textAttendedHours.text = "$attendedCount Classes Attended"
+        textAttendancePercent.text = "$percentage%"
+        attendanceRing.max = 100
+        attendanceRing.setProgressCompat(percentage, true)
+    }
+
+    private fun loadMonthlyTrendFromMergedDocs(merged: List<com.google.firebase.firestore.DocumentSnapshot>) {
+        val calendar = Calendar.getInstance()
+        calendar.add(Calendar.MONTH, -11)
         calendar.set(Calendar.DAY_OF_MONTH, 1)
         calendar.set(Calendar.HOUR_OF_DAY, 0)
         calendar.set(Calendar.MINUTE, 0)
         calendar.set(Calendar.SECOND, 0)
         calendar.set(Calendar.MILLISECOND, 0)
-        val monthStart = com.google.firebase.Timestamp(calendar.time)
-        
-        android.util.Log.d("StudentDashboard", "Loading attendance stats from: $monthStart")
-        
-        db.collection("attendance")
-            .whereEqualTo("userId", currentUser.uid)
-            .whereGreaterThanOrEqualTo("timestamp", monthStart)
-            .get()
-            .addOnSuccessListener { snapshot ->
-                var presentCount = 0
-                var absentCount = 0
-                var lateCount = 0
-                
-                for (doc in snapshot.documents) {
-                    val status = doc.getString("status")?.uppercase() ?: "PRESENT"
-                    when (status) {
-                        "PRESENT" -> presentCount++
-                        "ABSENT" -> absentCount++
-                        "LATE" -> lateCount++
-                        "EXCUSED" -> presentCount++ // Count excused as present
-                        "CUTTING" -> absentCount++ // Count cutting as absent
-                    }
-                }
-                
-                android.util.Log.d("StudentDashboard", "Stats - Present: $presentCount, Absent: $absentCount, Late: $lateCount")
-                textPresentCount.text = presentCount.toString()
-                textAbsentCount.text = absentCount.toString()
-                textLateCount.text = lateCount.toString()
-            }
-            .addOnFailureListener { e ->
-                android.util.Log.e("StudentDashboard", "Error loading stats: ${e.message}", e)
-                textPresentCount.text = "0"
-                textAbsentCount.text = "0"
-                textLateCount.text = "0"
-            }
+        val start = com.google.firebase.Timestamp(calendar.time)
+        val docsInRange = merged.filter { doc ->
+            val ts = doc.getTimestamp("timestamp") ?: return@filter false
+            ts >= start
+        }
+        renderMonthlyTrendBars(docsInRange)
     }
 
-    private fun loadTodayStatus() {
-        val currentUser = auth.currentUser ?: return
-        val prefs = requireContext().getSharedPreferences("student_attendance", Context.MODE_PRIVATE)
-
-        val justMarkedSubject = arguments?.getString("justMarkedSubject")
-        val justMarkedTime = arguments?.getLong("justMarkedTime", 0L) ?: 0L
-
-        if (justMarkedSubject != null && justMarkedTime > 0) {
-            prefs.edit().apply {
-                putString("markedSubject", justMarkedSubject)
-                putLong("markedTime", justMarkedTime)
-            }.commit()
-
-            val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
-            val timeString = timeFormat.format(Date(justMarkedTime))
-
-            android.util.Log.d("StudentDashboard", "✓✓✓ Just marked attendance! Showing immediately ✓✓✓")
-            updateStatusUI("Present - $justMarkedSubject", "Marked at $timeString", Color.parseColor("#22C55E"))
-            loadAttendanceStats()
-
-            arguments?.clear()
+    private fun renderMonthlyTrendBars(docsInRange: List<com.google.firebase.firestore.DocumentSnapshot>) {
+        val formatter = SimpleDateFormat("MMM", Locale.getDefault())
+        val nowCalendar = Calendar.getInstance()
+        val monthKeys = mutableListOf<String>()
+        repeat(12) { index ->
+            val temp = Calendar.getInstance()
+            temp.add(Calendar.MONTH, index - 11)
+            monthKeys.add("${temp.get(Calendar.YEAR)}-${temp.get(Calendar.MONTH)}")
+            monthLabels[index].text = formatter.format(temp.time)
         }
 
-        android.util.Log.d("StudentDashboard", "Checking for current class")
-        db.collection("users").document(currentUser.uid)
-            .get()
-            .addOnSuccessListener { userDoc ->
-                val section = userDoc.getString("section")?.uppercase() ?: return@addOnSuccessListener
-                checkCurrentClassWithMarkedStatus(currentUser.uid, section, prefs)
+        val monthTotals = monthKeys.associateWith { 0 }.toMutableMap()
+        val monthAttended = monthKeys.associateWith { 0 }.toMutableMap()
+        for (doc in docsInRange) {
+            val date = doc.getTimestamp("timestamp")?.toDate() ?: continue
+            nowCalendar.time = date
+            val key = "${nowCalendar.get(Calendar.YEAR)}-${nowCalendar.get(Calendar.MONTH)}"
+            if (!monthTotals.containsKey(key)) continue
+            val status = doc.getString("status")?.trim()?.uppercase() ?: "PRESENT"
+            monthTotals[key] = (monthTotals[key] ?: 0) + 1
+            if (status == "PRESENT" || status == "LATE" || status == "EXCUSED") {
+                monthAttended[key] = (monthAttended[key] ?: 0) + 1
             }
-            .addOnFailureListener { e ->
-                android.util.Log.e("StudentDashboard", "Error loading user: ${e.message}", e)
-                val markedTime = prefs.getLong("markedTime", 0L)
-                if (markedTime <= 0 || System.currentTimeMillis() - markedTime > 120_000) {
-                    updateStatusUI("Not marked yet", "", Color.parseColor("#71717A"))
-                }
-            }
-    }
+        }
 
-    private fun checkCurrentClassWithMarkedStatus(userId: String, section: String, prefs: android.content.SharedPreferences) {
-
-        val calendar = Calendar.getInstance()
-        val currentDay = calendar.getDisplayName(Calendar.DAY_OF_WEEK, Calendar.LONG, Locale.getDefault()) ?: ""
-        val nowMinutes = calendar.get(Calendar.HOUR_OF_DAY) * 60 + calendar.get(Calendar.MINUTE)
-
-        android.util.Log.d("StudentDashboard", "=== CHECKING CURRENT CLASS ===")
-        android.util.Log.d("StudentDashboard", "Current day: $currentDay, Current time: ${nowMinutes / 60}:${String.format("%02d", nowMinutes % 60)}")
-        android.util.Log.d("StudentDashboard", "Section: $section")
-
-        db.collection("schedules")
-            .whereEqualTo("section", section)
-            .get()
-            .addOnSuccessListener { allSchedules ->
-
-                if (allSchedules.isEmpty) {
-                    android.util.Log.d("StudentDashboard", "No schedules found with uppercase section, trying lowercase...")
-                    checkSchedulesWithLowercaseSection(userId, section.lowercase(), currentDay, nowMinutes, prefs)
-                    return@addOnSuccessListener
-                }
-
-                val schedules = allSchedules.filter {
-                    it.getString("day")?.equals(currentDay, ignoreCase = true) == true
-                }
-                android.util.Log.d("StudentDashboard", "Found ${schedules.size} schedules for today out of ${allSchedules.size()} total schedules")
-                var currentSchedule: com.google.firebase.firestore.DocumentSnapshot? = null
-
-                for (schedule in schedules) {
-                    val startTime = schedule.getString("startTime") ?: continue
-                    val endTime = schedule.getString("endTime") ?: continue
-
-                    val startMin = parseTimeToMinutes(startTime)
-                    val endMin = parseTimeToMinutes(endTime)
-
-                    val isWithinClass = if (endMin < startMin) {
-
-                        nowMinutes >= startMin || nowMinutes <= endMin
-                    } else {
-                        nowMinutes >= startMin && nowMinutes <= endMin
-                    }
-
-                    if (isWithinClass) {
-                        currentSchedule = schedule
-                        break
-                    }
-                }
-
-                if (currentSchedule != null) {
-                    val scheduleId = currentSchedule!!.id
-                    val subject = currentSchedule!!.getString("subject") ?: ""
-
-                    val markedSubject = prefs.getString("markedSubject", null)
-                    val markedTime = prefs.getLong("markedTime", 0L)
-                    val justScanned = markedTime > 0 && System.currentTimeMillis() - markedTime <= 120_000
-
-                    if (justScanned || (markedSubject != null && markedTime > 0 && markedSubject.equals(subject, ignoreCase = true))) {
-
-                        val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
-                        val timeString = timeFormat.format(Date(markedTime))
-                        android.util.Log.d("StudentDashboard", "✓ Current class '$subject' - showing present (justScanned=$justScanned)")
-                        updateStatusUI("Present - ${markedSubject ?: subject}", "Marked at $timeString", Color.parseColor("#22C55E"))
-                    } else {
-
-                        android.util.Log.d("StudentDashboard", "Current class '$subject' - not marked yet")
-                        updateStatusUI("Not marked yet", "Scan QR for $subject", Color.parseColor("#71717A"))
-                    }
-                    checkAttendanceForCurrentClass(userId, scheduleId, subject, prefs)
-                } else {
-
-                    val markedSubject = prefs.getString("markedSubject", null)
-                    val markedTime = prefs.getLong("markedTime", 0L)
-                    val justScanned = markedTime > 0 && System.currentTimeMillis() - markedTime <= 120_000
-
-                    if (!justScanned) prefs.edit().clear().apply()
-                    attendanceListener?.remove()
-                    attendanceListener = null
-
-                    if (justScanned) {
-                        val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
-                        val timeString = timeFormat.format(Date(markedTime))
-                        updateStatusUI("Present - ${markedSubject ?: "Class"}", "Marked at $timeString", Color.parseColor("#22C55E"))
-                    } else {
-                        val nextClass = schedules.mapNotNull { schedule ->
-                            val startTime = schedule.getString("startTime") ?: return@mapNotNull null
-                            val startMin = parseTimeToMinutes(startTime)
-                            if (startMin > nowMinutes) {
-                                Pair(startMin, schedule.getString("subject") ?: "")
-                            } else null
-                        }.minByOrNull { it.first }
-
-                        if (nextClass != null) {
-                            val hour = nextClass.first / 60
-                            val minute = nextClass.first % 60
-                            val timeStr = String.format("%d:%02d %s",
-                                if (hour == 0) 12 else if (hour > 12) hour - 12 else hour,
-                                minute,
-                                if (hour < 12) "AM" else "PM"
-                            )
-                            updateStatusUI("Next class: ${nextClass.second}", "at $timeStr", Color.parseColor("#3B82F6"))
-                        } else {
-                            updateStatusUI("No more classes today", "", Color.parseColor("#71717A"))
-                        }
-                    }
-                }
-            }
-            .addOnFailureListener { e ->
-                android.util.Log.e("StudentDashboard", "Error loading schedules: ${e.message}", e)
-                val markedTime = prefs.getLong("markedTime", 0L)
-                if (markedTime <= 0 || System.currentTimeMillis() - markedTime > 120_000) {
-                    updateStatusUI("Not marked yet", "", Color.parseColor("#71717A"))
-                }
-            }
-    }
-
-    private fun checkSchedulesWithLowercaseSection(
-        userId: String,
-        lowercaseSection: String,
-        currentDay: String,
-        nowMinutes: Int,
-        prefs: android.content.SharedPreferences
-    ) {
-        db.collection("schedules")
-            .whereEqualTo("section", lowercaseSection)
-            .get()
-            .addOnSuccessListener { allSchedules ->
-                android.util.Log.d("StudentDashboard", "Found ${allSchedules.size()} schedules with lowercase section")
-
-                val schedules = allSchedules.filter {
-                    it.getString("day")?.equals(currentDay, ignoreCase = true) == true
-                }
-                android.util.Log.d("StudentDashboard", "Found ${schedules.size} schedules for today out of ${allSchedules.size()} total schedules")
-                var currentSchedule: com.google.firebase.firestore.DocumentSnapshot? = null
-
-                for (schedule in schedules) {
-                    val startTime = schedule.getString("startTime") ?: continue
-                    val endTime = schedule.getString("endTime") ?: continue
-
-                    val startMin = parseTimeToMinutes(startTime)
-                    val endMin = parseTimeToMinutes(endTime)
-
-                    val isWithinClass = if (endMin < startMin) {
-
-                        nowMinutes >= startMin || nowMinutes <= endMin
-                    } else {
-                        nowMinutes >= startMin && nowMinutes <= endMin
-                    }
-
-                    if (isWithinClass) {
-                        currentSchedule = schedule
-                        break
-                    }
-                }
-
-                if (currentSchedule != null) {
-                    val scheduleId = currentSchedule!!.id
-                    val subject = currentSchedule!!.getString("subject") ?: ""
-
-                    val markedSubject = prefs.getString("markedSubject", null)
-                    val markedTime = prefs.getLong("markedTime", 0L)
-                    val justScanned = markedTime > 0 && System.currentTimeMillis() - markedTime <= 120_000
-
-                    if (justScanned || (markedSubject != null && markedTime > 0 && markedSubject.equals(subject, ignoreCase = true))) {
-
-                        val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
-                        val timeString = timeFormat.format(Date(markedTime))
-                        android.util.Log.d("StudentDashboard", "✓ Current class '$subject' - showing present (justScanned=$justScanned)")
-                        updateStatusUI("Present - ${markedSubject ?: subject}", "Marked at $timeString", Color.parseColor("#22C55E"))
-                    } else {
-
-                        android.util.Log.d("StudentDashboard", "Current class '$subject' - not marked yet")
-                        updateStatusUI("Not marked yet", "Scan QR for $subject", Color.parseColor("#71717A"))
-                    }
-                    checkAttendanceForCurrentClass(userId, scheduleId, subject, prefs)
-                } else {
-                    val markedSubject = prefs.getString("markedSubject", null)
-                    val markedTime = prefs.getLong("markedTime", 0L)
-                    val justScanned = markedTime > 0 && System.currentTimeMillis() - markedTime <= 120_000
-
-                    if (!justScanned) prefs.edit().clear().apply()
-                    attendanceListener?.remove()
-                    attendanceListener = null
-
-                    if (justScanned) {
-                        val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
-                        val timeString = timeFormat.format(Date(markedTime))
-                        updateStatusUI("Present - ${markedSubject ?: "Class"}", "Marked at $timeString", Color.parseColor("#22C55E"))
-                    } else {
-                        val nextClass = schedules
-                            .mapNotNull { schedule ->
-                                val startTime = schedule.getString("startTime") ?: return@mapNotNull null
-                                val startMin = parseTimeToMinutes(startTime)
-                                if (startMin > nowMinutes) {
-                                    Pair(startMin, schedule.getString("subject") ?: "")
-                                } else null
-                            }
-                            .minByOrNull { it.first }
-
-                        if (nextClass != null) {
-                            val hour = nextClass.first / 60
-                            val minute = nextClass.first % 60
-                            val timeStr = String.format("%d:%02d %s",
-                                if (hour == 0) 12 else if (hour > 12) hour - 12 else hour,
-                                minute,
-                                if (hour < 12) "AM" else "PM"
-                            )
-                            updateStatusUI("Next class: ${nextClass.second}", "at $timeStr", Color.parseColor("#3B82F6"))
-                        } else {
-                            updateStatusUI("No more classes today", "", Color.parseColor("#71717A"))
-                        }
-                    }
-                }
-            }
-            .addOnFailureListener { e ->
-                android.util.Log.e("StudentDashboard", "Error loading schedules with lowercase: ${e.message}", e)
-                val markedTime = prefs.getLong("markedTime", 0L)
-                if (markedTime <= 0 || System.currentTimeMillis() - markedTime > 120_000) {
-                    updateStatusUI("Not marked yet", "", Color.parseColor("#71717A"))
-                }
-            }
-    }
-
-    private fun checkAttendanceForCurrentClass(
-        userId: String,
-        scheduleId: String,
-        subject: String,
-        prefs: android.content.SharedPreferences
-    ) {
-
-        val calendar = Calendar.getInstance()
-        calendar.set(Calendar.HOUR_OF_DAY, 0)
-        calendar.set(Calendar.MINUTE, 0)
-        calendar.set(Calendar.SECOND, 0)
-        calendar.set(Calendar.MILLISECOND, 0)
-        val todayStart = com.google.firebase.Timestamp(calendar.time)
-
-        android.util.Log.d("StudentDashboard", "=== QUERYING ATTENDANCE FOR CURRENT CLASS ===")
-        android.util.Log.d("StudentDashboard", "userId: $userId")
-        android.util.Log.d("StudentDashboard", "scheduleId: $scheduleId")
-        android.util.Log.d("StudentDashboard", "subject: $subject")
-        attendanceListener?.remove()
-        attendanceListener = db.collection("attendance")
-            .whereEqualTo("userId", userId)
-            .whereEqualTo("scheduleId", scheduleId)
-            .whereEqualTo("subject", subject)
-            .addSnapshotListener { snapshot, e ->
-                if (e != null) {
-                    android.util.Log.e("StudentDashboard", "Error loading attendance: ${e.message}", e)
-                    val markedTime = prefs.getLong("markedTime", 0L)
-                    if (markedTime <= 0 || System.currentTimeMillis() - markedTime > 120_000) {
-                        updateStatusUI("Not marked yet", "Scan QR to mark attendance", Color.parseColor("#71717A"))
-                    }
-                    return@addSnapshotListener
-                }
-
-                if (snapshot != null && !snapshot.isEmpty) {
-                    val todayStartSeconds = todayStart.seconds
-                    val todayDocs = snapshot.documents.filter {
-                        (it.getTimestamp("timestamp")?.seconds ?: 0L) >= todayStartSeconds
-                    }
-                    val attendance = todayDocs.maxByOrNull { it.getTimestamp("timestamp")?.seconds ?: 0L }
-                    if (attendance != null) {
-                    val status = attendance.getString("status") ?: "PRESENT"
-                    val timestamp = attendance.getTimestamp("timestamp")
-
-                    android.util.Log.d("StudentDashboard", "✓✓✓ ATTENDANCE FOUND! ✓✓✓")
-                    android.util.Log.d("StudentDashboard", "Document ID: ${attendance.id}")
-                    android.util.Log.d("StudentDashboard", "status: $status")
-                    android.util.Log.d("StudentDashboard", "timestamp: $timestamp")
-                    android.util.Log.d("StudentDashboard", "Total documents in snapshot: ${snapshot.documents.size}")
-
-                    val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
-                    val timeString = timestamp?.toDate()?.let { timeFormat.format(it) } ?: ""
-
-                    when (status) {
-                        "PRESENT" -> updateStatusUI("Present - $subject", timeString, Color.parseColor("#22C55E"))
-                        "LATE" -> updateStatusUI("Late - $subject", timeString, Color.parseColor("#F59E0B"))
-                        "EXCUSED" -> updateStatusUI("Excused - $subject", timeString, Color.parseColor("#3B82F6"))
-                        "CUTTING" -> updateStatusUI("Cutting - $subject", timeString, Color.parseColor("#EF4444"))
-                        else -> updateStatusUI("Marked - $subject", timeString, Color.parseColor("#22C55E"))
-                    }
-                    prefs.edit().apply {
-                        putString("markedSubject", subject)
-                        putLong("markedTime", timestamp?.toDate()?.time ?: System.currentTimeMillis())
-                        apply()
-                    }
-                    loadAttendanceStats()
-                } else {
-                    val fromCacheInner = snapshot?.metadata?.isFromCache == true
-                    android.util.Log.d("StudentDashboard", "✗✗✗ NO ATTENDANCE FOUND (fromCache=$fromCacheInner) ✗✗✗")
-                    android.util.Log.d("StudentDashboard", "Subject being queried: $subject")
-                    android.util.Log.d("StudentDashboard", "ScheduleId being queried: $scheduleId")
-                    if (fromCacheInner) return@addSnapshotListener
-                    val markedSubject = prefs.getString("markedSubject", null)
-                    val markedTime = prefs.getLong("markedTime", 0L)
-                    val justScanned = markedTime > 0 && System.currentTimeMillis() - markedTime <= 120_000
-                    val isRecentMarked = markedSubject != null &&
-                        markedTime > 0 &&
-                        (justScanned || markedSubject.equals(subject, ignoreCase = true)) &&
-                        System.currentTimeMillis() - markedTime <= 15 * 60 * 1000
-                    if (isRecentMarked) {
-                        val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
-                        val timeString = timeFormat.format(Date(markedTime))
-                        updateStatusUI("Present - ${markedSubject ?: subject}", "Marked at $timeString", Color.parseColor("#22C55E"))
-                    } else {
-                        updateStatusUI("Not marked yet", "Scan QR for $subject", Color.parseColor("#71717A"))
-                    }
-                }
-                } else {
-                    val fromCacheEmpty = snapshot?.metadata?.isFromCache == true
-                    android.util.Log.d("StudentDashboard", "✗✗✗ NO ATTENDANCE FOUND (fromCache=$fromCacheEmpty) ✗✗✗")
-                    android.util.Log.d("StudentDashboard", "Subject being queried: $subject")
-                    android.util.Log.d("StudentDashboard", "ScheduleId being queried: $scheduleId")
-                    if (fromCacheEmpty) return@addSnapshotListener
-                    val markedSubject = prefs.getString("markedSubject", null)
-                    val markedTime = prefs.getLong("markedTime", 0L)
-                    val justScanned = markedTime > 0 && System.currentTimeMillis() - markedTime <= 120_000
-                    val isRecentMarked = markedSubject != null &&
-                        markedTime > 0 &&
-                        (justScanned || markedSubject.equals(subject, ignoreCase = true)) &&
-                        System.currentTimeMillis() - markedTime <= 15 * 60 * 1000
-                    if (isRecentMarked) {
-                        val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
-                        val timeString = timeFormat.format(Date(markedTime))
-                        updateStatusUI("Present - ${markedSubject ?: subject}", "Marked at $timeString", Color.parseColor("#22C55E"))
-                    } else {
-                        updateStatusUI("Not marked yet", "Scan QR for $subject", Color.parseColor("#71717A"))
-                    }
-                }
-            }
-    }
-
-    private fun parseTimeToMinutes(time: String): Int {
-        return try {
-            val parts = time.split(":")
-            val hour = parts[0].toInt()
-            val minute = parts[1].toInt()
-            hour * 60 + minute
-        } catch (e: Exception) {
-            0
+        monthKeys.forEachIndexed { index, key ->
+            val total = monthTotals[key] ?: 0
+            val attended = monthAttended[key] ?: 0
+            val percent = if (total == 0) 0 else (attended * 100 / total)
+            updateBarHeight(barViews[index], percent)
         }
     }
 
-    private fun updateStatusUI(statusText: String, timeText: String, color: Int) {
-        textTodayStatus.text = statusText
-        textStatusTime.text = timeText
-        statusIndicator.setBackgroundColor(color)
+    private fun renderEmptyTrend() {
+        monthLabels.forEach { it.text = "--" }
+        barViews.forEach { updateBarHeight(it, 0) }
+    }
+
+    private fun updateBarHeight(bar: View, percent: Int) {
+        val minHeight = dpToPx(22)
+        val maxHeight = dpToPx(150)
+        val targetHeight = minHeight + ((maxHeight - minHeight) * percent / 100)
+        val params = bar.layoutParams
+        params.height = targetHeight
+        bar.layoutParams = params
+    }
+
+    private fun dpToPx(dp: Int): Int {
+        val density = resources.displayMetrics.density
+        return (dp * density).toInt()
     }
 
     private fun loadUserData() {
@@ -555,7 +354,7 @@ class StudentDashboardFragment : Fragment() {
                 }
             }
     }
-    
+
     private fun getGreeting(): String {
         val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
         return when {
@@ -565,34 +364,7 @@ class StudentDashboardFragment : Fragment() {
         }
     }
 
-    private fun setupClickListeners() {
-        buttonScanQR.setOnClickListener {
-            try { switchToFragment(QRScannerFragment()) }
-            catch (e: Exception) { Toast.makeText(requireContext(), "Error opening scanner: ${e.message}", Toast.LENGTH_SHORT).show() }
-        }
-        buttonViewHistory.setOnClickListener {
-            try { switchToFragment(StudentAttendanceHistoryFragment()) }
-            catch (e: Exception) { Toast.makeText(requireContext(), "Error opening history: ${e.message}", Toast.LENGTH_SHORT).show() }
-        }
-        fabScanQR.setOnClickListener {
-            try { switchToFragment(QRScannerFragment()) }
-            catch (e: Exception) { Toast.makeText(requireContext(), "Error opening scanner: ${e.message}", Toast.LENGTH_SHORT).show() }
-        }
-    }
-
-    private fun switchToFragment(fragment: Fragment) {
-        parentFragmentManager.beginTransaction()
-            .replace(R.id.fragmentContainer, fragment)
-            .commit()
-    }
-
-    private fun showToast(message: String, duration: Int = Toast.LENGTH_SHORT) {
-        Toast.makeText(requireContext(), message, duration).show()
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        attendanceListener?.remove()
-        attendanceListener = null
+    private enum class AttendanceRange {
+        DAYS_7, WEEKS_4, WEEKS_12, YEAR
     }
 }

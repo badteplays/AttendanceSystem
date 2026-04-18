@@ -15,8 +15,8 @@ class TeacherAttendanceAdapter(
 ) : RecyclerView.Adapter<TeacherAttendanceAdapter.ViewHolder>() {
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val avatarInitials: TextView = itemView.findViewById(R.id.textAvatarInitials)
         val studentName: TextView = itemView.findViewById(R.id.textStudentName)
-        val timeTaken: TextView = itemView.findViewById(R.id.textTimeTaken)
         val section: TextView = itemView.findViewById(R.id.textSection)
         val status: TextView = itemView.findViewById(R.id.textStatus)
         val buttonRemove: TextView? = itemView.findViewById(R.id.buttonRemove)
@@ -30,20 +30,39 @@ class TeacherAttendanceAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = attendanceList[position]
+        val ctx = holder.itemView.context
         holder.studentName.text = item.studentName
-        holder.timeTaken.text = item.timeTaken
         holder.section.text = item.section
-        holder.status.text = item.status
+        val normalizedStatus = item.status.uppercase()
+        holder.status.text = normalizedStatus.lowercase().replaceFirstChar { it.uppercase() }
 
-        // Set status background color
-        val backgroundRes = when (item.status) {
-            "PRESENT" -> R.drawable.status_present_bg
-            "EXCUSED" -> R.drawable.status_excused_bg
-            "ABSENT" -> R.drawable.status_absent_bg
-            else -> R.drawable.status_present_bg
+        holder.avatarInitials.text = item.studentName
+            .split(" ")
+            .filter { it.isNotBlank() }
+            .take(2)
+            .joinToString("") { it.first().uppercaseChar().toString() }
+            .ifBlank { "ST" }
+
+        when (normalizedStatus) {
+            "PRESENT" -> {
+                holder.avatarInitials.background = ContextCompat.getDrawable(ctx, R.drawable.bg_teacher_avatar_present)
+                holder.avatarInitials.setTextColor(ContextCompat.getColor(ctx, R.color.teacher_ds_status_present_text))
+                holder.status.background = ContextCompat.getDrawable(ctx, R.drawable.bg_teacher_status_badge_present)
+                holder.status.setTextColor(ContextCompat.getColor(ctx, R.color.teacher_ds_status_present_text))
+            }
+            "LATE" -> {
+                holder.avatarInitials.background = ContextCompat.getDrawable(ctx, R.drawable.bg_teacher_avatar_late)
+                holder.avatarInitials.setTextColor(ContextCompat.getColor(ctx, R.color.teacher_ds_status_late_text))
+                holder.status.background = ContextCompat.getDrawable(ctx, R.drawable.bg_teacher_status_badge_late)
+                holder.status.setTextColor(ContextCompat.getColor(ctx, R.color.teacher_ds_status_late_text))
+            }
+            else -> {
+                holder.avatarInitials.background = ContextCompat.getDrawable(ctx, R.drawable.bg_teacher_avatar_absent)
+                holder.avatarInitials.setTextColor(ContextCompat.getColor(ctx, R.color.teacher_ds_status_absent_text))
+                holder.status.background = ContextCompat.getDrawable(ctx, R.drawable.bg_teacher_status_badge_absent)
+                holder.status.setTextColor(ContextCompat.getColor(ctx, R.color.teacher_ds_status_absent_text))
+            }
         }
-
-        holder.status.background = ContextCompat.getDrawable(holder.itemView.context, backgroundRes)
 
         holder.buttonRemove?.setOnClickListener {
             onRemove?.invoke(item)

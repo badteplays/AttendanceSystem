@@ -1,61 +1,243 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".TeacherSchedulesFragment">
+    android:background="@color/teacher_ds_page_bg">
 
-    
+    <LinearLayout
+        android:id="@+id/headerShell"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_teacher_header_shell"
+        android:orientation="vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="16dp"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:layout_marginBottom="14dp">
+
+            <FrameLayout
+                android:layout_width="40dp"
+                android:layout_height="40dp">
+
+                <TextView
+                    android:id="@+id/textInitials"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_teacher_avatar_header"
+                    android:gravity="center"
+                    android:text="TC"
+                    android:textColor="@android:color/white"
+                    android:textSize="12sp" />
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Schedule"
+                    android:textColor="@color/teacher_ds_on_dark_muted"
+                    android:textSize="10sp" />
+
+                <TextView
+                    android:id="@+id/textName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Teacher"
+                    android:textColor="@android:color/white"
+                    android:textSize="15sp" />
+            </LinearLayout>
+
+            <FrameLayout
+                android:id="@+id/btnHeaderAdd"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="@drawable/bg_teacher_notif_button"
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_add"
+                    app:tint="@android:color/white" />
+            </FrameLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_teacher_day_tab_container"
+            android:orientation="horizontal"
+            android:padding="3dp">
+
+            <TextView
+                android:id="@+id/tabMon"
+                android:layout_width="0dp"
+                android:layout_height="32dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="Mon"
+                android:textSize="10sp"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <TextView
+                android:id="@+id/tabTue"
+                android:layout_width="0dp"
+                android:layout_height="32dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="Tue"
+                android:textSize="10sp"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <TextView
+                android:id="@+id/tabWed"
+                android:layout_width="0dp"
+                android:layout_height="32dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="Wed"
+                android:textSize="10sp"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <TextView
+                android:id="@+id/tabThu"
+                android:layout_width="0dp"
+                android:layout_height="32dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="Thu"
+                android:textSize="10sp"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <TextView
+                android:id="@+id/tabFri"
+                android:layout_width="0dp"
+                android:layout_height="32dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="Fri"
+                android:textSize="10sp"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <TextView
+                android:id="@+id/tabSat"
+                android:layout_width="0dp"
+                android:layout_height="32dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="Sat"
+                android:textSize="10sp"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <TextView
+                android:id="@+id/tabSun"
+                android:layout_width="0dp"
+                android:layout_height="32dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="Sun"
+                android:textSize="10sp"
+                android:clickable="true"
+                android:focusable="true" />
+        </LinearLayout>
+    </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="16dp"
-        app:layout_constraintTop_toBottomOf="@id/scheduleFormCard"
-        app:layout_constraintBottom_toTopOf="@id/fabAdd"
-        tools:listitem="@layout/item_simple_schedule" />
+        android:paddingHorizontal="14dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="80dp"
+        android:clipToPadding="false"
+        app:layout_constraintTop_toBottomOf="@id/headerShell"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
     <ProgressBar
         android:id="@+id/progressBar"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:visibility="gone"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/headerShell"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <LinearLayout
         android:id="@+id/emptyState"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
+        android:gravity="center"
         android:visibility="gone"
-        app:layout_constraintTop_toTopOf="parent"
+        android:padding="32dp"
+        app:layout_constraintTop_toBottomOf="@id/headerShell"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
+        <FrameLayout
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:background="@drawable/bg_teacher_empty_icon"
+            android:layout_marginBottom="12dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_schedule"
+                app:tint="@color/teacher_ds_text_secondary" />
+        </FrameLayout>
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="No schedules found"
-            android:textSize="16sp"/>
+            android:text="No classes today"
+            android:textSize="13sp"
+            android:textColor="@color/teacher_ds_text_primary"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tap + to add a schedule"
+            android:textSize="11sp"
+            android:textColor="@color/teacher_ds_text_secondary" />
     </LinearLayout>
 
-    <!-- Schedule Creation Form -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/scheduleFormCard"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="16dp"
+        android:layout_margin="14dp"
         android:visibility="gone"
-        app:cardCornerRadius="16dp"
-        app:cardElevation="4dp"
-        app:cardBackgroundColor="@color/surface"
-        app:layout_constraintTop_toTopOf="parent"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="0dp"
+        app:cardBackgroundColor="@color/teacher_ds_card_bg"
+        app:layout_constraintTop_toBottomOf="@id/headerShell"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
@@ -68,65 +250,107 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Add New Schedule"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="@color/text_primary"
-                android:layout_marginBottom="16dp" />
+                android:text="Add new schedule"
+                android:textSize="14sp"
+                android:textColor="@color/teacher_ds_text_primary"
+                android:layout_marginBottom="14dp" />
 
-            <!-- Subject Input -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/subjectInputLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
+                android:layout_marginBottom="8dp"
                 android:hint="Subject"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                style="@style/Widget.App.TextInputLayout">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/editSubject"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="text" />
-
+                    android:inputType="textCapWords"
+                    android:textSize="13sp"
+                    android:textColor="@color/teacher_ds_text_primary" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Section Input -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/sectionInputLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
+                android:layout_marginBottom="8dp"
                 android:hint="Section"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                style="@style/Widget.App.TextInputLayout">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/editSection"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="text" />
-
+                    android:inputType="textCapCharacters"
+                    android:textSize="13sp"
+                    android:textColor="@color/teacher_ds_text_primary" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Day Input -->
             <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/dayInputLayout"
+                android:id="@+id/roomInputLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                android:hint="Day"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
+                android:layout_marginBottom="8dp"
+                android:hint="Room (optional)"
+                style="@style/Widget.App.TextInputLayout">
 
-                <AutoCompleteTextView
-                    android:id="@+id/editDay"
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editRoom"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="none"
-                    android:text="Monday" />
-
+                    android:inputType="textCapCharacters"
+                    android:textSize="13sp"
+                    android:textColor="@color/teacher_ds_text_primary" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Time Selection Buttons -->
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:overScrollMode="never"
+                android:scrollbars="none">
+
+                <com.google.android.material.button.MaterialButtonToggleGroup
+                    android:id="@+id/addDayToggleGroup"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:selectionRequired="true"
+                    app:singleSelection="true">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/addDayMon" style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="wrap_content" android:layout_height="36dp" android:minWidth="0dp"
+                        android:paddingHorizontal="12dp" android:text="Mon" android:textAllCaps="false" android:textSize="11sp" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/addDayTue" style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="wrap_content" android:layout_height="36dp" android:minWidth="0dp"
+                        android:paddingHorizontal="12dp" android:text="Tue" android:textAllCaps="false" android:textSize="11sp" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/addDayWed" style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="wrap_content" android:layout_height="36dp" android:minWidth="0dp"
+                        android:paddingHorizontal="12dp" android:text="Wed" android:textAllCaps="false" android:textSize="11sp" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/addDayThu" style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="wrap_content" android:layout_height="36dp" android:minWidth="0dp"
+                        android:paddingHorizontal="12dp" android:text="Thu" android:textAllCaps="false" android:textSize="11sp" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/addDayFri" style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="wrap_content" android:layout_height="36dp" android:minWidth="0dp"
+                        android:paddingHorizontal="12dp" android:text="Fri" android:textAllCaps="false" android:textSize="11sp" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/addDaySat" style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="wrap_content" android:layout_height="36dp" android:minWidth="0dp"
+                        android:paddingHorizontal="12dp" android:text="Sat" android:textAllCaps="false" android:textSize="11sp" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/addDaySun" style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="wrap_content" android:layout_height="36dp" android:minWidth="0dp"
+                        android:paddingHorizontal="12dp" android:text="Sun" android:textAllCaps="false" android:textSize="11sp" />
+                </com.google.android.material.button.MaterialButtonToggleGroup>
+            </HorizontalScrollView>
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -135,73 +359,57 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/editStartTime"
-                    android:layout_width="0dp"
-                    android:layout_height="64dp"
-                    android:layout_weight="1"
-                    android:layout_marginEnd="8dp"
-                    android:text="Select start time"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textAllCaps="false"
-                    app:icon="@android:drawable/ic_menu_recent_history"
-                    app:iconGravity="start"
-                    app:iconTint="?attr/colorOnSurface"
-                    app:iconPadding="8dp"
-                    app:cornerRadius="8dp"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="0dp" android:layout_height="48dp" android:layout_weight="1"
+                    android:layout_marginEnd="4dp" android:text="Start time" android:textAllCaps="false"
+                    android:textSize="12sp" app:icon="@drawable/ic_time" app:iconTint="@color/teacher_ds_primary_light"
+                    app:iconPadding="6dp" app:cornerRadius="10dp" app:strokeColor="@color/teacher_ds_border_medium" app:strokeWidth="1dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/editEndTime"
-                    android:layout_width="0dp"
-                    android:layout_height="64dp"
-                    android:layout_weight="1"
-                    android:layout_marginStart="8dp"
-                    android:text="Select end time"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textAllCaps="false"
-                    app:icon="@android:drawable/ic_menu_recent_history"
-                    app:iconGravity="start"
-                    app:iconTint="?attr/colorOnSurface"
-                    app:iconPadding="8dp"
-                    app:cornerRadius="8dp"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
-
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="0dp" android:layout_height="48dp" android:layout_weight="1"
+                    android:layout_marginStart="4dp" android:text="End time" android:textAllCaps="false"
+                    android:textSize="12sp" app:icon="@drawable/ic_time" app:iconTint="@color/teacher_ds_primary_light"
+                    app:iconPadding="6dp" app:cornerRadius="10dp" app:strokeColor="@color/teacher_ds_border_medium" app:strokeWidth="1dp" />
             </LinearLayout>
 
-            <!-- Action Buttons -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="end">
+                android:orientation="horizontal">
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnCancelSchedule"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="8dp"
-                    android:text="Cancel"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="0dp" android:layout_height="44dp" android:layout_weight="1"
+                    android:layout_marginEnd="4dp" android:text="Cancel" android:textAllCaps="false"
+                    android:textSize="11sp" app:cornerRadius="10dp" app:strokeColor="@color/teacher_ds_border_medium" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnAddSchedule"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Add Schedule"
-                    app:backgroundTint="@color/primary" />
-
+                    style="@style/Widget.MaterialComponents.Button"
+                    android:layout_width="0dp" android:layout_height="44dp" android:layout_weight="2"
+                    android:layout_marginStart="4dp" android:text="Add schedule" android:textAllCaps="false"
+                    android:textSize="11sp" app:cornerRadius="10dp" app:backgroundTint="@color/teacher_ds_status_present_accent" />
             </LinearLayout>
-
         </LinearLayout>
-
     </com.google.android.material.card.MaterialCardView>
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
         android:id="@+id/fabAdd"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
+        android:text="Add schedule"
+        android:textAllCaps="false"
+        android:textSize="11sp"
+        app:backgroundTint="@color/teacher_ds_primary_dark"
+        app:icon="@drawable/ic_add"
+        app:iconTint="@android:color/white"
+        app:iconSize="14dp"
+        app:cornerRadius="50dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:srcCompat="@drawable/ic_add" />
+        app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

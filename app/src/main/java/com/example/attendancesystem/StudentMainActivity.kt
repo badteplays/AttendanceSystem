@@ -1,34 +1,34 @@
 package com.example.attendancesystem
 
-import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
-import androidx.drawerlayout.widget.DrawerLayout
-import androidx.fragment.app.Fragment
-import com.google.android.material.navigation.NavigationView
-import com.google.android.material.bottomnavigation.BottomNavigationView
+import android.Manifest
 import android.content.Context
 import android.content.Intent
-import android.Manifest
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
 import android.view.View
-import android.widget.Toast
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.drawerlayout.widget.DrawerLayout
+import androidx.fragment.app.Fragment
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.example.attendancesystem.notifications.LocalNotificationManager
 import com.example.attendancesystem.utils.ProfilePictureManager
+import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.navigation.NavigationView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
@@ -67,9 +67,8 @@ class StudentMainActivity : AppCompatActivity() {
 
         if (savedInstanceState == null) {
             val fragmentToLoad = when (intent.getStringExtra("fragment")) {
-                "schedule" -> { bottomNav?.selectedItemId = R.id.nav_schedule; StudentScheduleFragment() }
+                "schedule" -> { bottomNav?.selectedItemId = R.id.nav_calendar; StudentScheduleFragment() }
                 "routines" -> StudentRoutinesFragment()
-                "history" -> StudentAttendanceHistoryFragment()
                 "profile" -> StudentOptionsFragment()
                 else -> StudentDashboardFragment()
             }
@@ -147,10 +146,14 @@ class StudentMainActivity : AppCompatActivity() {
         bottomNav?.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_home -> { loadFragment(StudentDashboardFragment()); true }
-                R.id.nav_scan -> { loadFragment(QRScannerFragment()); true }
-                R.id.nav_schedule -> { loadFragment(StudentScheduleFragment()); true }
+                R.id.nav_calendar -> { loadFragment(StudentScheduleFragment()); true }
+                R.id.nav_routines -> { loadFragment(StudentRoutinesFragment()); true }
                 else -> false
             }
+        }
+
+        findViewById<View>(R.id.globalScanFab)?.setOnClickListener {
+            loadFragment(QRScannerFragment())
         }
     }
 
@@ -172,7 +175,6 @@ class StudentMainActivity : AppCompatActivity() {
         navigationView?.setNavigationItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.drawer_routines -> { loadFragment(StudentRoutinesFragment()); true }
-                R.id.drawer_history -> { loadFragment(StudentAttendanceHistoryFragment()); true }
                 R.id.drawer_profile -> { loadFragment(StudentOptionsFragment()); true }
                 else -> false
             }.also { if (it) drawerLayout?.closeDrawer(navigationView!!) }
@@ -245,6 +247,11 @@ class StudentMainActivity : AppCompatActivity() {
             permissionsToRequest.add(Manifest.permission.CAMERA)
         }
 
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED) {
+            permissionsToRequest.add(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -279,12 +286,11 @@ class StudentMainActivity : AppCompatActivity() {
 
             if (deniedPermissions.isNotEmpty()) {
                 val message = when {
-                    deniedPermissions.contains(Manifest.permission.CAMERA) &&
-                    deniedPermissions.contains(Manifest.permission.POST_NOTIFICATIONS) -> {
-                        "Camera and notification permissions are recommended for full functionality"
-                    }
                     deniedPermissions.contains(Manifest.permission.CAMERA) -> {
                         "Camera permission is needed to scan QR codes for attendance"
+                    }
+                    deniedPermissions.contains(Manifest.permission.ACCESS_FINE_LOCATION) -> {
+                        "Location permission may be needed for QR validation"
                     }
                     deniedPermissions.contains(Manifest.permission.POST_NOTIFICATIONS) -> {
                         "Notification permission is recommended for class reminders"

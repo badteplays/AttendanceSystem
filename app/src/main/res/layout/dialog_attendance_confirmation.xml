@@ -1,53 +1,314 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_margin="24dp"
-    app:cardCornerRadius="20dp"
-    app:cardElevation="8dp"
-    android:background="@android:color/transparent">
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#1E1E1E">
 
+    <!-- ===== GREEN SUCCESS HEADER (expands to fill top) ===== -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="@drawable/bg_confirmation_header"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp">
+
+        <!-- Glass checkmark circle -->
+        <FrameLayout
+            android:layout_width="84dp"
+            android:layout_height="84dp"
+            android:background="@drawable/bg_confirmation_check_circle">
+
+            <ImageView
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_check_circle"
+                android:contentDescription="Success"
+                app:tint="#FFFFFF" />
+        </FrameLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Attendance marked"
+            android:textColor="#FFFFFF"
+            android:textSize="30sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/textConfirmationStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="You're on time"
+            android:textColor="#CCFFFFFF"
+            android:textSize="16sp" />
+    </LinearLayout>
+
+    <!-- ===== DARK BODY SECTION (wraps content at bottom) ===== -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="#1E1E1E"
         android:orientation="vertical"
-        android:padding="24dp">
+        android:paddingHorizontal="20dp"
+        android:paddingTop="24dp"
+        android:paddingBottom="32dp">
 
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/textConfirmation"
-            android:layout_width="wrap_content"
+        <!-- Student profile row -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Attendance Confirmed"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:layout_gravity="center_horizontal"
-            android:paddingBottom="16dp"/>
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:layout_marginBottom="20dp">
 
-        <com.google.android.material.textview.MaterialTextView
-            android:id="@+id/tvConfirmationDetails"
-            android:layout_width="wrap_content"
+            <!-- Avatar circle with initials -->
+            <FrameLayout
+                android:layout_width="52dp"
+                android:layout_height="52dp">
+
+                <ImageView
+                    android:id="@+id/imageConfirmProfilePic"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/textConfirmInitials"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_confirmation_avatar"
+                    android:gravity="center"
+                    android:text="ST"
+                    android:textColor="#198754"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="14dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/textConfirmStudentName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Student Name"
+                    android:textColor="#FFFFFF"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/textConfirmSection"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Section"
+                    android:textColor="#B3B3B3"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <!-- Status pill badge -->
+            <TextView
+                android:id="@+id/textConfirmStatusBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_confirmation_status_pill"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="4dp"
+                android:text="On time"
+                android:textColor="#27AE60"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <!-- Info card -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Attendance Details"
+            android:background="@drawable/bg_confirmation_info_card"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Class / Subject -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:src="@drawable/ic_class"
+                    app:tint="#8E8E93"
+                    android:contentDescription="Class" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="10dp"
+                    android:text="Class"
+                    android:textColor="#8E8E93"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/textConfirmSubject"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Subject"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Divider -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginVertical="12dp"
+                android:background="@drawable/bg_confirmation_divider" />
+
+            <!-- Time scanned -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:src="@drawable/ic_time"
+                    app:tint="#8E8E93"
+                    android:contentDescription="Time" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="10dp"
+                    android:text="Time scanned"
+                    android:textColor="#8E8E93"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/textConfirmTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="12:30 PM"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Divider -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginVertical="12dp"
+                android:background="@drawable/bg_confirmation_divider" />
+
+            <!-- Date -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:src="@drawable/ic_calendar"
+                    app:tint="#8E8E93"
+                    android:contentDescription="Date" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="10dp"
+                    android:text="Date"
+                    android:textColor="#8E8E93"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/textConfirmDate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Apr 16, 2026"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Divider -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginVertical="12dp"
+                android:background="@drawable/bg_confirmation_divider" />
+
+            <!-- Section -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:src="@drawable/ic_person"
+                    app:tint="#8E8E93"
+                    android:contentDescription="Section" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="10dp"
+                    android:text="Section"
+                    android:textColor="#8E8E93"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/textConfirmSectionValue"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="MAWD402"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Done button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/buttonConfirmDone"
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:layout_marginTop="24dp"
+            android:text="Done"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF"
             android:textSize="16sp"
-            android:layout_gravity="center_horizontal"
-            android:paddingBottom="16dp"/>
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnBack"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Back"
-            android:layout_marginTop="8dp"/>
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnClose"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Close"
-            android:layout_marginTop="8dp"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
-
+            android:textStyle="bold"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            app:backgroundTint="#219669"
+            app:cornerRadius="14dp"
+            app:rippleColor="#33FFFFFF" />
     </LinearLayout>
-
-</com.google.android.material.card.MaterialCardView>
+</LinearLayout>

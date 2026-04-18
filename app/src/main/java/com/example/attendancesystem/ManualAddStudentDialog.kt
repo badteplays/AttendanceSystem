@@ -5,17 +5,15 @@ import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.Window
-import android.widget.Toast
-
+import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import com.example.attendancesystem.models.AttendanceStatus
-import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.Timestamp
-import android.widget.ArrayAdapter
-import android.widget.Spinner
-import com.google.firebase.firestore.FieldPath
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 class ManualAddStudentDialog(context: Context, private val scheduleId: String, private val sessionId: String) : Dialog(context) {
 
@@ -159,13 +157,20 @@ class ManualAddStudentDialog(context: Context, private val scheduleId: String, p
     }
 
     private fun addStudentToAttendance(studentId: String, studentName: String, isFromClass: Boolean) {
+        val teacherId = FirebaseAuth.getInstance().currentUser?.uid
+        if (teacherId.isNullOrBlank()) {
+            Toast.makeText(context, "Not signed in", Toast.LENGTH_SHORT).show()
+            return
+        }
         val attendanceData = hashMapOf(
             "studentId" to studentId,
+            "userId" to studentId,
             "studentName" to studentName,
             "timestamp" to Timestamp.now(),
             "location" to "",
             "status" to AttendanceStatus.PRESENT.name,
             "notes" to if (isFromClass) "" else "Manually added (not in Section $classSection roster)",
+            "teacherId" to teacherId,
             "scheduleId" to scheduleId,
             "subject" to classSubject,
             "section" to classSection.lowercase(),

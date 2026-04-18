@@ -137,13 +137,15 @@ class StudentRoutinesFragment : Fragment() {
                 val userDoc = db.collection("users").document(currentUser.uid).get().await()
                 val section = userDoc.getString("section")?.uppercase() ?: ""
 
-                val schedules = db.collection("schedules")
-                    .whereEqualTo("day", routine.day)
+                val schedulesSnap = db.collection("schedules")
                     .whereEqualTo("section", section)
                     .get()
                     .await()
+                val schedulesForDay = schedulesSnap.documents.filter {
+                    it.getString("day")?.equals(routine.day, ignoreCase = true) == true
+                }
 
-                val conflict = checkTimeConflict(routine, schedules.documents.map { doc ->
+                val conflict = checkTimeConflict(routine, schedulesForDay.map { doc ->
                     Triple(
                         doc.getString("subject") ?: "Class",
                         doc.getString("startTime") ?: "",

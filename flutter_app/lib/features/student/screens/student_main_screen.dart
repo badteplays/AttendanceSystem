@@ -3,6 +3,7 @@ import '../../../core/theme/app_colors.dart';
 import 'student_dashboard_screen.dart';
 import 'student_schedule_screen.dart';
 import 'student_history_screen.dart';
+import 'student_routines_screen.dart';
 import 'student_options_screen.dart';
 
 class StudentMainScreen extends StatefulWidget {
@@ -29,6 +30,7 @@ class _StudentMainScreenState extends State<StudentMainScreen> {
       ),
       const StudentScheduleScreen(),
       const StudentHistoryScreen(),
+      const StudentRoutinesScreen(),
       const StudentOptionsScreen(),
     ]);
   }
@@ -96,10 +98,16 @@ class _StudentMainScreenState extends State<StudentMainScreen> {
                   onTap: () => setState(() => _currentIndex = 2),
                 ),
                 _NavItem(
-                  icon: Icons.person_rounded,
-                  label: 'Profile',
+                  icon: Icons.self_improvement_rounded,
+                  label: 'Routines',
                   isSelected: _currentIndex == 3,
                   onTap: () => setState(() => _currentIndex = 3),
+                ),
+                _NavItem(
+                  icon: Icons.person_rounded,
+                  label: 'Profile',
+                  isSelected: _currentIndex == 4,
+                  onTap: () => setState(() => _currentIndex = 4),
                 ),
               ],
             ),

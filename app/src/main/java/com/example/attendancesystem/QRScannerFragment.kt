@@ -1,10 +1,15 @@
 package com.example.attendancesystem
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
+import android.media.AudioManager
+import android.media.ToneGenerator
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,24 +20,22 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.example.attendancesystem.models.QRCodeData
+import com.example.attendancesystem.utils.LocationManager
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreException
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.DecodeHintType
 import com.journeyapps.barcodescanner.BarcodeCallback
 import com.journeyapps.barcodescanner.BarcodeResult
 import com.journeyapps.barcodescanner.DecoratedBarcodeView
-import com.example.attendancesystem.utils.LocationManager
-import com.example.attendancesystem.models.AttendanceStatus
-import com.example.attendancesystem.models.QRCodeData
+import com.journeyapps.barcodescanner.DefaultDecoderFactory
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import android.content.Context
-import android.media.AudioManager
-import android.media.ToneGenerator
-import android.os.VibrationEffect
-import android.os.Vibrator
-import com.journeyapps.barcodescanner.DefaultDecoderFactory
-import com.google.zxing.BarcodeFormat
-import com.google.zxing.DecodeHintType
+import org.json.JSONObject
+import java.net.HttpURLConnection
+import java.net.URL
 
 class QRScannerFragment : Fragment() {
     private lateinit var barcodeView: DecoratedBarcodeView
@@ -52,8 +55,52 @@ class QRScannerFragment : Fragment() {
     companion object {
         private const val TAG = "QRScannerFragment"
         private const val PERMISSION_REQUEST_CODE = 100
+        // #region agent log
+        private const val DEBUG_SESSION = "f32d87"
+        private const val DEBUG_INGEST = "http://10.0.2.2:7552/ingest/00253193-e183-41ea-802a-ffd1a46a6236"
+        // #endregion
     }
 
+    // #region agent log
+    private fun qrScanDebugLog(hypothesisId: String, location: String, message: String, data: Map<String, Any?>) {
+        try {
+            val dataObj = JSONObject()
+            for ((k, v) in data) {
+                when (v) {
+                    null -> dataObj.put(k, JSONObject.NULL)
+                    is Number -> dataObj.put(k, v)
+                    is Boolean -> dataObj.put(k, v)
+                    else -> dataObj.put(k, v.toString())
+                }
+            }
+            val line = JSONObject().apply {
+                put("sessionId", DEBUG_SESSION)
+                put("runId", "pre-fix")
+                put("hypothesisId", hypothesisId)
+                put("location", location)
+                put("message", message)
+                put("data", dataObj)
+                put("timestamp", System.currentTimeMillis())
+            }.toString()
+            Thread {
+                try {
+                    val conn = URL(DEBUG_INGEST).openConnection() as HttpURLConnection
+                    conn.requestMethod = "POST"
+                    conn.setRequestProperty("Content-Type", "application/json")
+                    conn.setRequestProperty("X-Debug-Session-Id", DEBUG_SESSION)
+                    conn.doOutput = true
+                    conn.connectTimeout = 4000
+                    conn.readTimeout = 4000
+                    conn.outputStream.use { it.write(line.toByteArray(Charsets.UTF_8)) }
+                    conn.inputStream.bufferedReader().use { it.readText() }
+                    conn.disconnect()
+                } catch (_: Exception) {
+                }
+            }.start()
+        } catch (_: Exception) {
+        }
+    }
+    // #endregion
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -142,6 +189,14 @@ class QRScannerFragment : Fragment() {
             })
             barcodeView.resume()
         } catch (e: Exception) {
+            // #region agent log
+            AgentDebugLog.log(
+                "QRScannerFragment.kt:startScanning",
+                "camera_start_failed",
+                "H4",
+                mapOf("type" to e.javaClass.simpleName, "msg" to (e.message ?: ""))
+            )
+            // #endregion
             android.util.Log.e(TAG, "Error starting camera", e)
             showToast("Error starting camera: ${e.message}")
         }
@@ -179,9 +234,24 @@ class QRScannerFragment : Fragment() {
         progressBar.visibility = View.VISIBLE
 
         viewLifecycleOwner.lifecycleScope.launch {
+            // #region agent log
+            var debugStep = "INIT"
+            // #endregion
             try {
                 val qrData = QRCodeData.fromJson(qrContent)
                 currentQRData = qrData
+                // #region agent log
+                qrScanDebugLog(
+                    "H4",
+                    "QRScannerFragment.kt:handleQRCodeResult",
+                    "qr_parsed",
+                    mapOf(
+                        "scheduleId" to qrData.scheduleId,
+                        "qrSection" to qrData.section,
+                        "teacherIdLen" to qrData.teacherId.length
+                    )
+                )
+                // #endregion
 
                 if (!qrData.isExpired()) {
                     startTimer(qrData)
@@ -195,7 +265,9 @@ class QRScannerFragment : Fragment() {
                     return@launch
                 }
 
-
+                // #region agent log
+                debugStep = "STEP1_READ_SESSION"
+                // #endregion
                 val sessionDoc = db.collection("attendance_sessions")
                     .document(qrData.sessionId)
                     .get().await()
@@ -223,13 +295,90 @@ class QRScannerFragment : Fragment() {
                     return@launch
                 }
 
+                // #region agent log
+                debugStep = "STEP2_READ_USER"
+                // #endregion
                 val currentUser = auth.currentUser ?: throw Exception("Not logged in")
                 val userDoc = db.collection("users").document(currentUser.uid).get().await()
                 val studentName = userDoc.getString("name") ?: "Unknown Student"
+                val studentSectionRaw = userDoc.getString("section") ?: ""
+                // #region agent log
+                val userRole = userDoc.getString("role") ?: "NULL"
+                val userIsStudent = userDoc.getBoolean("isStudent")?.toString() ?: "NULL"
+                val userIsTeacher = userDoc.getBoolean("isTeacher")?.toString() ?: "NULL"
+                android.util.Log.e("QR_DEBUG", "USER_DOC: role=$userRole isStudent=$userIsStudent isTeacher=$userIsTeacher uid=${currentUser.uid}")
+                // #endregion
 
+                // #region agent log
+                val scheduleDoc = db.collection("schedules").document(qrData.scheduleId).get().await()
+                val scheduleExists = scheduleDoc.exists()
+                val scheduleSectionRaw = if (scheduleExists) (scheduleDoc.getString("section") ?: "") else ""
+                fun normSec(s: String) = s.trim().lowercase()
+                val userVsQrSection = normSec(studentSectionRaw) == normSec(qrData.section)
+                val userVsScheduleSection = scheduleExists && normSec(studentSectionRaw) == normSec(scheduleSectionRaw)
+                val qrVsScheduleSection = scheduleExists && normSec(qrData.section) == normSec(scheduleSectionRaw)
+                qrScanDebugLog(
+                    "H1",
+                    "QRScannerFragment.kt:handleQRCodeResult",
+                    "eligibility_snapshot",
+                    mapOf(
+                        "studentSectionRaw" to studentSectionRaw,
+                        "qrSection" to qrData.section,
+                        "scheduleExists" to scheduleExists,
+                        "scheduleSectionRaw" to scheduleSectionRaw,
+                        "userVsQrSection" to userVsQrSection,
+                        "userVsScheduleSection" to userVsScheduleSection,
+                        "qrVsScheduleSection" to qrVsScheduleSection,
+                        "uidSuffix" to currentUser.uid.takeLast(6)
+                    )
+                )
+                qrScanDebugLog(
+                    "H3",
+                    "QRScannerFragment.kt:handleQRCodeResult",
+                    "schedule_doc_for_qr",
+                    mapOf(
+                        "scheduleExists" to scheduleExists,
+                        "scheduleId" to qrData.scheduleId
+                    )
+                )
+                android.util.Log.e(
+                    "QR_DEBUG",
+                    "ELIGIBILITY studentSection=[$studentSectionRaw] qrSection=[${qrData.section}] scheduleExists=$scheduleExists scheduleSection=[$scheduleSectionRaw] userVsQr=$userVsQrSection userVsSchedule=$userVsScheduleSection"
+                )
+                // #endregion
+
+                if (studentSectionRaw.isBlank()) {
+                    showToast("Your account has no section assigned. Ask your teacher to update your profile.")
+                    progressBar.visibility = View.GONE
+                    isProcessing = false
+                    stopTimer()
+                    barcodeView.postDelayed({
+                        if (isAdded && !isDetached) startScanning()
+                    }, 2000)
+                    return@launch
+                }
+                if (!scheduleExists) {
+                    showToast("This class is not on your schedule.")
+                    progressBar.visibility = View.GONE
+                    isProcessing = false
+                    stopTimer()
+                    barcodeView.postDelayed({
+                        if (isAdded && !isDetached) startScanning()
+                    }, 2000)
+                    return@launch
+                }
+                if (!normSec(studentSectionRaw).equals(normSec(scheduleSectionRaw))) {
+                    showToast("This QR code is not for your section.")
+                    progressBar.visibility = View.GONE
+                    isProcessing = false
+                    stopTimer()
+                    barcodeView.postDelayed({
+                        if (isAdded && !isDetached) startScanning()
+                    }, 2000)
+                    return@launch
+                }
 
                 if (scannedSessions.contains(qrData.scheduleId)) {
-                    android.util.Log.d(TAG, "Duplicate scan detected (app session) - Schedule: ${qrData.scheduleId}")
                     showToast("You've already marked attendance for this class!")
                     progressBar.visibility = View.GONE
                     isProcessing = false
@@ -237,33 +386,33 @@ class QRScannerFragment : Fragment() {
                     return@launch
                 }
 
-                val todayStart = java.util.Calendar.getInstance().apply {
-                    set(java.util.Calendar.HOUR_OF_DAY, 0)
-                    set(java.util.Calendar.MINUTE, 0)
-                    set(java.util.Calendar.SECOND, 0)
-                    set(java.util.Calendar.MILLISECOND, 0)
-                }
-                val todayTimestamp = com.google.firebase.Timestamp(todayStart.time)
-
-                val existingBySchedule = db.collection("attendance")
+                // #region agent log
+                debugStep = "STEP3_QUERY_ATTENDANCE"
+                android.util.Log.e("QR_DEBUG", "STEP3: querying attendance sessionId=${qrData.sessionId} userId=${currentUser.uid}")
+                // #endregion
+                val sessionSnap = db.collection("attendance")
+                    .whereEqualTo("sessionId", qrData.sessionId)
                     .whereEqualTo("userId", currentUser.uid)
-                    .whereEqualTo("scheduleId", qrData.scheduleId)
-                    .whereGreaterThanOrEqualTo("timestamp", todayTimestamp)
                     .get().await()
+                // #region agent log
+                android.util.Log.e("QR_DEBUG", "STEP3 OK: found ${sessionSnap.size()} docs")
+                // #endregion
+                val duplicateThisSession = sessionSnap.documents.isNotEmpty()
 
-                if (!existingBySchedule.isEmpty) {
-                    android.util.Log.d(TAG, "Duplicate scan detected - already attended this class today")
+                if (duplicateThisSession) {
                     scannedSessions.add(qrData.scheduleId)
-                    showToast("You've already marked attendance for this class!")
+                    showToast("You already scanned this QR code.")
                     progressBar.visibility = View.GONE
                     isProcessing = false
                     stopTimer()
                     return@launch
                 }
 
-                android.util.Log.d(TAG, "No duplicates found, marking attendance for ${qrData.subject}")
+                val sessionStartedAt = sessionDoc.getLong("firstGeneratedAt") ?: sessionDoc.getLong("createdAt") ?: 0L
+                val attendanceStatus = if (sessionStartedAt > 0 && System.currentTimeMillis() > sessionStartedAt + 15 * 60 * 1000L) "LATE" else "PRESENT"
 
                 val attendanceData = hashMapOf(
+                    "studentId" to currentUser.uid,
                     "userId" to currentUser.uid,
                     "studentName" to studentName,
                     "sessionId" to qrData.sessionId,
@@ -272,43 +421,65 @@ class QRScannerFragment : Fragment() {
                     "subject" to qrData.subject,
                     "section" to qrData.section,
                     "timestamp" to com.google.firebase.Timestamp.now(),
-                    "status" to AttendanceStatus.PRESENT.name,
+                    "status" to attendanceStatus,
                     "location" to "",
                     "notes" to ""
                 )
-                android.util.Log.d(TAG, "=== SAVING ATTENDANCE TO FIRESTORE ===")
-                android.util.Log.d(TAG, "userId: ${currentUser.uid}")
-                android.util.Log.d(TAG, "studentName: $studentName")
-                android.util.Log.d(TAG, "sessionId: ${qrData.sessionId}")
-                android.util.Log.d(TAG, "teacherId: ${qrData.teacherId}")
-                android.util.Log.d(TAG, "scheduleId: ${qrData.scheduleId}")
-                android.util.Log.d(TAG, "subject: ${qrData.subject}")
-                android.util.Log.d(TAG, "section: ${qrData.section}")
-                android.util.Log.d(TAG, "status: ${AttendanceStatus.PRESENT.name}")
+                // #region agent log
+                qrScanDebugLog(
+                    "H5",
+                    "QRScannerFragment.kt:handleQRCodeResult",
+                    "about_to_write_attendance",
+                    mapOf(
+                        "storedSectionFromQr" to qrData.section,
+                        "studentSectionRaw" to studentSectionRaw,
+                        "scheduleId" to qrData.scheduleId
+                    )
+                )
+                // #endregion
+                // #region agent log
+                debugStep = "STEP4_CREATE_ATTENDANCE"
+                android.util.Log.e("QR_DEBUG", "STEP4: creating attendance doc. expiresAt=$expiresAt serverDelta=${expiresAt - System.currentTimeMillis()}ms")
+                // #endregion
                 val docRef = db.collection("attendance").add(attendanceData).await()
-                android.util.Log.d(TAG, "✓✓✓ ATTENDANCE SAVED! Document ID: ${docRef.id} ✓✓✓")
+                // #region agent log
+                android.util.Log.e("QR_DEBUG", "STEP4 OK: docId=${docRef.id}")
+                // #endregion
 
                 scannedSessions.add(qrData.scheduleId)
-
-                android.util.Log.d(TAG, "Attendance marked successfully - Schedule: ${qrData.scheduleId}, Subject: ${qrData.subject}")
 
                 progressBar.visibility = View.GONE
                 stopTimer()
                 isProcessing = false
-                showToast("Attendance marked successfully!")
 
-                val dashboardFragment = StudentDashboardFragment().apply {
-                    arguments = Bundle().apply {
-                        putString("justMarkedSubject", qrData.subject)
-                        putLong("justMarkedTime", System.currentTimeMillis())
-                    }
+                val confirmDialog = AttendanceConfirmationDialog.newInstance(
+                    studentName = studentName,
+                    section = qrData.section,
+                    subject = qrData.subject,
+                    status = attendanceStatus,
+                    timestampMillis = System.currentTimeMillis()
+                )
+                confirmDialog.onDoneListener = {
+                    // Reset bottom nav to Home tab
+                    (activity as? StudentMainActivity)?.navigateToDashboard()
                 }
-                parentFragmentManager.beginTransaction()
-                    .replace(R.id.fragmentContainer, dashboardFragment)
-                    .commit()
+                confirmDialog.show(parentFragmentManager, "attendance_confirmation")
 
             } catch (e: Exception) {
-                showToast(e.message ?: "Error processing QR code")
+                // #region agent log
+                val fs = e as? FirebaseFirestoreException
+                val cause = e.cause as? FirebaseFirestoreException
+                val code = fs?.code ?: cause?.code
+                android.util.Log.e("QR_DEBUG", "FAILED at $debugStep: ${code?.name ?: "no-code"} ${e.javaClass.simpleName}: ${e.message}")
+                android.util.Log.e("QR_DEBUG", "Full stack:", e)
+                // #endregion
+                val raw = e.message.orEmpty()
+                val toastMsg = if (raw.contains("index", ignoreCase = true) || raw.contains("FAILED_PRECONDITION", ignoreCase = true)) {
+                    "Not a camera issue: Firestore needs an index. Use the link in Logcat or deploy firestore.indexes.json."
+                } else {
+                    "[$debugStep] ${e.message ?: "Error processing QR code"}"
+                }
+                showToast(toastMsg)
                 progressBar.visibility = View.GONE
                 isProcessing = false
                 stopTimer()

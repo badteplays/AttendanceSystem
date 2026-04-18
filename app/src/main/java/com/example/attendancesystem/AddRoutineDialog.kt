@@ -3,14 +3,17 @@ package com.example.attendancesystem
 import android.app.Dialog
 import android.app.TimePickerDialog
 import android.content.Context
-import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import android.view.Window
-import android.widget.*
+import android.widget.ArrayAdapter
+import android.widget.Button
+import android.widget.Spinner
+import android.widget.TextView
+import android.widget.Toast
 import com.example.attendancesystem.models.Routine
 import com.google.android.material.textfield.TextInputEditText
-import java.util.*
+import java.util.Calendar
 
 class AddRoutineDialog(
     context: Context,
@@ -29,11 +32,19 @@ class AddRoutineDialog(
 
     private var selectedStartTime = ""
     private var selectedEndTime = ""
-    private var selectedColor = "#4CAF50"
 
-    private val colors = listOf(
-        "#4CAF50", "#2196F3", "#FF9800", "#E91E63", "#9C27B0"
-    )
+    companion object {
+        private val AUTO_COLORS = listOf(
+            "#4CAF50", "#2196F3", "#FF9800", "#E91E63", "#9C27B0"
+        )
+        private var colorIndex = 0
+
+        fun nextColor(): String {
+            val color = AUTO_COLORS[colorIndex % AUTO_COLORS.size]
+            colorIndex++
+            return color
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,7 +54,6 @@ class AddRoutineDialog(
         initializeViews()
         setupDaySpinner()
         setupTimePickers()
-        setupColorPicker()
         setupButtons()
     }
 
@@ -108,28 +118,6 @@ class AddRoutineDialog(
         return String.format("%d:%02d %s", displayHour, minute, amPm)
     }
 
-    private fun setupColorPicker() {
-        val colorViews = listOf(
-            findViewById<View>(R.id.colorOption1),
-            findViewById<View>(R.id.colorOption2),
-            findViewById<View>(R.id.colorOption3),
-            findViewById<View>(R.id.colorOption4),
-            findViewById<View>(R.id.colorOption5)
-        )
-
-        colorViews.forEachIndexed { index, view ->
-            view.setOnClickListener {
-                selectedColor = colors[index]
-
-                colorViews.forEach { it.alpha = 0.5f }
-                view.alpha = 1.0f
-            }
-        }
-
-        colorViews[0].alpha = 1.0f
-        colorViews.drop(1).forEach { it.alpha = 0.5f }
-    }
-
     private fun setupButtons() {
         buttonCancel.setOnClickListener {
             dismiss()
@@ -170,7 +158,7 @@ class AddRoutineDialog(
             day = day,
             startTime = selectedStartTime,
             endTime = selectedEndTime,
-            color = selectedColor
+            color = nextColor()
         )
 
         onRoutineCreated(routine)

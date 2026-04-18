@@ -7,15 +7,12 @@
     android:background="@color/background"
     tools:context=".StudentScheduleFragment">
 
-    <!-- Header Card -->
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/headerCard"
+    <LinearLayout
+        android:id="@+id/headerWrap"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
-        app:cardCornerRadius="16dp"
-        app:cardElevation="4dp"
-        app:cardBackgroundColor="@color/primary"
+        android:orientation="vertical"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
@@ -23,63 +20,163 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="20dp">
+            android:layout_marginBottom="14dp"
+            android:orientation="horizontal">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="My Class Schedule"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:textColor="@color/on_primary"
-                android:layout_marginBottom="8dp" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/todayButton"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:text="Today"
+                android:textAllCaps="false"
+                app:cornerRadius="14dp"
+                app:icon="@drawable/ic_calendar"
+                app:iconTint="@color/text_secondary"
+                app:strokeColor="@color/card_border"
+                app:strokeWidth="1dp" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
-
-                <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:src="@drawable/ic_calendar"
-                    app:tint="@color/on_primary"
-                    android:layout_marginEnd="8dp" />
-
-                <TextView
-                    android:id="@+id/textTodayClasses"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Loading..."
-                    android:textSize="14sp"
-                    android:textColor="@color/on_primary" />
-
-                <TextView
-                    android:id="@+id/textTotalClasses"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="0 classes"
-                    android:textSize="14sp"
-                    android:textColor="@color/on_primary"
-                    android:textStyle="bold" />
-
-            </LinearLayout>
-
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/monthButton"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="Mar 2025"
+                android:textAllCaps="false"
+                app:cornerRadius="14dp"
+                app:icon="@drawable/ic_arrow_down"
+                app:iconGravity="textEnd"
+                app:iconTint="@color/text_secondary"
+                app:strokeColor="@color/card_border"
+                app:strokeWidth="1dp" />
         </LinearLayout>
 
-    </com.google.android.material.card.MaterialCardView>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal">
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="S" android:textColor="@color/text_secondary" android:textSize="16sp" />
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="M" android:textColor="@color/text_secondary" android:textSize="16sp" />
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="T" android:textColor="@color/text_secondary" android:textSize="16sp" />
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="W" android:textColor="@color/text_secondary" android:textSize="16sp" />
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="T" android:textColor="@color/text_secondary" android:textSize="16sp" />
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="F" android:textColor="@color/text_secondary" android:textSize="16sp" />
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="S" android:textColor="@color/text_secondary" android:textSize="16sp" />
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            android:id="@+id/dayToggleGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            app:singleSelection="true"
+            app:selectionRequired="true">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/daySun"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="0dp"
+                android:layout_height="46dp"
+                android:layout_weight="1"
+                android:text="1"
+                app:cornerRadius="23dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/dayMon"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="0dp"
+                android:layout_height="46dp"
+                android:layout_weight="1"
+                android:text="2"
+                app:cornerRadius="23dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/dayTue"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="0dp"
+                android:layout_height="46dp"
+                android:layout_weight="1"
+                android:text="3"
+                app:cornerRadius="23dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/dayWed"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="0dp"
+                android:layout_height="46dp"
+                android:layout_weight="1"
+                android:text="4"
+                app:cornerRadius="23dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/dayThu"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="0dp"
+                android:layout_height="46dp"
+                android:layout_weight="1"
+                android:text="5"
+                app:cornerRadius="23dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/dayFri"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="0dp"
+                android:layout_height="46dp"
+                android:layout_weight="1"
+                android:text="6"
+                app:cornerRadius="23dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/daySat"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="0dp"
+                android:layout_height="46dp"
+                android:layout_weight="1"
+                android:text="7"
+                app:cornerRadius="23dp" />
+        </com.google.android.material.button.MaterialButtonToggleGroup>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/textTodayClasses"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Loading..."
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/textTotalClasses"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0 classes"
+                android:textColor="@color/text_primary"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/studentScheduleRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="2dp"
         android:paddingHorizontal="16dp"
+        android:paddingBottom="16dp"
         android:clipToPadding="false"
-        app:layout_constraintTop_toBottomOf="@id/headerCard"
+        app:layout_constraintTop_toBottomOf="@id/headerWrap"
         app:layout_constraintBottom_toBottomOf="parent"
         tools:listitem="@layout/item_student_schedule" />
 

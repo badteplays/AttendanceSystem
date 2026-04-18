@@ -5,10 +5,6 @@
         android:title="My Routines"
         android:icon="@drawable/ic_schedule" />
     <item
-        android:id="@+id/drawer_history"
-        android:title="History"
-        android:icon="@drawable/ic_hours" />
-    <item
         android:id="@+id/drawer_profile"
         android:title="Profile"
         android:icon="@drawable/ic_person" />

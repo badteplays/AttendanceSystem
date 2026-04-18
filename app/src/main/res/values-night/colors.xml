@@ -172,4 +172,28 @@
     <color name="inverse_on_surface">#27272A</color>
     <color name="inverse_primary">#2563EB</color>
     <color name="text_on_gradient">#FFFFFF</color>
+
+    <color name="teacher_ds_primary_dark">#1D6E6E</color>
+    <color name="teacher_ds_primary_mid">#2E9E9E</color>
+    <color name="teacher_ds_primary_light">#5DCAA5</color>
+    <color name="teacher_ds_page_bg">#0F1A18</color>
+    <color name="teacher_ds_card_bg">#1A2926</color>
+    <color name="teacher_ds_text_primary">#E8F0EE</color>
+    <color name="teacher_ds_text_secondary">#7A9E9E</color>
+    <color name="teacher_ds_text_muted">#4A6E6E</color>
+    <color name="teacher_ds_on_dark_muted">#8CFFFFFF</color>
+    <color name="teacher_ds_border_default">#243634</color>
+    <color name="teacher_ds_border_medium">#2E4240</color>
+    <color name="teacher_ds_live_bg">#5DCAA5</color>
+    <color name="teacher_ds_live_text">#04342C</color>
+
+    <color name="teacher_ds_status_present_bg">#1A3D2E</color>
+    <color name="teacher_ds_status_present_text">#5DCAA5</color>
+    <color name="teacher_ds_status_present_accent">#5DCAA5</color>
+    <color name="teacher_ds_status_absent_bg">#3D1A1A</color>
+    <color name="teacher_ds_status_absent_text">#F87171</color>
+    <color name="teacher_ds_status_absent_accent">#EF4444</color>
+    <color name="teacher_ds_status_late_bg">#3D2E1A</color>
+    <color name="teacher_ds_status_late_text">#FBBF24</color>
+    <color name="teacher_ds_status_late_accent">#F59E0B</color>
 </resources>

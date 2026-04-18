@@ -67,18 +67,17 @@ class StudentReminderWorker(
             ) ?: return null
 
             val schedulesUpper = db.collection("schedules")
-                .whereEqualTo("day", day)
                 .whereEqualTo("section", sectionUpper)
                 .get().await()
             val schedulesLower = if (sectionLower != sectionUpper) {
                 db.collection("schedules")
-                    .whereEqualTo("day", day)
                     .whereEqualTo("section", sectionLower)
                     .get().await()
             } else {
                 schedulesUpper
             }
             val schedules = (schedulesUpper.documents + schedulesLower.documents)
+                .filter { it.getString("day").equals(day, ignoreCase = true) }
                 .distinctBy { it.id }
 
             val now = Calendar.getInstance()

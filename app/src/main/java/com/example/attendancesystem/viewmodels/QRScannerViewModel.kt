@@ -4,13 +4,11 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.attendancesystem.models.QRCodeData
 import com.example.attendancesystem.models.AttendanceStatus
+import com.example.attendancesystem.models.QRCodeData
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
-import java.util.*
 
 class QRScannerViewModel(application: Application) : AndroidViewModel(application) {
     private val _scanResult = MutableLiveData<ScanResult>()
@@ -31,6 +29,14 @@ class QRScannerViewModel(application: Application) : AndroidViewModel(applicatio
                     return@launch
                 }
 
+                firestore.collection("attendance_sessions")
+                    .document(qrCodeData.sessionId)
+                    .get()
+                    .addOnSuccessListener { sessionDoc ->
+                        val sessionStartedAt = sessionDoc.getLong("firstGeneratedAt") ?: sessionDoc.getLong("createdAt") ?: 0L
+                        val status = if (sessionStartedAt > 0 && System.currentTimeMillis() > sessionStartedAt + 15 * 60 * 1000L)
+                            AttendanceStatus.LATE.name else AttendanceStatus.PRESENT.name
+
                 firestore.collection("attendance")
                     .whereEqualTo("studentId", userId)
                     .whereEqualTo("scheduleId", qrCodeData.scheduleId)
@@ -46,7 +52,7 @@ class QRScannerViewModel(application: Application) : AndroidViewModel(applicatio
                                         "userId" to userId,
                                         "studentName" to studentName,
                                         "timestamp" to com.google.firebase.Timestamp.now(),
-                                        "status" to AttendanceStatus.PRESENT.name,
+                                        "status" to status,
                                         "sessionId" to qrCodeData.sessionId,
                                         "scheduleId" to qrCodeData.scheduleId,
                                         "subject" to qrCodeData.subject,
@@ -90,6 +96,8 @@ class QRScannerViewModel(application: Application) : AndroidViewModel(applicatio
                     .addOnFailureListener { e ->
                         _scanResult.postValue(ScanResult.Error("Error checking previous attendance: ${e.message}"))
                     }
+                    }
+                    .addOnFailureListener { _scanResult.postValue(ScanResult.Error("Failed to read session")) }
                 return@launch
 
             } catch (e: Exception) {

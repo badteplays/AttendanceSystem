@@ -35,6 +35,22 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/globalScanFab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginBottom="84dp"
+            android:contentDescription="Scan QR"
+            android:src="@drawable/ic_qr_code"
+            android:tint="@color/white"
+            app:backgroundTint="@color/primary"
+            app:borderWidth="0dp"
+            app:elevation="0dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:maxImageSize="22dp" />
+
         <FrameLayout
             android:id="@+id/drawerHandle"
             android:layout_width="48dp"

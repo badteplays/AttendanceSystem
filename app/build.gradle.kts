@@ -97,6 +97,9 @@ dependencies {
     
     // Glide for image loading
     implementation("com.github.bumptech.glide:glide:4.16.0")
+
+    // JExcel for Excel export (Android-compatible)
+    implementation("net.sourceforge.jexcelapi:jxl:2.6.12")
     
 
     

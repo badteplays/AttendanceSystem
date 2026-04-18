@@ -1,10 +1,18 @@
 package com.example.attendancesystem
 
+import android.Manifest
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.view.inputmethod.EditorInfo
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.example.attendancesystem.databinding.ActivityLoginBinding
 import com.example.attendancesystem.utils.KeyboardUtils
 import com.example.attendancesystem.utils.NetworkUtils
@@ -13,16 +21,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
-import androidx.work.WorkManager
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.ExistingPeriodicWorkPolicy
 import java.util.concurrent.TimeUnit
-import android.content.Context
-import android.Manifest
-import android.content.pm.PackageManager
-import android.os.Build
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
@@ -198,8 +197,11 @@ class LoginActivity : AppCompatActivity() {
                         showLoading(false)
                         val userIsTeacher = doc.getBoolean("isTeacher") ?: false
                         if (userIsTeacher == isTeacher) {
-                            ensureUserProfile(if (isTeacher) "teacher" else "student")
-                            navigateToAppropriateScreen()
+                            val role = if (isTeacher) "teacher" else "student"
+                            db.collection("users").document(result.user!!.uid)
+                                .set(mapOf("role" to role, "isTeacher" to isTeacher, "isStudent" to !isTeacher), com.google.firebase.firestore.SetOptions.merge())
+                                .addOnSuccessListener { navigateToAppropriateScreen() }
+                                .addOnFailureListener { navigateToAppropriateScreen() }
                         } else {
                             auth.signOut()
                             showSnackbar("Incorrect role selected for this account")
@@ -243,18 +245,6 @@ class LoginActivity : AppCompatActivity() {
             .setBackgroundTint(getColor(R.color.surface_container_high))
             .setTextColor(getColor(R.color.text_primary))
             .show()
-    }
-
-    private fun ensureUserProfile(role: String) {
-        val user = auth.currentUser ?: return
-        val userData = hashMapOf(
-            "email" to user.email,
-            "displayName" to user.displayName,
-            "isTeacher" to (role == "teacher"),
-            "isStudent" to (role == "student")
-        )
-        db.collection("users").document(user.uid)
-            .set(userData, com.google.firebase.firestore.SetOptions.merge())
     }
 
     private fun navigateToAppropriateScreen() {
@@ -328,6 +318,11 @@ class LoginActivity : AppCompatActivity() {
             permissionsToRequest.add(Manifest.permission.CAMERA)
         }
 
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED) {
+            permissionsToRequest.add(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -358,11 +353,10 @@ class LoginActivity : AppCompatActivity() {
 
             if (deniedPermissions.isNotEmpty()) {
                 val message = when {
-                    Manifest.permission.CAMERA in deniedPermissions &&
-                    Manifest.permission.POST_NOTIFICATIONS in deniedPermissions -> 
-                        "Camera and notifications needed for full functionality"
                     Manifest.permission.CAMERA in deniedPermissions -> 
                         "Camera needed to scan QR codes"
+                    Manifest.permission.ACCESS_FINE_LOCATION in deniedPermissions -> 
+                        "Location may be needed for QR validation"
                     Manifest.permission.POST_NOTIFICATIONS in deniedPermissions -> 
                         "Notifications needed for class reminders"
                     else -> "Some permissions were denied"

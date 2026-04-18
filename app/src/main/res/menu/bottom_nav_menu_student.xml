@@ -3,16 +3,16 @@
     <item
         android:id="@+id/nav_home"
         android:icon="@drawable/ic_home"
-        android:title="Dashboard"
+        android:title="Home"
         android:checkable="true" />
     <item
-        android:id="@+id/nav_scan"
-        android:icon="@drawable/ic_qr_code"
-        android:title="Scan QR"
-        android:checkable="true" />
-    <item
-        android:id="@+id/nav_schedule"
+        android:id="@+id/nav_calendar"
         android:icon="@drawable/ic_calendar"
-        android:title="Schedule"
+        android:title="Calendar"
+        android:checkable="true" />
+    <item
+        android:id="@+id/nav_routines"
+        android:icon="@drawable/ic_schedule"
+        android:title="Routines"
         android:checkable="true" />
 </menu>

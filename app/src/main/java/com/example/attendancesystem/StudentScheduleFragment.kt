@@ -1,5 +1,6 @@
 package com.example.attendancesystem
 
+import android.app.DatePickerDialog
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -10,12 +11,16 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.attendancesystem.models.StudentScheduleItem
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.button.MaterialButtonToggleGroup
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
-import com.example.attendancesystem.models.StudentScheduleItem
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 class StudentScheduleFragment : Fragment() {
     private lateinit var recyclerView: RecyclerView
@@ -23,18 +28,23 @@ class StudentScheduleFragment : Fragment() {
     private lateinit var emptyState: LinearLayout
     private lateinit var textTotalClasses: TextView
     private lateinit var textTodayClasses: TextView
+    private lateinit var todayButton: MaterialButton
+    private lateinit var monthButton: MaterialButton
+    private lateinit var dayToggleGroup: MaterialButtonToggleGroup
     private lateinit var adapter: StudentScheduleAdapter
     private val scheduleList = ArrayList<StudentScheduleItem>()
     private val db = FirebaseFirestore.getInstance()
     private val currentUser = FirebaseAuth.getInstance().currentUser
     private var studentSection: String = ""
+    private val selectedDate = Calendar.getInstance()
+    private val dayButtons = mutableListOf<MaterialButton>()
+    private val dayCalendars = mutableListOf<Calendar>()
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        android.util.Log.d("StudentScheduleFragment", "Creating view")
         return inflater.inflate(R.layout.fragment_student_schedule, container, false)
     }
 
@@ -44,11 +54,10 @@ class StudentScheduleFragment : Fragment() {
         try {
             initializeViews(view)
             setupRecyclerView()
-
+            setupDateControls()
             showEmptyState("Schedule loading...")
             loadStudentSection()
         } catch (e: Exception) {
-            android.util.Log.e("StudentScheduleFragment", "Error in onViewCreated: ${e.message}", e)
             showEmptyState("Error loading schedule: ${e.message}")
         }
     }
@@ -60,8 +69,18 @@ class StudentScheduleFragment : Fragment() {
             emptyState = view.findViewById(R.id.emptyState)
             textTotalClasses = view.findViewById(R.id.textTotalClasses)
             textTodayClasses = view.findViewById(R.id.textTodayClasses)
+            todayButton = view.findViewById(R.id.todayButton)
+            monthButton = view.findViewById(R.id.monthButton)
+            dayToggleGroup = view.findViewById(R.id.dayToggleGroup)
+            dayButtons.clear()
+            dayButtons.add(view.findViewById(R.id.daySun))
+            dayButtons.add(view.findViewById(R.id.dayMon))
+            dayButtons.add(view.findViewById(R.id.dayTue))
+            dayButtons.add(view.findViewById(R.id.dayWed))
+            dayButtons.add(view.findViewById(R.id.dayThu))
+            dayButtons.add(view.findViewById(R.id.dayFri))
+            dayButtons.add(view.findViewById(R.id.daySat))
         } catch (e: Exception) {
-            android.util.Log.e("StudentScheduleFragment", "Error initializing views: ${e.message}", e)
             throw e
         }
     }
@@ -72,8 +91,63 @@ class StudentScheduleFragment : Fragment() {
             recyclerView.layoutManager = LinearLayoutManager(requireContext())
             recyclerView.adapter = adapter
         } catch (e: Exception) {
-            android.util.Log.e("StudentScheduleFragment", "Error setting up recycler view: ${e.message}", e)
             throw e
+        }
+    }
+
+    private fun setupDateControls() {
+        todayButton.setOnClickListener {
+            selectedDate.timeInMillis = System.currentTimeMillis()
+            updateDateUi()
+            loadStudentSchedules()
+        }
+        monthButton.setOnClickListener {
+            showDatePicker()
+        }
+        dayToggleGroup.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (!isChecked) return@addOnButtonCheckedListener
+            val index = dayButtons.indexOfFirst { it.id == checkedId }
+            if (index >= 0 && index < dayCalendars.size) {
+                selectedDate.time = dayCalendars[index].time
+                updateDateUi()
+                loadStudentSchedules()
+            }
+        }
+        updateDateUi()
+    }
+
+    private fun showDatePicker() {
+        val y = selectedDate.get(Calendar.YEAR)
+        val m = selectedDate.get(Calendar.MONTH)
+        val d = selectedDate.get(Calendar.DAY_OF_MONTH)
+        DatePickerDialog(requireContext(), { _, year, month, day ->
+            selectedDate.set(Calendar.YEAR, year)
+            selectedDate.set(Calendar.MONTH, month)
+            selectedDate.set(Calendar.DAY_OF_MONTH, day)
+            updateDateUi()
+            loadStudentSchedules()
+        }, y, m, d).show()
+    }
+
+    private fun updateDateUi() {
+        monthButton.text = SimpleDateFormat("MMM yyyy", Locale.getDefault()).format(selectedDate.time)
+        dayCalendars.clear()
+
+        val weekStart = Calendar.getInstance().apply {
+            time = selectedDate.time
+            set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY)
+        }
+        dayButtons.forEachIndexed { index, button ->
+            val day = Calendar.getInstance().apply {
+                time = weekStart.time
+                add(Calendar.DAY_OF_YEAR, index)
+            }
+            dayCalendars.add(day)
+            button.text = day.get(Calendar.DAY_OF_MONTH).toString()
+        }
+        val selectedIndex = (selectedDate.get(Calendar.DAY_OF_WEEK) - Calendar.SUNDAY).coerceIn(0, 6)
+        dayButtons.getOrNull(selectedIndex)?.let {
+            dayToggleGroup.check(it.id)
         }
     }
 
@@ -84,13 +158,11 @@ class StudentScheduleFragment : Fragment() {
         }
 
         try {
-
             db.collection("users").document(currentUser.uid)
                 .get()
                 .addOnSuccessListener { document ->
                     if (document.exists()) {
                         studentSection = document.getString("section") ?: ""
-                        android.util.Log.d("StudentScheduleFragment", "Student section from database: '$studentSection'")
                         if (studentSection.isNotEmpty()) {
                             loadStudentSchedules()
                         } else {
@@ -112,24 +184,19 @@ class StudentScheduleFragment : Fragment() {
         progressBar.visibility = View.VISIBLE
 
         try {
-
             val normalizedSection = studentSection.trim().uppercase()
-            android.util.Log.d("StudentScheduleFragment", "Loading schedules for section: '$normalizedSection' (original: '$studentSection')")
+            val selectedDay = getSelectedDayOfWeek()
             db.collection("schedules")
                 .whereEqualTo("section", normalizedSection)
                 .get()
                 .addOnSuccessListener { documents ->
-                    android.util.Log.d("StudentScheduleFragment", "Found ${documents.size()} schedules with uppercase query")
-
                     if (documents.isEmpty) {
-                        android.util.Log.d("StudentScheduleFragment", "No results with uppercase, trying lowercase...")
-                        tryLowercaseQuery(normalizedSection.lowercase())
+                        tryLowercaseQuery(normalizedSection.lowercase(), selectedDay)
                     } else {
-                        processScheduleDocuments(documents)
+                        processScheduleDocuments(documents, selectedDay)
                     }
                 }
                 .addOnFailureListener { e ->
-                    android.util.Log.e("StudentScheduleFragment", "Error loading schedules: ${e.message}", e)
                     progressBar.visibility = View.GONE
                     showEmptyState("Error loading schedules: ${e.message}")
                 }
@@ -139,76 +206,66 @@ class StudentScheduleFragment : Fragment() {
         }
     }
 
-    private fun tryLowercaseQuery(lowercaseSection: String) {
-        android.util.Log.d("StudentScheduleFragment", "Querying with lowercase section: '$lowercaseSection'")
+    private fun tryLowercaseQuery(lowercaseSection: String, selectedDay: String) {
         db.collection("schedules")
             .whereEqualTo("section", lowercaseSection)
             .get()
             .addOnSuccessListener { documents ->
-                android.util.Log.d("StudentScheduleFragment", "Found ${documents.size()} schedules with lowercase query")
-                processScheduleDocuments(documents)
+                processScheduleDocuments(documents, selectedDay)
             }
             .addOnFailureListener { e ->
-                android.util.Log.e("StudentScheduleFragment", "Error with lowercase query: ${e.message}", e)
                 progressBar.visibility = View.GONE
                 showEmptyState("Error loading schedules: ${e.message}")
             }
     }
 
-    private fun processScheduleDocuments(documents: com.google.firebase.firestore.QuerySnapshot) {
-                scheduleList.clear()
-                var todayClassesCount = 0
-                val today = getCurrentDayOfWeek()
+    private fun processScheduleDocuments(documents: com.google.firebase.firestore.QuerySnapshot, selectedDay: String) {
+        val daySchedules = documents.documents.filter {
+            it.getString("day")?.equals(selectedDay, ignoreCase = true) == true
+        }
+        if (daySchedules.isEmpty()) {
+            scheduleList.clear()
+            adapter.notifyDataSetChanged()
+            showEmptyState("No classes for ${selectedDay.lowercase().replaceFirstChar { c -> c.uppercase() }}")
+            return
+        }
 
-                for (document in documents) {
-                    val subject = document.getString("subject") ?: ""
-                    val section = document.getString("section") ?: ""
-                    val day = document.getString("day") ?: ""
-                    val startTime = document.getString("startTime") ?: ""
-                    val endTime = document.getString("endTime") ?: ""
-                    val notes = document.getString("notes") ?: ""
-                    val teacherId = document.getString("teacherId") ?: ""
+        val dayStart = Calendar.getInstance().apply {
+            time = selectedDate.time
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        val dayEnd = Calendar.getInstance().apply {
+            time = dayStart.time
+            add(Calendar.DAY_OF_YEAR, 1)
+        }
+        val dayStartTs = Timestamp(dayStart.time)
+        val dayEndTs = Timestamp(dayEnd.time)
+        val uid = currentUser?.uid
+        if (uid == null) {
+            renderSchedules(daySchedules, emptyMap())
+            return
+        }
 
-                    android.util.Log.d("StudentScheduleFragment", "Found schedule: subject=$subject, section=$section, day=$day, time=$startTime-$endTime")
-
-                    val timeString = convertTo12HourFormat(startTime, endTime)
-
-                    if (day.equals(today, ignoreCase = true)) {
-                        todayClassesCount++
-                    }
-
-                    scheduleList.add(StudentScheduleItem(
-                        id = document.id,
-                        subject = subject,
-                        section = section,
-                        day = day,
-                        time = timeString,
-                        startTime = startTime,
-                        endTime = endTime,
-                        notes = notes,
-                        teacherId = teacherId
-                    ))
+        db.collection("attendance")
+            .whereEqualTo("userId", uid)
+            .get()
+            .addOnSuccessListener { attendanceDocs ->
+                val statusBySchedule = mutableMapOf<String, String>()
+                attendanceDocs.documents.forEach { doc ->
+                    val ts = doc.getTimestamp("timestamp") ?: return@forEach
+                    if (ts < dayStartTs || ts >= dayEndTs) return@forEach
+                    val scheduleId = doc.getString("scheduleId") ?: return@forEach
+                    val status = doc.getString("status")?.uppercase() ?: "PRESENT"
+                    statusBySchedule[scheduleId] = status
                 }
-
-                if (scheduleList.isNotEmpty()) {
-                    recyclerView.visibility = View.VISIBLE
-                    emptyState.visibility = View.GONE
-
-                    val totalText = if (scheduleList.size == 1) "1 class" else "${scheduleList.size} classes"
-                    textTotalClasses.text = totalText
-
-                    val todayText = when (todayClassesCount) {
-                        0 -> "No classes today"
-                        1 -> "1 class today"
-                        else -> "$todayClassesCount classes today"
-                    }
-                    textTodayClasses.text = todayText
-                } else {
-                    showEmptyState("No classes scheduled for your section")
-                }
-
-                adapter.notifyDataSetChanged()
-                progressBar.visibility = View.GONE
+                renderSchedules(daySchedules, statusBySchedule)
+            }
+            .addOnFailureListener {
+                renderSchedules(daySchedules, emptyMap())
+            }
     }
 
     private fun showEmptyState(message: String) {
@@ -223,10 +280,85 @@ class StudentScheduleFragment : Fragment() {
         emptyMessage?.text = message
     }
 
-    private fun getCurrentDayOfWeek(): String {
-        val calendar = Calendar.getInstance()
+    private fun renderSchedules(
+        daySchedules: List<com.google.firebase.firestore.DocumentSnapshot>,
+        statusBySchedule: Map<String, String>
+    ) {
+        scheduleList.clear()
+        daySchedules.forEach { document ->
+            val subject = document.getString("subject") ?: ""
+            val section = document.getString("section") ?: ""
+            val room = document.getString("room") ?: ""
+            val day = document.getString("day") ?: ""
+            val startTime = document.getString("startTime") ?: ""
+            val endTime = document.getString("endTime") ?: ""
+            val notes = document.getString("notes") ?: ""
+            val teacherId = document.getString("teacherId") ?: ""
+            val dbStatus = statusBySchedule[document.id]
+
+            scheduleList.add(
+                StudentScheduleItem(
+                    id = document.id,
+                    subject = subject,
+                    section = section,
+                    room = room,
+                    day = day,
+                    time = convertTo12HourFormat(startTime, endTime),
+                    startTime = startTime,
+                    endTime = endTime,
+                    notes = notes,
+                    teacherId = teacherId,
+                    attendanceStatus = resolveScheduleStatus(dbStatus, startTime)
+                )
+            )
+        }
+        scheduleList.sortBy { parseTimeToMinutes(it.startTime) }
+        recyclerView.visibility = View.VISIBLE
+        emptyState.visibility = View.GONE
+        textTodayClasses.text = SimpleDateFormat("EEE, MMM d", Locale.getDefault()).format(selectedDate.time)
+        textTotalClasses.text = if (scheduleList.size == 1) "1 class" else "${scheduleList.size} classes"
+        adapter.notifyDataSetChanged()
+        progressBar.visibility = View.GONE
+    }
+
+    private fun resolveScheduleStatus(dbStatus: String?, startTime: String): String {
+        if (!dbStatus.isNullOrBlank()) {
+            return when (dbStatus.uppercase()) {
+                "PRESENT", "LATE", "EXCUSED" -> "ATTENDED"
+                "ABSENT", "CUTTING" -> "ABSENT"
+                else -> "SCHEDULED"
+            }
+        }
+        val todayStart = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        val selectedStart = Calendar.getInstance().apply {
+            time = selectedDate.time
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        return when {
+            selectedStart.after(todayStart) -> "SCHEDULED"
+            selectedStart.before(todayStart) -> "ABSENT"
+            else -> {
+                if (parseTimeToMinutes(startTime) > currentTimeInMinutes()) "SCHEDULED" else "ABSENT"
+            }
+        }
+    }
+
+    private fun getSelectedDayOfWeek(): String {
         val dayFormat = SimpleDateFormat("EEEE", Locale.getDefault())
-        return dayFormat.format(calendar.time)
+        return dayFormat.format(selectedDate.time)
+    }
+
+    private fun currentTimeInMinutes(): Int {
+        val calendar = Calendar.getInstance()
+        return calendar.get(Calendar.HOUR_OF_DAY) * 60 + calendar.get(Calendar.MINUTE)
     }
 
     private fun convertTo12HourFormat(startTime: String, endTime: String): String {
@@ -243,6 +375,17 @@ class StudentScheduleFragment : Fragment() {
             "$formattedStart - $formattedEnd"
         } catch (e: Exception) {
             "$startTime - $endTime"
+        }
+    }
+
+    private fun parseTimeToMinutes(time: String): Int {
+        return try {
+            val parts = time.split(":")
+            val hour = parts[0].toInt()
+            val minute = parts[1].toInt()
+            hour * 60 + minute
+        } catch (e: Exception) {
+            0
         }
     }
 }

@@ -89,15 +89,16 @@
 
         </LinearLayout>
 
-        <!-- Delete Button -->
+        <!-- X Delete Button -->
         <ImageView
             android:id="@+id/buttonDeleteRoutine"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:src="@drawable/ic_delete"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/ic_close"
             app:tint="@color/error"
-            android:padding="8dp"
+            android:padding="6dp"
             android:background="?attr/selectableItemBackgroundBorderless"
+            android:layout_gravity="center_vertical"
             android:contentDescription="Delete routine" />
 
     </LinearLayout>
