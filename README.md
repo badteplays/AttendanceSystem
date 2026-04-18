@@ -36,12 +36,6 @@ The app has been completely rebuilt in **Flutter** for cross-platform support:
   - Color-coded active class indicators
   - Display class details (subject, room, time)
 
-- **Attendance History**
-  - View complete attendance records with animations
-  - Status-colored cards (green/amber/red)
-  - See attendance status (Present, Excused, Late, Absent)
-  - Track attendance percentage
-
 - **Profile Management**
   - Beautiful gradient profile cards
   - View section and enrollment details
@@ -60,7 +54,6 @@ The app has been completely rebuilt in **Flutter** for cross-platform support:
   - Live attendance updates as students scan
   - See student names, sections, and scan times
   - Current class information display
-  - "LIVE" indicator with pulsing animation
 
 - **Manual Attendance Management**
   - Manually add students who forgot to scan
@@ -88,10 +81,6 @@ The app has been completely rebuilt in **Flutter** for cross-platform support:
 - **Space Grotesk Font** - Clean, modern typography
 
 ## 🔧 Technologies Used
-
-### Flutter App (Cross-Platform)
-- **Framework**: Flutter 3.24+
-- **Language**: Dart
 - **State Management**: Provider
 - **Backend**: Firebase
   - Firebase Authentication
@@ -108,25 +97,11 @@ The app has been completely rebuilt in **Flutter** for cross-platform support:
 - **UI Components**: Material Design 3
 
 ## 📋 Prerequisites
-
-### For Flutter App
-
-1. **Flutter SDK** (3.10.0 or later)
-   - Download: [Flutter Official Website](https://docs.flutter.dev/get-started/install)
-
-2. **IDE** (Choose one)
-   - Android Studio with Flutter plugin
-   - VS Code with Flutter extension
-
-3. **For iOS Development** (Mac only)
-   - Xcode 14.0 or later
-   - CocoaPods
-
 4. **Firebase Project**
    - Firebase Authentication enabled
    - Cloud Firestore database
 
-### For Android App (Legacy)
+### For Android App 
 
 - Android Studio Hedgehog (2023.1.1) or later
 - JDK 17 or later
@@ -136,21 +111,6 @@ The app has been completely rebuilt in **Flutter** for cross-platform support:
 
 ### Flutter App Setup
 
-```bash
-# Clone the repository
-git clone https://github.com/badteplays/AttendanceSystem.git
-cd AttendanceSystem/flutter_app
-
-# Install dependencies
-flutter pub get
-
-# Copy Firebase config
-# Android: Copy google-services.json to android/app/
-# iOS: Copy GoogleService-Info.plist to ios/Runner/
-
-# Run the app
-flutter run
-```
 
 ### Configure Firebase
 
@@ -161,14 +121,6 @@ flutter run
 5. Download config files and place in appropriate directories
 6. Enable Authentication (Email/Password)
 7. Create Firestore Database
-
-### Generate App Icons
-
-```bash
-cd flutter_app
-flutter pub get
-dart run flutter_launcher_icons
-```
 
 ## 📊 Database Structure
 
@@ -218,10 +170,7 @@ flutter_app/
 
 ## 🐛 Known Issues
 
-Something about the Class system
-not being in fucking IOS
-Notifcation system
-Ugly ass ui
+???????????
 
 ## 🔗 Repository
 
