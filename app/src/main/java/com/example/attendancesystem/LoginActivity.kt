@@ -63,7 +63,7 @@ class LoginActivity : AppCompatActivity() {
                         auth.signOut()
                         binding.btnLogin.isEnabled = true
                         binding.btnLogin.text = "Sign In"
-                        showSnackbar("Account not found. Please sign up.")
+                        showSnackbar("Account not found. Contact your administrator.")
                         setupClickListeners()
                         return@addOnSuccessListener
                     }
@@ -146,9 +146,7 @@ class LoginActivity : AppCompatActivity() {
             attemptLogin()
         }
 
-        binding.txtSignup.setOnClickListener {
-            startActivity(Intent(this, SignupActivity::class.java))
-        }
+
     }
     
     private fun attemptLogin() {
@@ -231,7 +229,7 @@ class LoginActivity : AppCompatActivity() {
 
     private fun showLoading(show: Boolean) {
         binding.btnLogin.isEnabled = !show
-        binding.txtSignup.isEnabled = !show
+
         binding.editEmail.isEnabled = !show
         binding.editPassword.isEnabled = !show
         binding.teacherRadio.isEnabled = !show
@@ -264,7 +262,7 @@ class LoginActivity : AppCompatActivity() {
             .addOnSuccessListener { document ->
                 if (!document.exists()) {
                     auth.signOut()
-                    showSnackbar("Account not found. Please sign up.")
+                    showSnackbar("Account not found. Contact your administrator.")
                     return@addOnSuccessListener
                 }
                 val isTeacher = document.getBoolean("isTeacher") ?: false

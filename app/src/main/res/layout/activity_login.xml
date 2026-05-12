@@ -189,32 +189,7 @@
             app:backgroundTint="@color/primary"
             android:layout_marginBottom="24dp" />
 
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:orientation="horizontal">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Don't have an account? "
-                android:textSize="14sp"
-                android:textColor="@color/text_secondary" />
-
-            <TextView
-                android:id="@+id/txtSignup"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Sign Up"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:textColor="@color/primary"
-                android:padding="4dp"
-                android:clickable="true"
-                android:focusable="true" />
-
-        </LinearLayout>
 
         <View
             android:layout_width="match_parent"

@@ -36,7 +36,7 @@
             android:id="@+id/appLogo"
             android:layout_width="80dp"
             android:layout_height="80dp"
-            android:src="@drawable/ic_launcher_foreground"
+            android:src="@mipmap/ic_launcher"
             android:contentDescription="@string/app_name"
             android:background="@drawable/circle_background"
             android:scaleType="centerInside"

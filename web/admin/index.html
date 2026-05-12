@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — Attendance System</title>
+  <meta name="description" content="Manage student and teacher accounts for the Attendance System">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <div class="bg-pattern"></div>
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- ════════════ DASHBOARD ════════════ -->
+  <div class="dashboard" id="dashboardScreen">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-icon">🛡️</div>
+        <span class="sidebar-logo-text">Admin Panel</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item active" onclick="showPage('users')" data-page="users">
+          <span class="nav-icon">👥</span> All Users
+        </button>
+        <button class="nav-item" onclick="showPage('create')" data-page="create">
+          <span class="nav-icon">➕</span> Create Account
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="admin-info">
+          <div class="admin-avatar">🔧</div>
+          <div>
+            <div class="admin-name">Local Admin</div>
+            <div class="admin-role">Account Manager</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+      <!-- ───── USERS PAGE ───── -->
+      <section class="page-section active" id="pageUsers">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Users</h1>
+            <p class="page-subtitle">Manage all student and teacher accounts</p>
+          </div>
+          <button class="btn btn-primary" onclick="showPage('create')">
+            ➕ Create Account
+          </button>
+        </div>
+
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat-card">
+            <div class="stat-icon purple">👥</div>
+            <div class="stat-value" id="statTotal">0</div>
+            <div class="stat-label">Total Users</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon blue">🎓</div>
+            <div class="stat-value" id="statStudents">0</div>
+            <div class="stat-label">Students</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon green">👨‍🏫</div>
+            <div class="stat-value" id="statTeachers">0</div>
+            <div class="stat-label">Teachers</div>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <div class="table-toolbar">
+            <input type="text" class="search-input" id="searchInput"
+              placeholder="Search by name or email..." oninput="filterUsers()">
+            <div class="filter-btns">
+              <button class="filter-btn active" onclick="setFilter('all')" data-filter="all">All</button>
+              <button class="filter-btn" onclick="setFilter('student')" data-filter="student">Students</button>
+              <button class="filter-btn" onclick="setFilter('teacher')" data-filter="teacher">Teachers</button>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Role</th>
+                <th>Section / Dept</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody">
+              <tr>
+                <td colspan="5">
+                  <div class="empty-state">
+                    <div class="empty-state-icon">📋</div>
+                    <div class="empty-state-text">Loading users...</div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ───── CREATE PAGE ───── -->
+      <section class="page-section" id="pageCreate">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Create Account</h1>
+            <p class="page-subtitle">Add a new student or teacher account</p>
+          </div>
+        </div>
+
+        <div style="max-width: 560px;">
+          <div style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-xl); padding: 1.5rem;">
+            <form id="createForm" onsubmit="handleCreateUser(event)">
+              <div class="form-group">
+                <label>Role</label>
+                <select id="createRole" onchange="toggleCreateFields()">
+                  <option value="student">Student</option>
+                  <option value="teacher">Teacher</option>
+                </select>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="createName">Full Name</label>
+                  <input type="text" id="createName" placeholder="John Doe" required>
+                </div>
+                <div class="form-group">
+                  <label for="createEmail">Email</label>
+                  <input type="email" id="createEmail" placeholder="user@school.edu" required>
+                </div>
+              </div>
+
+              <div class="form-group" id="createSectionGroup">
+                <label for="createSection">Strand / Course</label>
+                <select id="createSection">
+                  <option value="" disabled selected>Select strand or course</option>
+                  <optgroup label="Senior High School Strands">
+                    <option value="STEM">STEM</option>
+                    <option value="HUMSS">HUMSS</option>
+                    <option value="ABM">ABM</option>
+                    <option value="IT in Mobile App & Web Development">IT in Mobile App & Web Development</option>
+                    <option value="Digital Arts">Digital Arts</option>
+                  </optgroup>
+                  <optgroup label="College Courses">
+                    <option value="BSIT">BSIT</option>
+                    <option value="BSCS">BSCS</option>
+                    <option value="BSCpE">BSCpE</option>
+                    <option value="BSMA">BSMA</option>
+                    <option value="BSA">BSA</option>
+                    <option value="BSHM">BSHM</option>
+                    <option value="BACOMM">BACOMM</option>
+                    <option value="BA Psychology">BA Psychology</option>
+                    <option value="BMMA">BMMA</option>
+                    <option value="BSTM">BSTM</option>
+                    <option value="BS Criminology">BS Criminology</option>
+                  </optgroup>
+                </select>
+              </div>
+
+              <div class="form-group" id="createSectionNumGroup">
+                <label for="createSectionNum">Section Number</label>
+                <input type="text" id="createSectionNum" placeholder="e.g. 101, 201, 3A">
+              </div>
+
+              <div class="form-group hidden" id="createDeptGroup">
+                <label for="createDept">Department</label>
+                <select id="createDept">
+                  <option value="" disabled selected>Select department</option>
+                  <option value="IT / Computing Department">IT / Computing Department</option>
+                  <option value="Business & Accounting Department">Business & Accounting Department</option>
+                  <option value="Hospitality & Tourism Department">Hospitality & Tourism Department</option>
+                  <option value="Tourism Department">Tourism Department</option>
+                  <option value="Arts & Multimedia Department">Arts & Multimedia Department</option>
+                  <option value="Psychology Department">Psychology Department</option>
+                  <option value="Criminology Department">Criminology Department</option>
+                  <option value="Senior High School Department">Senior High School Department</option>
+                  <option value="ICT Department">ICT Department</option>
+                  <option value="Home Economics Department">Home Economics Department</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="createPassword">Password</label>
+                <input type="text" id="createPassword" placeholder="Min 6 characters" required minlength="6">
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-full" id="createBtn" style="margin-top: 0.5rem;">
+                Create Account
+              </button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ════════════ EDIT MODAL ════════════ -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Edit User</h2>
+        <button class="modal-close" onclick="closeModal('editModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editUid">
+        <div class="form-group">
+          <label for="editName">Name</label>
+          <input type="text" id="editName">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="editEmail" disabled style="opacity: 0.5;">
+        </div>
+        <div class="form-group">
+          <label for="editRole">Role</label>
+          <select id="editRole" onchange="toggleEditFields()">
+            <option value="student">Student</option>
+            <option value="teacher">Teacher</option>
+          </select>
+        </div>
+        <div class="form-group" id="editSectionGroup">
+          <label for="editSection">Strand / Course</label>
+          <select id="editSection">
+            <option value="" disabled>Select strand or course</option>
+            <optgroup label="Senior High School Strands">
+              <option value="STEM">STEM</option>
+              <option value="HUMSS">HUMSS</option>
+              <option value="ABM">ABM</option>
+              <option value="IT in Mobile App & Web Development">IT in Mobile App & Web Development</option>
+              <option value="Digital Arts">Digital Arts</option>
+            </optgroup>
+            <optgroup label="College Courses">
+              <option value="BSIT">BSIT</option>
+              <option value="BSCS">BSCS</option>
+              <option value="BSCpE">BSCpE</option>
+              <option value="BSMA">BSMA</option>
+              <option value="BSA">BSA</option>
+              <option value="BSHM">BSHM</option>
+              <option value="BACOMM">BACOMM</option>
+              <option value="BA Psychology">BA Psychology</option>
+              <option value="BMMA">BMMA</option>
+              <option value="BSTM">BSTM</option>
+              <option value="BS Criminology">BS Criminology</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="form-group" id="editSectionNumGroup">
+          <label for="editSectionNum">Section Number</label>
+          <input type="text" id="editSectionNum" placeholder="e.g. 101, 201, 3A">
+        </div>
+        <div class="form-group hidden" id="editDeptGroup">
+          <label for="editDept">Department</label>
+          <select id="editDept">
+            <option value="" disabled>Select department</option>
+            <option value="IT / Computing Department">IT / Computing Department</option>
+            <option value="Business & Accounting Department">Business & Accounting Department</option>
+            <option value="Hospitality & Tourism Department">Hospitality & Tourism Department</option>
+            <option value="Tourism Department">Tourism Department</option>
+            <option value="Arts & Multimedia Department">Arts & Multimedia Department</option>
+            <option value="Psychology Department">Psychology Department</option>
+            <option value="Criminology Department">Criminology Department</option>
+            <option value="Senior High School Department">Senior High School Department</option>
+            <option value="ICT Department">ICT Department</option>
+            <option value="Home Economics Department">Home Economics Department</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('editModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="handleEditUser()" id="editSaveBtn">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════ PASSWORD MODAL ════════════ -->
+  <div class="modal-overlay" id="passwordModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Change Password</h2>
+        <button class="modal-close" onclick="closeModal('passwordModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="passwordUid">
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem;">
+          Set a new password for <strong id="passwordUserName"></strong>
+        </p>
+        <div class="form-group">
+          <label for="newPassword">New Password</label>
+          <input type="text" id="newPassword" placeholder="Min 6 characters" minlength="6">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('passwordModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="handleChangePassword()" id="passwordSaveBtn">Update Password</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════ DELETE MODAL ════════════ -->
+  <div class="modal-overlay" id="deleteModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Delete User</h2>
+        <button class="modal-close" onclick="closeModal('deleteModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="deleteUid">
+        <p style="color: var(--text-secondary); font-size: 0.9rem;">
+          Are you sure you want to permanently delete <strong id="deleteUserName"></strong>?
+          This will remove their account and all profile data. This cannot be undone.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('deleteModal')">Cancel</button>
+        <button class="btn btn-danger" onclick="handleDeleteUser()" id="deleteSaveBtn">Delete User</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>

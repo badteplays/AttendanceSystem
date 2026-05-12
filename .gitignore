@@ -14,3 +14,5 @@
 .cxx
 local.properties
 app/google-services.json
+web/admin/server/serviceAccountKey.json
+web/admin/server/node_modules/
