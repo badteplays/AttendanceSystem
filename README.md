@@ -1,18 +1,10 @@
-# AttendanceSystem - QR Code Based Attendance Management
+# AttendanceSystem — QR Code Based Attendance Management
 
-A modern **cross-platform** attendance tracking application for educational institutions using QR code technology. Available for both **Android** and **iOS** with a beautiful, unified experience.
+A modern **Android** attendance tracking application for educational institutions using QR code technology, with a web-based **Admin Dashboard** for account management.
 
 ## 📱 Overview
 
-**AttendanceSystem** is a comprehensive attendance management solution that leverages QR code technology to enable quick and contactless attendance marking. The app provides separate interfaces for teachers and students, with real-time synchronization through Firebase.
-
-### 🆕 Now Available in Flutter!
-
-The app has been completely rebuilt in **Flutter** for cross-platform support:
-- ✅ **Android** - Native performance
-- ✅ **iOS** - Full iPhone/iPad support
-- ✅ **Same Firebase backend** - All data syncs across platforms
-- ✅ **Modern UI** - Beautiful gradient design with animations
+**AttendanceSystem** is a comprehensive attendance management solution that leverages QR code technology to enable quick and contactless attendance marking. The app provides separate interfaces for teachers and students, with real-time synchronization through Firebase. Accounts are managed by administrators through a dedicated web dashboard.
 
 ## ✨ Key Features
 
@@ -26,18 +18,17 @@ The app has been completely rebuilt in **Flutter** for cross-platform support:
 
 - **Dashboard**
   - Current class status display with animated statistics
-  - Quick access to QR scanner with gradient FAB
+  - Quick access to QR scanner
   - Monthly attendance breakdown (Present, Absent, Late)
   - Real-time attendance status updates
 
-- **Class Schedule Management**
-  - View complete weekly schedule with timeline view
-  - See all enrolled classes by section
+- **Class Schedule**
+  - View complete weekly schedule
+  - See enrolled classes by section
   - Color-coded active class indicators
   - Display class details (subject, room, time)
 
-- **Profile Management**
-  - Beautiful gradient profile cards
+- **Profile**
   - View section and enrollment details
   - Manage notification preferences
   - Sign out with confirmation
@@ -45,8 +36,8 @@ The app has been completely rebuilt in **Flutter** for cross-platform support:
 ### 👨‍🏫 For Teachers
 
 - **QR Code Generation**
-  - Generate unique QR codes with glowing animations
-  - Configurable expiration (5-60 minutes)
+  - Generate unique QR codes per session
+  - Configurable expiration (5–60 minutes)
   - Live countdown timer display
   - Regenerate codes instantly
 
@@ -55,122 +46,120 @@ The app has been completely rebuilt in **Flutter** for cross-platform support:
   - See student names, sections, and scan times
   - Current class information display
 
-- **Manual Attendance Management**
-  - Manually add students who forgot to scan
-  - Beautiful dialog with gradient buttons
+- **Manual Attendance**
+  - Manually mark students who forgot to scan
   - Search and select students by section
 
 - **Schedule Management**
   - Create and manage class schedules
   - View schedules grouped by day
-  - Color-coded schedule cards
   - "TODAY" indicator badge
 
 - **Analytics & Reporting**
-  - Animated percentage counters
-  - Monthly attendance overview card
+  - Monthly attendance overview
   - Breakdown by status (Present, Late, Absent, Excused)
-  - Beautiful gradient stat cards
+  - Animated percentage counters
 
-## 🎨 Design Features
+### 🛡️ Admin Dashboard (Web)
 
-- **Modern Dark Theme** - Deep blacks with layered surfaces
-- **Gradient Accents** - Indigo → Violet → Pink color scheme
-- **Glass Morphism** - Subtle bordered containers
-- **Micro-animations** - Counters, transitions, and pulses
-- **Space Grotesk Font** - Clean, modern typography
+- **Account Management** — Create, edit, and delete student/teacher accounts
+- **Password Management** — Directly change any user's password
+- **User Listing** — Search and filter all accounts by role
+- **Deployed on Vercel** — Always online, no local setup needed
 
-## 🔧 Technologies Used
-- **State Management**: Provider
-- **Backend**: Firebase
-  - Firebase Authentication
-  - Cloud Firestore
-  - Firebase Messaging
-- **QR Code**: qr_flutter & mobile_scanner
-- **UI**: Custom widgets with gradients
+## 🎨 Design
 
-### Android App (Legacy)
+- **Modern Dark Theme** — Deep blacks with layered surfaces
+- **Gradient Accents** — Indigo → Violet color scheme
+- **Material Design 3** — Clean, modern Android UI
+- **Micro-animations** — Counters, transitions, and pulses
+
+## 🔧 Tech Stack
+
+### Android App
 - **Language**: Kotlin
 - **Architecture**: MVVM with Fragments
+- **UI**: Material Design 3
 - **QR Code**: ZXing library
 - **Background Tasks**: WorkManager
-- **UI Components**: Material Design 3
+- **Backend**: Firebase (Authentication, Cloud Firestore, Messaging)
+
+### Admin Dashboard
+- **Frontend**: HTML / CSS / JavaScript
+- **Backend**: Vercel Serverless Functions (Node.js)
+- **Auth Management**: Firebase Admin SDK
 
 ## 📋 Prerequisites
-4. **Firebase Project**
-   - Firebase Authentication enabled
-   - Cloud Firestore database
-
-### For Android App 
 
 - Android Studio Hedgehog (2023.1.1) or later
 - JDK 17 or later
-- Android SDK 24-35
+- Android SDK 24–35
+- Firebase Project with Authentication and Firestore enabled
 
-## 🚀 Installation
+## 🚀 Setup
 
-### Flutter App Setup
+### Android App
 
+1. Clone the repository
+2. Open in Android Studio
+3. Download `google-services.json` from [Firebase Console](https://console.firebase.google.com/) → Project Settings
+4. Place it in `app/google-services.json`
+5. Build and run
 
-### Configure Firebase
+### Admin Dashboard
 
-1. Go to [Firebase Console](https://console.firebase.google.com/)
-2. Create or select your project
-3. Add Android app with package: `com.example.attendance_system`
-4. Add iOS app with bundle ID: `com.example.attendanceSystem`
-5. Download config files and place in appropriate directories
-6. Enable Authentication (Email/Password)
-7. Create Firestore Database
+The admin dashboard is deployed on **Vercel** and accessible via URL — no local setup required.
+
+To deploy your own:
+1. Sign up at [vercel.com](https://vercel.com) with GitHub
+2. Import this repo, set **Root Directory** to `web/admin`
+3. Add environment variable `FIREBASE_SERVICE_ACCOUNT` with your Firebase service account JSON
+4. Deploy — always online at your Vercel URL
 
 ## 📊 Database Structure
 
-### Collections:
-- `users` - User profiles (students and teachers)
-- `schedules` - Class schedules with time and section info
-- `attendance` - Active attendance records
-- `archived_attendance` - Historical attendance data
-- `attendance_sessions` - QR code session management
+### Firestore Collections
+| Collection | Description |
+|---|---|
+| `users` | User profiles (students and teachers) |
+| `schedules` | Class schedules with time and section info |
+| `attendance` | Active attendance records |
+| `archived_attendance` | Historical attendance data |
+| `attendance_sessions` | QR code session management |
 
 ## 🔐 User Roles
 
-### Student
-- Mark attendance by scanning QR codes
-- View personal schedule and attendance history
-- Track attendance statistics
-- Receive class reminders
-
-### Teacher
-- Generate QR codes for attendance
-- Monitor real-time attendance
-- Manage class schedules
-- Add/remove attendance manually
-- View analytics and reports
+| Role | Capabilities |
+|---|---|
+| **Student** | Scan QR codes, view schedule, track attendance stats, receive reminders |
+| **Teacher** | Generate QR codes, monitor live attendance, manage schedules, mark manually, view analytics |
+| **Admin** | Create/edit/delete accounts, change passwords (via web dashboard) |
 
 ## 📱 App Structure
 
 ```
-flutter_app/
-├── lib/
-│   ├── core/
-│   │   ├── models/          # Data models
-│   │   ├── services/        # Firebase services
-│   │   ├── theme/           # Colors & theme
-│   │   └── widgets/         # Reusable widgets
-│   ├── features/
-│   │   ├── auth/            # Login, Signup, Role selection
-│   │   ├── student/         # Student screens
-│   │   ├── teacher/         # Teacher screens
-│   │   └── qr/              # QR Scanner & Display
-│   └── main.dart
-├── assets/
-│   ├── icon/                # App icons
-│   └── images/              # Image assets
-└── pubspec.yaml
+app/src/main/java/com/example/attendancesystem/
+├── LoginActivity.kt              # Login screen (entry point)
+├── RoleSelectionActivity.kt      # Student / Teacher selection
+├── StudentMainActivity.kt        # Student container
+├── TeacherMainActivity.kt        # Teacher container
+├── StudentDashboardFragment.kt   # Student home
+├── TeacherDashboardFragment.kt   # Teacher home
+├── QRActivity.kt                 # QR generation (teacher)
+├── QRScannerFragment.kt          # QR scanning (student)
+├── TeacherSchedulesFragment.kt   # Schedule management
+├── TeacherAnalyticsFragment.kt   # Analytics & reports
+└── ...
+
+web/admin/
+├── index.html                    # Admin dashboard UI
+├── admin.css                     # Styles
+├── admin.js                      # Frontend logic
+├── vercel.json                   # Vercel config
+└── api/                          # Serverless API functions
+    ├── lib/firebase.js           # Shared Firebase Admin init
+    └── users/                    # User CRUD endpoints
 ```
-
-## 🐛 Known Issues
-
-???????????
 
 ## 🔗 Repository
 
@@ -178,8 +167,7 @@ flutter_app/
 
 ---
 
-**Version**: 2.0 (Flutter) TBA 
-**Last Updated**: march 2026  
-**Platforms**: Android, iOS  
-**Min Android SDK**: 21 (Android 5.0)  
-**Min iOS**: 12.0
+**Version**: 1.0  
+**Last Updated**: May 2026  
+**Platform**: Android  
+**Min Android SDK**: 24 (Android 7.0)
