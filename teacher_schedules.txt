@@ -1,0 +1,248 @@
+=== TEACHER SCHEDULES ===
+
+👨‍🏫 Teacher Emilio Garcia
+--------------------------------------------------
+Monday:
+  [ 08:00 - 09:00 ]  Math | MAWD-105 | RM-162
+  [ 09:00 - 10:00 ]  Math | HUMSS-104 | RM-210
+  [ 11:00 - 12:00 ]  Math | DIGAR-204 | RM-294
+  [ 12:00 - 13:00 ]  Math | MAWD-203 | RM-275
+  [ 13:00 - 14:00 ]  Math | HUMSS-204 | RM-111
+  [ 19:00 - 20:00 ]  Math | MAWD-205 | RM-233
+
+Tuesday:
+  [ 06:00 - 07:00 ]  Math | MAWD-201 | RM-178
+  [ 08:00 - 09:00 ]  Math | HUMSS-104 | RM-117
+  [ 09:00 - 10:00 ]  Math | ABM-104 | RM-300
+  [ 10:00 - 11:00 ]  Math | ABM-203 | RM-297
+  [ 11:00 - 12:00 ]  Math | HUMSS-104 | RM-233
+  [ 13:00 - 14:00 ]  Math | ABM-101 | RM-162
+  [ 14:00 - 15:00 ]  Math | DIGAR-105 | RM-278
+  [ 15:00 - 16:00 ]  Math | STEM-102 | RM-167
+  [ 17:00 - 18:00 ]  Math | MAWD-202 | RM-221
+  [ 19:00 - 20:00 ]  Math | ABM-102 | RM-183
+
+Wednesday:
+  [ 06:00 - 07:00 ]  Math | DIGAR-203 | RM-268
+  [ 07:00 - 08:00 ]  Math | MAWD-103 | RM-248
+  [ 12:00 - 13:00 ]  Math | MAWD-205 | RM-196
+  [ 15:00 - 16:00 ]  Math | DIGAR-202 | RM-189
+  [ 16:00 - 17:00 ]  Math | HUMSS-103 | RM-226
+  [ 17:00 - 18:00 ]  Math | MAWD-203 | RM-202
+
+Thursday:
+  [ 06:00 - 07:00 ]  Math | STEM-203 | RM-270
+  [ 08:00 - 09:00 ]  Math | MAWD-101 | RM-186
+  [ 09:00 - 10:00 ]  Math | DIGAR-203 | RM-193
+  [ 10:00 - 11:00 ]  Math | MAWD-205 | RM-149
+  [ 11:00 - 12:00 ]  Math | MAWD-105 | RM-194
+  [ 14:00 - 15:00 ]  Math | ABM-105 | RM-143
+  [ 17:00 - 18:00 ]  Math | HUMSS-103 | RM-118
+
+==================================================
+
+👨‍🏫 Teacher Gabriel Garcia
+--------------------------------------------------
+Monday:
+  [ 06:00 - 07:00 ]  Filipino | ABM-204 | RM-123
+  [ 13:00 - 14:00 ]  Filipino | ABM-204 | RM-102
+  [ 14:00 - 15:00 ]  Filipino | MAWD-105 | RM-268
+  [ 15:00 - 16:00 ]  Filipino | STEM-105 | RM-137
+  [ 17:00 - 18:00 ]  Filipino | STEM-202 | RM-256
+  [ 19:00 - 20:00 ]  Filipino | HUMSS-203 | RM-186
+
+Tuesday:
+  [ 08:00 - 09:00 ]  Filipino | DIGAR-201 | RM-218
+  [ 09:00 - 10:00 ]  Filipino | ABM-105 | RM-224
+  [ 10:00 - 11:00 ]  Filipino | HUMSS-202 | RM-119
+  [ 11:00 - 12:00 ]  Filipino | DIGAR-202 | RM-226
+  [ 12:00 - 13:00 ]  Filipino | HUMSS-202 | RM-216
+  [ 16:00 - 17:00 ]  Filipino | STEM-204 | RM-197
+  [ 17:00 - 18:00 ]  Filipino | HUMSS-204 | RM-101
+  [ 18:00 - 19:00 ]  Filipino | STEM-204 | RM-112
+  [ 19:00 - 20:00 ]  Filipino | STEM-202 | RM-175
+
+Wednesday:
+  [ 06:00 - 07:00 ]  Filipino | HUMSS-205 | RM-253
+  [ 09:00 - 10:00 ]  Filipino | DIGAR-205 | RM-287
+  [ 11:00 - 12:00 ]  Filipino | ABM-201 | RM-117
+  [ 12:00 - 13:00 ]  Filipino | DIGAR-205 | RM-182
+  [ 13:00 - 14:00 ]  Filipino | HUMSS-103 | RM-159
+  [ 17:00 - 18:00 ]  Filipino | ABM-102 | RM-136
+  [ 18:00 - 19:00 ]  Filipino | DIGAR-205 | RM-289
+
+Thursday:
+  [ 06:00 - 07:00 ]  Filipino | STEM-101 | RM-113
+  [ 07:00 - 08:00 ]  Filipino | HUMSS-204 | RM-238
+  [ 10:00 - 11:00 ]  Filipino | STEM-101 | RM-162
+  [ 11:00 - 12:00 ]  Filipino | DIGAR-205 | RM-193
+  [ 12:00 - 13:00 ]  Filipino | DIGAR-205 | RM-153
+  [ 15:00 - 16:00 ]  Filipino | STEM-204 | RM-258
+  [ 17:00 - 18:00 ]  Filipino | ABM-103 | RM-296
+  [ 18:00 - 19:00 ]  Filipino | MAWD-103 | RM-148
+  [ 19:00 - 20:00 ]  Filipino | ABM-102 | RM-181
+
+==================================================
+
+👨‍🏫 Teacher Abigail Santos
+--------------------------------------------------
+Monday:
+  [ 06:00 - 07:00 ]  English | ABM-102 | RM-230
+  [ 07:00 - 08:00 ]  English | ABM-204 | RM-193
+  [ 11:00 - 12:00 ]  English | STEM-203 | RM-295
+  [ 14:00 - 15:00 ]  English | MAWD-102 | RM-220
+  [ 16:00 - 17:00 ]  English | HUMSS-101 | RM-216
+  [ 17:00 - 18:00 ]  English | MAWD-202 | RM-205
+
+Wednesday:
+  [ 07:00 - 08:00 ]  English | ABM-205 | RM-185
+  [ 08:00 - 09:00 ]  English | DIGAR-101 | RM-246
+  [ 09:00 - 10:00 ]  English | DIGAR-204 | RM-303
+  [ 10:00 - 11:00 ]  English | MAWD-203 | RM-165
+  [ 15:00 - 16:00 ]  English | MAWD-201 | RM-188
+  [ 17:00 - 18:00 ]  English | STEM-104 | RM-181
+  [ 18:00 - 19:00 ]  English | DIGAR-104 | RM-297
+  [ 19:00 - 20:00 ]  English | ABM-104 | RM-112
+
+Thursday:
+  [ 06:00 - 07:00 ]  English | ABM-202 | RM-273
+  [ 07:00 - 08:00 ]  English | MAWD-103 | RM-258
+  [ 09:00 - 10:00 ]  English | DIGAR-105 | RM-153
+  [ 10:00 - 11:00 ]  English | ABM-103 | RM-207
+  [ 11:00 - 12:00 ]  English | ABM-203 | RM-293
+  [ 13:00 - 14:00 ]  English | ABM-204 | RM-270
+  [ 14:00 - 15:00 ]  English | HUMSS-204 | RM-287
+  [ 16:00 - 17:00 ]  English | MAWD-204 | RM-167
+  [ 18:00 - 19:00 ]  English | HUMSS-101 | RM-151
+
+Friday:
+  [ 07:00 - 08:00 ]  English | STEM-204 | RM-207
+  [ 08:00 - 09:00 ]  English | ABM-205 | RM-305
+  [ 09:00 - 10:00 ]  English | MAWD-205 | RM-162
+  [ 10:00 - 11:00 ]  English | MAWD-205 | RM-256
+  [ 11:00 - 12:00 ]  English | ABM-104 | RM-185
+  [ 15:00 - 16:00 ]  English | DIGAR-105 | RM-163
+  [ 18:00 - 19:00 ]  English | ABM-203 | RM-177
+  [ 19:00 - 20:00 ]  English | HUMSS-203 | RM-290
+
+Saturday:
+  [ 07:00 - 08:00 ]  English | HUMSS-101 | RM-142
+  [ 09:00 - 10:00 ]  English | HUMSS-105 | RM-161
+  [ 13:00 - 14:00 ]  English | STEM-101 | RM-157
+  [ 15:00 - 16:00 ]  English | DIGAR-102 | RM-159
+  [ 16:00 - 17:00 ]  English | DIGAR-203 | RM-293
+  [ 17:00 - 18:00 ]  English | HUMSS-204 | RM-109
+  [ 19:00 - 20:00 ]  English | DIGAR-204 | RM-262
+
+==================================================
+
+👨‍🏫 Teacher Sarah Aquino
+--------------------------------------------------
+Tuesday:
+  [ 08:00 - 09:00 ]  Science | DIGAR-105 | RM-280
+  [ 09:00 - 10:00 ]  Science | STEM-201 | RM-259
+  [ 10:00 - 11:00 ]  Science | DIGAR-203 | RM-239
+  [ 11:00 - 12:00 ]  Science | ABM-104 | RM-123
+  [ 13:00 - 14:00 ]  Science | STEM-101 | RM-137
+  [ 14:00 - 15:00 ]  Science | MAWD-203 | RM-241
+  [ 16:00 - 17:00 ]  Science | DIGAR-201 | RM-149
+  [ 17:00 - 18:00 ]  Science | HUMSS-203 | RM-214
+  [ 18:00 - 19:00 ]  Science | HUMSS-102 | RM-230
+  [ 19:00 - 20:00 ]  Science | DIGAR-105 | RM-231
+
+Wednesday:
+  [ 07:00 - 08:00 ]  Science | HUMSS-204 | RM-198
+  [ 08:00 - 09:00 ]  Science | MAWD-105 | RM-301
+  [ 09:00 - 10:00 ]  Science | DIGAR-203 | RM-127
+  [ 10:00 - 11:00 ]  Science | ABM-102 | RM-111
+  [ 11:00 - 12:00 ]  Science | ABM-202 | RM-202
+  [ 12:00 - 13:00 ]  Science | STEM-103 | RM-198
+  [ 13:00 - 14:00 ]  Science | STEM-204 | RM-212
+  [ 14:00 - 15:00 ]  Science | HUMSS-204 | RM-136
+  [ 16:00 - 17:00 ]  Science | STEM-103 | RM-279
+  [ 19:00 - 20:00 ]  Science | STEM-201 | RM-217
+
+Thursday:
+  [ 08:00 - 09:00 ]  Science | HUMSS-105 | RM-107
+  [ 09:00 - 10:00 ]  Science | STEM-105 | RM-247
+  [ 11:00 - 12:00 ]  Science | HUMSS-101 | RM-304
+  [ 12:00 - 13:00 ]  Science | ABM-105 | RM-157
+  [ 13:00 - 14:00 ]  Science | ABM-202 | RM-259
+  [ 14:00 - 15:00 ]  Science | STEM-205 | RM-246
+  [ 15:00 - 16:00 ]  Science | HUMSS-103 | RM-116
+  [ 16:00 - 17:00 ]  Science | MAWD-203 | RM-136
+
+Friday:
+  [ 06:00 - 07:00 ]  Science | MAWD-204 | RM-249
+  [ 07:00 - 08:00 ]  Science | MAWD-201 | RM-210
+  [ 11:00 - 12:00 ]  Science | DIGAR-105 | RM-105
+  [ 12:00 - 13:00 ]  Science | STEM-201 | RM-301
+  [ 13:00 - 14:00 ]  Science | DIGAR-104 | RM-124
+  [ 17:00 - 18:00 ]  Science | HUMSS-104 | RM-300
+
+Saturday:
+  [ 07:00 - 08:00 ]  Science | ABM-103 | RM-213
+  [ 08:00 - 09:00 ]  Science | MAWD-202 | RM-162
+  [ 09:00 - 10:00 ]  Science | STEM-105 | RM-213
+  [ 10:00 - 11:00 ]  Science | MAWD-205 | RM-292
+  [ 13:00 - 14:00 ]  Science | DIGAR-102 | RM-301
+  [ 14:00 - 15:00 ]  Science | DIGAR-102 | RM-210
+
+==================================================
+
+👨‍🏫 Teacher Emilio Reyes
+--------------------------------------------------
+Tuesday:
+  [ 07:00 - 08:00 ]  PE | STEM-101 | RM-140
+  [ 08:00 - 09:00 ]  PE | MAWD-103 | RM-122
+  [ 09:00 - 10:00 ]  PE | HUMSS-102 | RM-180
+  [ 11:00 - 12:00 ]  PE | STEM-205 | RM-121
+  [ 16:00 - 17:00 ]  PE | HUMSS-201 | RM-120
+  [ 17:00 - 18:00 ]  PE | STEM-204 | RM-205
+  [ 19:00 - 20:00 ]  PE | DIGAR-203 | RM-216
+
+Wednesday:
+  [ 06:00 - 07:00 ]  PE | ABM-203 | RM-275
+  [ 07:00 - 08:00 ]  PE | ABM-103 | RM-161
+  [ 10:00 - 11:00 ]  PE | MAWD-202 | RM-293
+  [ 11:00 - 12:00 ]  PE | ABM-101 | RM-266
+  [ 13:00 - 14:00 ]  PE | DIGAR-203 | RM-134
+  [ 15:00 - 16:00 ]  PE | DIGAR-104 | RM-255
+  [ 16:00 - 17:00 ]  PE | STEM-204 | RM-147
+  [ 17:00 - 18:00 ]  PE | ABM-203 | RM-262
+  [ 18:00 - 19:00 ]  PE | DIGAR-103 | RM-177
+  [ 19:00 - 20:00 ]  PE | MAWD-104 | RM-287
+
+Thursday:
+  [ 09:00 - 10:00 ]  PE | STEM-202 | RM-271
+  [ 10:00 - 11:00 ]  PE | HUMSS-203 | RM-240
+  [ 11:00 - 12:00 ]  PE | DIGAR-103 | RM-145
+  [ 12:00 - 13:00 ]  PE | MAWD-205 | RM-268
+  [ 13:00 - 14:00 ]  PE | DIGAR-102 | RM-206
+  [ 14:00 - 15:00 ]  PE | DIGAR-103 | RM-286
+  [ 15:00 - 16:00 ]  PE | STEM-205 | RM-152
+  [ 18:00 - 19:00 ]  PE | HUMSS-103 | RM-291
+  [ 19:00 - 20:00 ]  PE | DIGAR-102 | RM-180
+
+Friday:
+  [ 07:00 - 08:00 ]  PE | STEM-203 | RM-271
+  [ 09:00 - 10:00 ]  PE | MAWD-201 | RM-207
+  [ 12:00 - 13:00 ]  PE | DIGAR-102 | RM-115
+  [ 13:00 - 14:00 ]  PE | ABM-103 | RM-230
+  [ 15:00 - 16:00 ]  PE | ABM-203 | RM-193
+  [ 17:00 - 18:00 ]  PE | ABM-104 | RM-298
+  [ 18:00 - 19:00 ]  PE | HUMSS-105 | RM-270
+
+Saturday:
+  [ 06:00 - 07:00 ]  PE | HUMSS-101 | RM-114
+  [ 07:00 - 08:00 ]  PE | DIGAR-105 | RM-164
+  [ 08:00 - 09:00 ]  PE | HUMSS-204 | RM-234
+  [ 10:00 - 11:00 ]  PE | ABM-103 | RM-288
+  [ 11:00 - 12:00 ]  PE | DIGAR-203 | RM-257
+  [ 12:00 - 13:00 ]  PE | STEM-104 | RM-250
+  [ 16:00 - 17:00 ]  PE | ABM-105 | RM-109
+  [ 17:00 - 18:00 ]  PE | ABM-205 | RM-211
+  [ 18:00 - 19:00 ]  PE | ABM-102 | RM-132
+
+==================================================
+

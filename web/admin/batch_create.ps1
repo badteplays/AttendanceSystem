@@ -7,7 +7,7 @@ $lastNames = @("Abad","Abella","Abrigo","Acosta","Aguilar","Alcantara","Almonte"
 
 # ─── Config ───────────────────────────────────────────────────
 $strands = @("STEM","HUMSS","ABM","MAWD","DIGAR")
-$sections = @("101","102","103","104","105","201","202","203","204","205")
+$sections = @("301","302","303","304","305","401","402","403","404","405")
 $subjects = @("English","Math","Science","Filipino","PE","ICT","Oral Communication","Practical Research","Contemporary Arts","Media & Information Literacy","Personal Development","Understanding Culture, Society & Politics","Earth & Life Science","Physical Science","General Mathematics","Statistics & Probability","Entrepreneurship","Empowerment Technologies")
 
 $numStudents = 1300

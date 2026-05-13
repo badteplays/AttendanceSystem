@@ -263,6 +263,8 @@ class TeacherDashboardFragment : Fragment() {
         val sub = listeningSubject
         if (sid != null && sub != null && (attendanceListener != null || archivedAttendanceListener != null)) {
             startAttendanceListener(sid, sub, forceRefresh = true)
+        } else {
+            loadRecentAttendance()
         }
     }
 
@@ -1035,10 +1037,14 @@ class TeacherDashboardFragment : Fragment() {
                 activeDocs.forEach { doc ->
                     if (docExcludedFromTeacherDashboard(doc)) pendingHiddenAttendanceIds.remove(doc.id)
                 }
+                
+                val b = computeSessionDayBounds()
+                
                 val sortedDocs = activeDocs
                     .filter { it.id !in pendingHiddenAttendanceIds }
                     .filter { !isScheduleManuallyEndedTodayForDoc(it) }
                     .filter { !docExcludedFromTeacherDashboard(it) }
+                    .filter { isTodaysAttendanceRow(it, b.localDayStart, b.localDayEnd, b.extendedDayStart, b.extendedDayEnd) }
                     .sortedByDescending { it.getTimestamp("timestamp")?.seconds ?: 0 }
                     .take(RECENT_ATTENDANCE_LIMIT)
 
@@ -1404,7 +1410,7 @@ class TeacherDashboardFragment : Fragment() {
             .create()
 
         val textCurrentSession = dialogView.findViewById<TextView>(R.id.textCurrentSession)
-        val radioPresent = dialogView.findViewById<RadioButton>(R.id.radioPresent)
+
         val radioExcused = dialogView.findViewById<RadioButton>(R.id.radioExcused)
         val radioCutting = dialogView.findViewById<RadioButton>(R.id.radioCutting)
 

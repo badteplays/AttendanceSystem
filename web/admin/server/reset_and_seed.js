@@ -20,9 +20,11 @@ const sections = ["101", "102", "103", "104", "105", "201", "202", "203", "204",
 const subjects = ["English", "Math", "Science", "Filipino", "PE", "ICT"];
 const activeDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const times = [
-  {s: "08:00", e: "09:00"}, {s: "09:00", e: "10:00"}, {s: "10:00", e: "11:00"},
-  {s: "11:00", e: "12:00"}, {s: "13:00", e: "14:00"}, {s: "14:00", e: "15:00"},
-  {s: "15:00", e: "16:00"}, {s: "16:00", e: "17:00"}
+  {s: "06:00", e: "07:00"}, {s: "07:00", e: "08:00"}, {s: "08:00", e: "09:00"},
+  {s: "09:00", e: "10:00"}, {s: "10:00", e: "11:00"}, {s: "11:00", e: "12:00"},
+  {s: "12:00", e: "13:00"}, {s: "13:00", e: "14:00"}, {s: "14:00", e: "15:00"},
+  {s: "15:00", e: "16:00"}, {s: "16:00", e: "17:00"}, {s: "17:00", e: "18:00"},
+  {s: "18:00", e: "19:00"}, {s: "19:00", e: "20:00"}
 ];
 
 let usedEmails = new Set();
@@ -97,8 +99,10 @@ async function run() {
     let days = [...activeDays];
     days.splice(rng(0, days.length - 1), 1); // 1 random day off
     for (const day of days) {
-      // 5 random timeslots per day
-      const dailyTimes = [...times].sort(() => 0.5 - Math.random()).slice(0, 5);
+      // 6 to 10 random timeslots per day
+      const numClasses = rng(6, 10);
+      const dailyTimes = [...times].sort(() => 0.5 - Math.random()).slice(0, numClasses);
+      dailyTimes.sort((a, b) => a.s.localeCompare(b.s));
       for (const tSlot of dailyTimes) {
         const strand = sample(strands);
         const section = sample(sections);

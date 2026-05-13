@@ -11,8 +11,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.launch
 
 class QRScannerViewModel(application: Application) : AndroidViewModel(application) {
-    private val _scanResult = MutableLiveData<ScanResult>()
-    val scanResult: LiveData<ScanResult> = _scanResult
+    private val _scanResult = MutableLiveData<ScanResult?>()
+    val scanResult: LiveData<ScanResult?> = _scanResult
 
     private val _loading = MutableLiveData<Boolean>()
     val loading: LiveData<Boolean> = _loading
