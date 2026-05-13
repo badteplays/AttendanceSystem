@@ -99,46 +99,5 @@
                     android:visibility="gone" />
             </LinearLayout>
         </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:layout_marginStart="8dp">
-
-            <FrameLayout
-                android:id="@+id/btnEdit"
-                android:layout_width="26dp"
-                android:layout_height="26dp"
-                android:layout_marginBottom="4dp"
-                android:background="@drawable/bg_teacher_edit_btn"
-                android:clickable="true"
-                android:focusable="true">
-
-                <ImageView
-                    android:layout_width="12dp"
-                    android:layout_height="12dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_pencil"
-                    app:tint="@color/teacher_ds_primary_dark" />
-            </FrameLayout>
-
-            <FrameLayout
-                android:id="@+id/btnDelete"
-                android:layout_width="26dp"
-                android:layout_height="26dp"
-                android:background="@drawable/bg_teacher_delete_btn"
-                android:clickable="true"
-                android:focusable="true">
-
-                <ImageView
-                    android:layout_width="12dp"
-                    android:layout_height="12dp"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_close"
-                    app:tint="@color/teacher_ds_status_absent_text" />
-            </FrameLayout>
-        </LinearLayout>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
