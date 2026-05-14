@@ -39,14 +39,14 @@ async function run() {
     output += `👨‍🏫 ${teachers[tId]}\n`;
     output += `--------------------------------------------------\n`;
     const tScheds = schedulesByTeacher[tId] || {};
-    
+
     for (const day of daysOrder) {
       if (!tScheds[day] || tScheds[day].length === 0) continue;
-      
+
       output += `${day}:\n`;
       // Sort chronologically
       tScheds[day].sort((a, b) => a.startTime.localeCompare(b.startTime));
-      
+
       for (const slot of tScheds[day]) {
         output += `  [ ${slot.startTime} - ${slot.endTime} ]  ${slot.subject} | ${slot.section} | ${slot.room}\n`;
       }
