@@ -133,6 +133,94 @@ app.get('/api/users', async (req, res) => {
   }
 });
 
+// ─── GET /api/schedules — list teacher schedules ─────────────
+app.get('/api/schedules', async (req, res) => {
+  const { teacherId } = req.query;
+  if (!teacherId) {
+    return res.status(400).json({ error: 'teacherId required' });
+  }
+
+  try {
+    const snapshot = await db.collection('schedules')
+      .where('teacherId', '==', teacherId)
+      .get();
+    
+    const schedules = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    res.json(schedules);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ─── POST /api/schedules — create schedule slot ──────────────
+app.post('/api/schedules', async (req, res) => {
+  const { teacherId, subject, section, day, startTime, endTime, room } = req.body;
+
+  if (!teacherId || !subject || !section || !day || !startTime || !endTime) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  try {
+    const teacherDoc = await db.collection('users').doc(teacherId).get();
+    if (!teacherDoc.exists) {
+      return res.status(400).json({ error: 'Teacher user not found' });
+    }
+    const teacherData = teacherDoc.data();
+
+    const schedDoc = {
+      teacherId,
+      teacherName: teacherData.name || 'Unknown',
+      department: teacherData.department || 'General',
+      subject,
+      section: section.toUpperCase(),
+      day,
+      startTime,
+      endTime,
+      room: room || '',
+      status: 'scheduled',
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    const docRef = await db.collection('schedules').add(schedDoc);
+    res.json({ id: docRef.id, ...schedDoc });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+// ─── PUT /api/schedules/:id — update schedule slot ───────────
+app.put('/api/schedules/:id', async (req, res) => {
+  const { id } = req.params;
+  const { subject, section, day, startTime, endTime, room } = req.body;
+
+  try {
+    const updates = {};
+    if (subject !== undefined) updates.subject = subject;
+    if (section !== undefined) updates.section = section.toUpperCase();
+    if (day !== undefined) updates.day = day;
+    if (startTime !== undefined) updates.startTime = startTime;
+    if (endTime !== undefined) updates.endTime = endTime;
+    if (room !== undefined) updates.room = room;
+
+    await db.collection('schedules').doc(id).update(updates);
+    res.json({ message: 'Schedule updated' });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+// ─── DELETE /api/schedules/:id — delete schedule slot ────────
+app.delete('/api/schedules/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    await db.collection('schedules').doc(id).delete();
+    res.json({ message: 'Schedule deleted' });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
 // ─── START ──────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

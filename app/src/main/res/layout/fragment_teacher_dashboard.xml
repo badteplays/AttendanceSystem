@@ -391,12 +391,15 @@
                     android:insetBottom="0dp"
                     android:minWidth="0dp"
                     android:paddingHorizontal="0dp"
-                    android:text="+"
-                    android:textColor="@color/teacher_ds_primary_dark"
-                    android:textSize="18sp"
+                    android:text=""
                     app:cornerRadius="12dp"
                     app:strokeColor="@color/teacher_ds_primary_light"
-                    app:strokeWidth="1dp" />
+                    app:strokeWidth="1dp"
+                    app:icon="@drawable/ic_refresh"
+                    app:iconTint="@color/teacher_ds_primary_light"
+                    app:iconSize="20dp"
+                    app:iconGravity="textStart"
+                    app:iconPadding="0dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/buttonRefreshAttendance"

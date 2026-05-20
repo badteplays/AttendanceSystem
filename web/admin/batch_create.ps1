@@ -7,7 +7,7 @@ $lastNames = @("Abad","Abella","Abrigo","Acosta","Aguilar","Alcantara","Almonte"
 
 # ─── Config ───────────────────────────────────────────────────
 $strands = @("STEM","HUMSS","ABM","MAWD","DIGAR")
-$sections = @("301","302","303","304","305","401","402","403","404","405")
+$sections = @("201","202","203","204","205","401","402","403","404","405")
 $subjects = @("English","Math","Science","Filipino","PE","ICT","Oral Communication","Practical Research","Contemporary Arts","Media & Information Literacy","Personal Development","Understanding Culture, Society & Politics","Earth & Life Science","Physical Science","General Mathematics","Statistics & Probability","Entrepreneurship","Empowerment Technologies")
 
 $numStudents = 1300
@@ -120,7 +120,7 @@ for ($i = 0; $i -lt $numTeachers; $i++) {
         $failCount2++
         if ($_.Exception.Message -match "429|QUOTA|rate") {
             Write-Host "  Rate limited, waiting 10s..." -ForegroundColor Yellow
-            Start-Sleep -Seconds 10
+            Start-Sleep -Seconds 5
             try {
                 Invoke-RestMethod -Uri $url -Method POST -Body $body -ContentType "application/json" -ErrorAction Stop | Out-Null
                 $teacherCount++

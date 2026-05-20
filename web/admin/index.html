@@ -31,6 +31,9 @@
         <button class="nav-item" onclick="showPage('create')" data-page="create">
           <span class="nav-icon">➕</span> Create Account
         </button>
+        <button class="nav-item" onclick="showPage('schedules')" data-page="schedules">
+          <span class="nav-icon">📅</span> Teacher Schedules
+        </button>
       </nav>
 
       <div class="sidebar-footer">
@@ -158,7 +161,7 @@
 
               <div class="form-group" id="createSectionNumGroup">
                 <label for="createSectionNum">Section Number</label>
-                <input type="text" id="createSectionNum" placeholder="e.g. 301, 401, 3A">
+                <input type="text" id="createSectionNum" placeholder="e.g. 201, 401, 3A">
               </div>
 
               <div class="form-group hidden" id="createDeptGroup">
@@ -183,6 +186,39 @@
                 Create Account
               </button>
             </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- ───── SCHEDULES PAGE ───── -->
+      <section class="page-section" id="pageSchedules">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Teacher Schedules</h1>
+            <p class="page-subtitle">View and manage schedule slots and subject assignments</p>
+          </div>
+        </div>
+
+        <div class="schedules-layout">
+          <!-- Left Panel: Teachers list -->
+          <div class="teachers-list-container">
+            <h3 class="panel-title">Teachers</h3>
+            <input type="text" class="search-input" id="teacherSearchInput"
+              placeholder="Search teachers..." oninput="filterTeachersList()" style="width: 100%; min-width: auto; margin-top: 0.5rem;">
+            <div class="teachers-list" id="teachersList">
+              <div class="empty-state">
+                <div class="empty-state-icon">📋</div>
+                <div class="empty-state-text">Loading teachers...</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Panel: Schedule view -->
+          <div class="teacher-schedule-detail" id="teacherScheduleDetail">
+            <div class="empty-state" style="padding: 4rem 1rem;">
+              <div class="empty-state-icon">📅</div>
+              <div class="empty-state-text">Select a teacher to view and edit schedules</div>
+            </div>
           </div>
         </div>
       </section>
@@ -229,7 +265,7 @@
         </div>
         <div class="form-group" id="editSectionNumGroup">
           <label for="editSectionNum">Section Number</label>
-          <input type="text" id="editSectionNum" placeholder="e.g. 301, 401, 3A">
+          <input type="text" id="editSectionNum" placeholder="e.g. 201, 401, 3A">
         </div>
         <div class="form-group hidden" id="editDeptGroup">
           <label for="editDept">Department</label>
@@ -292,6 +328,76 @@
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeModal('deleteModal')">Cancel</button>
         <button class="btn btn-danger" onclick="handleDeleteUser()" id="deleteSaveBtn">Delete User</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════ SCHEDULE MODAL ════════════ -->
+  <div class="modal-overlay" id="scheduleModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title" id="scheduleModalTitle">Add Class Slot</h2>
+        <button class="modal-close" onclick="closeModal('scheduleModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="scheduleForm" onsubmit="handleSaveSchedule(event)">
+          <input type="hidden" id="schedId">
+          <input type="hidden" id="schedTeacherId">
+          
+          <div class="form-group">
+            <label for="schedDay">Day</label>
+            <select id="schedDay" required>
+              <option value="Monday">Monday</option>
+              <option value="Tuesday">Tuesday</option>
+              <option value="Wednesday">Wednesday</option>
+              <option value="Thursday">Thursday</option>
+              <option value="Friday">Friday</option>
+              <option value="Saturday">Saturday</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="schedSubject">Subject</label>
+            <input type="text" id="schedSubject" placeholder="e.g. Web Development - WebDev 1" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="schedStrand">Strand / Course</label>
+              <select id="schedStrand" required>
+                <option value="STEM">STEM</option>
+                <option value="HUMSS">HUMSS</option>
+                <option value="ABM">ABM</option>
+                <option value="MAWD">MAWD</option>
+                <option value="DIGAR">DIGAR</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="schedSectionNum">Section Number</label>
+              <input type="text" id="schedSectionNum" placeholder="e.g. 201, 302" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="schedRoom">Room</label>
+            <input type="text" id="schedRoom" placeholder="e.g. Comlab203, RM-101" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="schedStartTime">Start Time (24h)</label>
+              <input type="time" id="schedStartTime" required>
+            </div>
+            <div class="form-group">
+              <label for="schedEndTime">End Time (24h)</label>
+              <input type="time" id="schedEndTime" required>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-full" id="schedSaveBtn" style="margin-top: 1rem;">
+            Save Class Slot
+          </button>
+        </form>
       </div>
     </div>
   </div>
