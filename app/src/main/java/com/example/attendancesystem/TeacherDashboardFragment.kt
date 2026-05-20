@@ -266,6 +266,10 @@ class TeacherDashboardFragment : Fragment() {
         } else {
             loadRecentAttendance()
         }
+        // Refresh QR session status when returning from QRActivity
+        if (activeScheduleId != null) {
+            loadQrSessionExpiry()
+        }
     }
 
     private fun initializeViews(view: View) {
